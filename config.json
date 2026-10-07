@@ -33,5 +33,6 @@
     "basketball_euroleague",
     "handball_germany_bundesliga"
   ],
-  "gemini_model": "gemini-2.5-flash"
+  "gemini_model": "gemini-2.5-flash",
+  "ai_shortlist": 10
 }

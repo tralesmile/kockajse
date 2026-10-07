@@ -190,7 +190,7 @@ def pick_ticket(now):
                          commenceTimeTo=iso(end))
         for event in events:
             cands.extend(candidates_from_event(event))
-    return build_ticket(cands)
+    return cands
 
 
 # ------------------------------------------------------------ settling ----
@@ -332,14 +332,15 @@ def build_email(state, finished, ticket, note, today):
             f"Stake: <b>{money(ticket['stake'])}</b><br>"
             f"If it wins: payout {money(gross)}, tax {money(tax)}, you receive {money(net)} "
             f"(profit {money(net - ticket['stake'])}).<br>"
-            f"Estimated chance from the odds: {ticket['win_prob']:.0%}.</p>"
+            f"Estimated chance from the odds: {ticket['win_prob']:.0%}.<br>"
+            f"Picked by: {ticket.get('picked_by', 'rules')}.</p>"
             "<p><small>Odds are the average of European bookmakers and will differ slightly "
             "at Megawin. Times are Skopje time.</small></p>")
         if ticket.get("analysis"):
-            parts.append("<h3>AI analysis of the picks</h3>"
-                         f"<p style='font-size:14px'>{ticket['analysis']}</p>"
-                         "<p><small>Written by Gemini from web search. It can be wrong and "
-                         "it does not change the picks.</small></p>")
+            parts.append("<h3>AI analysis</h3>"
+                         f"<div style='font-size:14px'>{ticket['analysis']}</div>"
+                         "<p><small>Research and verdicts by Gemini from web search; it can "
+                         "be wrong. Odds and limits are enforced by the bot.</small></p>")
     else:
         parts.append(f"<h3>No ticket today</h3><p>{note}</p>")
 
@@ -397,62 +398,179 @@ def send_email(subject, html):
         print("No email settings found; wrote out/email.html instead.")
 
 
-# ------------------------------------------------------------ AI notes ----
-def ai_analysis(ticket, today):
-    """Ask Gemini (with Google Search) for a short written check of each pick.
-
-    Commentary only: it never changes the ticket. Returns HTML, or "" when no
-    key is set or the request fails.
-    """
+# ------------------------------------------------------------------ AI ----
+def gemini(prompt, search=False, schema=None):
+    """One Gemini call. Returns the reply text, or "" if it fails."""
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         return ""
-    lines = "\n".join(
-        f"{i}. {leg['sport']}, {leg['league']}: {leg['home']} v {leg['away']}, "
-        f"starts {local_time(leg['start'])} Skopje time. Pick: {leg['pick']} at odds "
-        f"{leg['odds']:.2f} (bookmakers imply about {leg['prob']:.0%})."
-        for i, leg in enumerate(ticket["legs"], 1))
-    prompt = (
-        f"Today is {today:%A %d %B %Y}. You are a careful sports analyst. Use Google Search "
-        "to check the latest news for each pick on this betting ticket:\n\n"
-        f"{lines}\n\n"
-        "For each pick write, in plain text without markdown or tables:\n"
-        "- Form: recent results of both sides.\n"
-        "- News: injuries, suspensions, rest or lineup news that matters.\n"
-        "- Risk: the main way this pick loses.\n"
-        "- Verdict: one of AGREE, RISKY or AVOID, with one sentence why.\n"
-        "Keep each pick under 90 words. Start each pick with its number and the match. "
-        "Only state facts you found in search results for this season. If you cannot find "
-        "current information about a match, say so plainly instead of guessing. "
-        "Finish with one line starting 'Overall:' about the whole ticket.")
-    body = json.dumps({"contents": [{"parts": [{"text": prompt}]}],
-                       "tools": [{"google_search": {}}]}).encode()
+    payload = {"contents": [{"parts": [{"text": prompt}]}],
+               "generationConfig": {"temperature": 0.2}}
+    if search:
+        payload["tools"] = [{"google_search": {}}]
+    if schema:
+        payload["generationConfig"].update(responseMimeType="application/json",
+                                           responseSchema=schema)
     url = ("https://generativelanguage.googleapis.com/v1beta/models/"
            f"{CONFIG['gemini_model']}:generateContent")
     for attempt in range(4):
         try:
-            req = urllib.request.Request(url, data=body, method="POST", headers={
-                "x-goog-api-key": key, "Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
+                                         headers={"x-goog-api-key": key,
+                                                  "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=180) as resp:
                 data = json.loads(resp.read().decode())
             parts = data["candidates"][0]["content"]["parts"]
             text = "".join(p.get("text", "") for p in parts).strip()
             if text:
-                return html_lib.escape(text).replace("\n", "<br>")
+                return text
         except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
-            print(f"AI analysis attempt {attempt + 1} failed: {err}")
+            print(f"Gemini attempt {attempt + 1} failed: {err}")
         time.sleep(5 + 10 * attempt)
     return ""
 
 
+DECISION_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "picks": {"type": "ARRAY", "items": {
+            "type": "OBJECT",
+            "properties": {
+                "id": {"type": "INTEGER"},
+                "verdict": {"type": "STRING", "enum": ["AGREE", "RISKY", "AVOID"]},
+                "adjusted_chance": {"type": "NUMBER"},
+                "summary": {"type": "STRING"}},
+            "required": ["id", "verdict", "adjusted_chance", "summary"]}},
+        "ticket": {"type": "ARRAY", "items": {"type": "INTEGER"}},
+        "ticket_reason": {"type": "STRING"}},
+    "required": ["picks", "ticket", "ticket_reason"],
+}
+
+
+def shortlist(cands):
+    """The most likely outcome of each match, best first, numbered for the AI."""
+    best = {}
+    for c in cands:
+        if c["event_id"] not in best or c["prob"] > best[c["event_id"]]["prob"]:
+            best[c["event_id"]] = c
+    top = sorted(best.values(), key=lambda c: c["prob"], reverse=True)[:CONFIG["ai_shortlist"]]
+    return {i: c for i, c in enumerate(top, 1)}
+
+
+def describe(short):
+    return "\n".join(
+        f"ID {i}: {c['sport']}, {c['league']}: {c['home']} (home) v {c['away']} (away), "
+        f"starts {local_time(c['start'])} Skopje time. Pick: {c['pick']} to win. "
+        f"Odds {c['odds']:.2f}. Market chance {c['prob']:.0%}."
+        for i, c in short.items())
+
+
+def valid_combo(legs):
+    odds = 1.0
+    for leg in legs:
+        odds *= leg["odds"]
+    return (1 <= len(legs) <= CONFIG["max_legs"]
+            and len({l["event_id"] for l in legs}) == len(legs)
+            and CONFIG["min_total_odds"] <= round(odds, 2) <= CONFIG["max_total_odds"])
+
+
+def ai_pick(cands, today):
+    """Let Gemini research the shortlist and choose the ticket.
+
+    Returns (ticket, analysis_html, note). ticket is None when the AI says no bet.
+    Returns None when the AI is unavailable, so the caller can fall back to the rules.
+    Every answer is checked in code: the AI can only choose from the shortlist, the odds
+    always come from the feed, and the ticket must meet the odds limits.
+    """
+    short = shortlist(cands)
+    if not short or not os.environ.get("GEMINI_API_KEY"):
+        return None
+    listing = describe(short)
+    day = f"{today:%A %d %B %Y, %H:%M}"
+    research = gemini((ROOT / "prompts" / "research.txt").read_text().format(
+        today=day, candidates=listing), search=True)
+    if not research:
+        return None
+    raw = gemini((ROOT / "prompts" / "decide.txt").read_text().format(
+        today=day, candidates=listing, research=research, max_legs=CONFIG["max_legs"],
+        min_odds=CONFIG["min_total_odds"], max_odds=CONFIG["max_total_odds"]),
+        schema=DECISION_SCHEMA)
+    try:
+        answer = json.loads(raw)
+        verdicts = {int(p["id"]): p for p in answer["picks"] if int(p["id"]) in short}
+        chosen = [int(i) for i in answer["ticket"]]
+    except (ValueError, KeyError, TypeError):
+        print("AI decision could not be read; using the rules instead.")
+        return None
+
+    # Missing verdicts count as RISKY; the AI may not raise a chance by more than 8 points.
+    for i, c in short.items():
+        v = verdicts.get(i, {})
+        c["verdict"] = v.get("verdict", "RISKY")
+        c["summary"] = str(v.get("summary", "No analysis returned."))[:600]
+        try:
+            adj = float(v.get("adjusted_chance", c["prob"] * 100)) / 100
+        except (TypeError, ValueError):
+            adj = c["prob"]
+        c["adj"] = max(0.01, min(adj, c["prob"] + 0.08))
+
+    def usable(ids):
+        legs = [short[i] for i in ids]
+        risky = sum(1 for l in legs if l["verdict"] == "RISKY")
+        return (all(l["verdict"] != "AVOID" for l in legs) and risky <= 1
+                and valid_combo(legs))
+
+    source = "AI"
+    if not (chosen and len(set(chosen)) == len(chosen)
+            and all(i in short for i in chosen) and usable(chosen)):
+        # The AI's ticket broke a rule (or was empty): build the best one its verdicts allow.
+        chosen, best_score = [], 0
+        for allow_risky in (False, True):
+            pool = [i for i, c in short.items()
+                    if c["verdict"] == "AGREE" or (allow_risky and c["verdict"] == "RISKY")]
+            for size in range(1, CONFIG["max_legs"] + 1):
+                for combo in itertools.combinations(pool, size):
+                    score = 1.0
+                    for i in combo:
+                        score *= short[i]["adj"]
+                    if usable(combo) and score > best_score:
+                        chosen, best_score = list(combo), score
+            if chosen:
+                break
+        source = "AI verdicts, ticket built by the rules"
+
+    lines = []
+    for i, c in short.items():
+        mark = "<b>ON TICKET</b> " if i in chosen else ""
+        lines.append(f"{mark}<b>{html_lib.escape(c['home'])} v {html_lib.escape(c['away'])}</b>, "
+                     f"{html_lib.escape(c['pick'])} @ {c['odds']:.2f}: <b>{c['verdict']}</b> "
+                     f"(market {c['prob']:.0%}, AI {c['adj']:.0%}). "
+                     f"{html_lib.escape(c['summary'])}")
+    reason = html_lib.escape(str(answer.get("ticket_reason", ""))[:600])
+    analysis = (f"<p><b>Why this ticket:</b> {reason}</p><p>" + "<br><br>".join(lines) + "</p>")
+
+    if not chosen:
+        return None, analysis, "The AI found no ticket that passes its checks today."
+    legs = sorted(({k: v for k, v in short[i].items() if k not in ("adj",)} for i in chosen),
+                  key=lambda c: c["start"])
+    total, prob = 1.0, 1.0
+    for leg in legs:
+        total *= leg["odds"]
+        prob *= leg["prob"]
+    ticket = {"legs": legs, "total_odds": round(total, 2), "win_prob": round(prob, 4),
+              "picked_by": source}
+    return ticket, analysis, ""
+
+
+
 # ---------------------------------------------------------------- main ----
-def run(now=None, force=False, resend=False):
+def run(now=None, force=False, resend=False, preview=False):
     now = now or datetime.now(timezone.utc)
     local = now.astimezone(TZ)
     today = local.date().isoformat()
     state = json.loads(STATE_PATH.read_text())
 
-    if not force and not resend:
+    if not force and not resend and not preview:
         if local.hour < CONFIG["send_hour_local"]:
             print(f"Too early ({local:%H:%M} local); nothing to do.")
             return False
@@ -463,30 +581,38 @@ def run(now=None, force=False, resend=False):
     if resend:
         # Send the report again for the newest open ticket without changing anything else.
         ticket = state["open_tickets"][-1] if state["open_tickets"] else None
-        if ticket:
-            ticket["analysis"] = ai_analysis(ticket, local)
         subject, html = build_email(state, [], ticket, "No open ticket.", local)
         send_email(subject, html)
         print(subject)
         STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
         return True
 
-    finished = settle(state, now)
+    # A preview picks and emails a ticket but saves nothing and settles nothing.
+    finished = [] if preview else settle(state, now)
     stake = CONFIG["stake"]
     ticket, note = None, ""
 
     if state["bankroll"] >= stake:
         state["stopped"] = False
-        picked = pick_ticket(now)
+        cands = pick_ticket(now)
+        result = ai_pick(cands, local)
+        analysis = ""
+        if result is None:
+            picked = build_ticket(cands)
+            if picked:
+                picked["picked_by"] = "rules (AI unavailable)"
+            note = "No combination of games fits the rules today."
+        else:
+            picked, analysis, note = result
         if picked:
             ticket = {"no": state["next_ticket_no"], "date": today, "created": iso(now),
                       "stake": stake, **picked}
-            ticket["analysis"] = ai_analysis(ticket, local)
+            ticket["analysis"] = analysis
             state["next_ticket_no"] += 1
             state["bankroll"] = round(state["bankroll"] - stake, 2)
             state["open_tickets"].append(ticket)
-        else:
-            note = "No combination of games fits the rules today."
+        elif analysis:
+            note += analysis
     elif state["open_tickets"]:
         note = "The remaining money is on open tickets. Waiting for their results."
     else:
@@ -501,11 +627,18 @@ def run(now=None, force=False, resend=False):
     state["last_run_date"] = today
     if not silent:
         subject, html = build_email(state, finished, ticket, note, local)
+        if preview:
+            subject = "PREVIEW, not counted | " + subject
+            (ROOT / "out").mkdir(exist_ok=True)
+            (ROOT / "out" / "preview.json").write_text(json.dumps(
+                {"ticket": ticket, "note": note, "credits_left": credits_left}, indent=2))
         send_email(subject, html)
         print(subject)
-    STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
+    if not preview:
+        STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
     return True
 
 
 if __name__ == "__main__":
-    run(force="--force" in sys.argv, resend="--resend" in sys.argv)
+    run(force="--force" in sys.argv, resend="--resend" in sys.argv,
+        preview="--preview" in sys.argv)

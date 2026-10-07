@@ -16,6 +16,10 @@ on:
         description: "Only resend the email for the open ticket (no new ticket)"
         type: boolean
         default: false
+      preview:
+        description: "Pick and email a test ticket without saving it"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -44,7 +48,10 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: python bot.py ${{ inputs.force && '--force' || '' }} ${{ inputs.resend && '--resend' || '' }}
+        run: python bot.py ${{ inputs.force && '--force' || '' }} ${{ inputs.resend && '--resend' || '' }} ${{ inputs.preview && '--preview' || '' }}
+      - name: Keep preview output
+        if: ${{ inputs.preview }}
+        run: python -c "print(open('out/preview.json').read())" || true
       - name: Save the ledger
         run: |
           git config user.name "betting-bot"
