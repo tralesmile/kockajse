@@ -1,48 +1,7 @@
 {
-  "bankroll": 300,
-  "next_ticket_no": 2,
-  "open_tickets": [
-    {
-      "no": 1,
-      "date": "2026-10-07",
-      "created": "2026-10-07T18:05:48Z",
-      "stake": 100,
-      "legs": [
-        {
-          "event_id": "6608125b38823d94d6eef41f1717d86c",
-          "sport_key": "basketball_wnba",
-          "sport": "Basketball",
-          "league": "WNBA",
-          "home": "Atlanta Dream",
-          "away": "New York Liberty",
-          "start": "2026-10-07T23:30:00Z",
-          "pick": "Atlanta Dream",
-          "odds": 1.76,
-          "prob": 0.5413757567750124,
-          "books": 16,
-          "result": "pending"
-        },
-        {
-          "event_id": "67cfb783c5290b2ff1c47303c87e9cf1",
-          "sport_key": "basketball_wnba",
-          "sport": "Basketball",
-          "league": "WNBA",
-          "home": "Golden State Valkyries",
-          "away": "Las Vegas Aces",
-          "start": "2026-10-08T01:30:00Z",
-          "pick": "Golden State Valkyries",
-          "odds": 1.79,
-          "prob": 0.5314995054220063,
-          "books": 16,
-          "result": "pending"
-        }
-      ],
-      "total_odds": 3.15,
-      "win_prob": 0.2877,
-      "picked_by": "rules, AI unavailable (Gemini quota used up)",
-      "analysis": ""
-    }
-  ],
-  "last_run_date": "2026-10-07",
+  "bankroll": 400,
+  "next_ticket_no": 1,
+  "open_tickets": [],
+  "last_run_date": null,
   "stopped": false
 }
