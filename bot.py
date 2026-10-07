@@ -10,6 +10,7 @@ Every morning (Skopje time) it:
 Only the Python standard library is used.
 """
 import csv
+import re
 import html as html_lib
 import itertools
 import json
@@ -37,6 +38,8 @@ SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
 
 credits_left = None  # filled from the API response headers
 AI_LOG = []  # what happened in each Gemini call, kept for previews
+SCOUTED = []  # event ids the AI scout chose today, safest first
+SCOUT_NOTE = ""
 MODELS_OUT = set()  # Gemini models that ran out of quota during this run
 
 
@@ -82,28 +85,29 @@ def sport_of(key):
 
 
 # ------------------------------------------------------------- picking ----
-def keys_with_games(start, end):
-    """Leagues that have games in the window, ordered so every sport gets a turn.
-
-    Uses only the free /sports and /events endpoints.
-    """
+def all_fixtures(start, end):
+    """Every match in the window across all covered leagues (free endpoints only)."""
     sports = api_get("/sports")
     active = [s["key"] for s in sports
               if s.get("active") and not s.get("has_outrights")
               and s["key"].startswith(tuple(CONFIG["sport_prefixes"]))
               and not any(word in s["key"] for word in CONFIG["skip_keys_containing"])]
     priority = [k for k in CONFIG["priority_keys"] if k in active]
-    ordered = priority + sorted(k for k in active if k not in priority)
-
-    by_sport = {}
-    for key in ordered:
-        events = api_get(f"/sports/{key}/events",
-                         commenceTimeFrom=iso(start), commenceTimeTo=iso(end))
-        if events:
-            by_sport.setdefault(sport_of(key), []).append(key)
+    fixtures = []
+    for key in priority + sorted(k for k in active if k not in priority):
+        fixtures.extend(api_get(f"/sports/{key}/events",
+                                commenceTimeFrom=iso(start), commenceTimeTo=iso(end)))
         time.sleep(0.15)
+    return fixtures
 
-    # Round-robin across sports so one sport cannot use up the daily request budget.
+
+def default_keys(fixtures):
+    """Leagues to price when the AI scout is unavailable: every sport gets a turn."""
+    by_sport = {}
+    for event in fixtures:
+        keys = by_sport.setdefault(sport_of(event["sport_key"]), [])
+        if event["sport_key"] not in keys:
+            keys.append(event["sport_key"])
     result = []
     queues = [by_sport[s] for s in ("soccer", "basketball", "tennis", "handball") if s in by_sport]
     while any(queues):
@@ -111,6 +115,44 @@ def keys_with_games(start, end):
             if queue:
                 result.append(queue.pop(0))
     return result[:CONFIG["max_odds_requests_per_day"]]
+
+
+def ai_scout(fixtures, today):
+    """Ask Gemini to go through the whole day's fixtures and name the safest matches.
+
+    Returns the chosen event ids, safest first. The AI can only point at fixtures from the
+    feed; anything else in its answer is ignored.
+    """
+    global SCOUT_NOTE
+    fixtures = sorted(fixtures, key=lambda e: (e["sport_key"], e["commence_time"]))[:400]
+    if not fixtures or not os.environ.get("GEMINI_API_KEY"):
+        return []
+    listing = "\n".join(
+        f"F{i}: {SPORT_NAMES.get(sport_of(e['sport_key']), '')}, "
+        f"{e.get('sport_title', e['sport_key'])}: {e['home_team']} (home) v {e['away_team']} "
+        f"(away), {local_time(e['commence_time'])}"
+        for i, e in enumerate(fixtures, 1))
+    text = gemini((ROOT / "prompts" / "scout.txt").read_text().format(
+        today=f"{today:%A %d %B %Y, %H:%M}", fixtures=listing,
+        max_leagues=CONFIG["max_odds_requests_per_day"]), search=True)
+    tail = text.rsplit("PICKS:", 1)[-1] if "PICKS:" in text else ""
+    ids, keys = [], []
+    for number in re.findall(r"F\s*(\d+)", tail):
+        index = int(number)
+        if not 1 <= index <= len(fixtures):
+            continue
+        event = fixtures[index - 1]
+        if event["sport_key"] not in keys:
+            if len(keys) >= CONFIG["max_odds_requests_per_day"]:
+                continue
+            keys.append(event["sport_key"])
+        if event["id"] not in ids:
+            ids.append(event["id"])
+    SCOUT_NOTE = (f"The AI went through {len(fixtures)} matches on offer today and chose "
+                  f"{len(ids)} to research in depth." if ids else
+                  f"The AI scout named no matches out of {len(fixtures)}; "
+                  "the most likely favourites were researched instead.")
+    return ids
 
 
 def candidates_from_event(event):
@@ -186,8 +228,14 @@ def pick_ticket(now):
     hours = CONFIG["last_start_hour_local"]
     end = (local.replace(hour=0, minute=0, second=0, microsecond=0)
            + timedelta(days=1, hours=hours))
+    fixtures = all_fixtures(start, end)
+    SCOUTED[:] = ai_scout(fixtures, local)
+    wanted = [e["sport_key"] for e in fixtures if e["id"] in SCOUTED]
+    # Leagues the scout chose first, then others until the daily request budget is used.
+    keys = list(dict.fromkeys(wanted + default_keys(fixtures)))
+    keys = keys[:CONFIG["max_odds_requests_per_day"]]
     cands = []
-    for key in keys_with_games(start, end):
+    for key in keys:
         events = api_get(f"/sports/{key}/odds", regions=CONFIG["region"], markets="h2h",
                          oddsFormat="decimal", commenceTimeFrom=iso(start),
                          commenceTimeTo=iso(end))
@@ -470,7 +518,10 @@ def shortlist(cands):
     for c in cands:
         if c["event_id"] not in best or c["prob"] > best[c["event_id"]]["prob"]:
             best[c["event_id"]] = c
-    top = sorted(best.values(), key=lambda c: c["prob"], reverse=True)[:CONFIG["ai_shortlist"]]
+    ranked = sorted(best.values(), key=lambda c: c["prob"], reverse=True)
+    # Matches the AI scout chose come first; the rest fill any remaining places.
+    top = ([c for c in ranked if c["event_id"] in SCOUTED]
+           + [c for c in ranked if c["event_id"] not in SCOUTED])[:CONFIG["ai_shortlist"]]
     return {i: c for i, c in enumerate(top, 1)}
 
 
@@ -572,7 +623,7 @@ def ai_pick(cands, today):
                      f"(market {c['prob']:.0%}, AI {c['adj']:.0%}). "
                      f"{html_lib.escape(c['summary'])}")
     reason = html_lib.escape(str(answer.get("ticket_reason", ""))[:600])
-    analysis = (f"<p><b>Why this ticket:</b> {reason}</p><p>" + "<br><br>".join(lines) + "</p>")
+    analysis = (f"<p>{SCOUT_NOTE}</p><p><b>Why this ticket:</b> {reason}</p><p>" + "<br><br>".join(lines) + "</p>")
 
     if not chosen:
         return None, analysis, "The AI found no ticket that passes its checks today."

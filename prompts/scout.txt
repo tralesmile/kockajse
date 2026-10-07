@@ -1,0 +1,40 @@
+You are scouting for the safest bets available today, {today} (Skopje time).
+
+Below is the complete list of matches that bookmakers are offering in the next 24 hours, taken
+from a live feed. Every match on it is real and open for betting. Matches that are not on this
+list cannot be bet on or settled, so you must choose only from this list.
+
+FIXTURES
+{fixtures}
+
+TASK
+Go through EVERY match on the list, league by league. Use Google Search (league tables, recent
+results, today's betting previews and team news) to find the matches with the clearest, most
+reliable favourite to win. A good choice has most of these:
+- a large, proven gap in quality: far apart in the table or ranking, or a top side against a
+  struggling one;
+- the favourite is in good recent form and has its key players available;
+- the favourite has a real reason to win today (league points, playoff game, must-win);
+- for football and handball, the favourite is at home, or is clearly superior even away.
+
+Leave out:
+- friendlies, preseason games and matches where the favourite has nothing to play for;
+- derbies and matches between evenly matched sides;
+- cup or European games where the favourite is likely to rotate its squad;
+- tennis matches where the favourite is returning from injury or played a long match yesterday;
+- any match you cannot find current information about.
+
+LIMITS
+- Choose at most 14 matches, from at most {max_leagues} different leagues in total.
+- Use only the IDs from the list. Never add or invent a match.
+- Rely on what you find in search results today, not on memory: squads, coaches and divisions
+  change every season.
+- If fewer than 14 matches deserve it, choose fewer. If none do, say so.
+
+OUTPUT (plain text)
+One line per chosen match, safest first:
+F<ID> | <team or player to win> | <one sentence with the concrete reason>
+Then finish with exactly one final line listing the chosen IDs in the same order:
+PICKS: F12, F3, F40
+If nothing qualifies, the final line is:
+PICKS: NONE

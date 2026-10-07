@@ -48,7 +48,9 @@ def fake_api(path, **params):
                           "handball_germany_bundesliga", "soccer_fifa_world_cup_winner")]
     key = path.split("/")[2]
     if path.endswith("/events"):
-        return [{"id": g[2]} for g in games(day) if g[0] == key]
+        return [{"id": g[2], "sport_key": g[0], "sport_title": g[1], "home_team": g[3],
+                 "away_team": g[4], "commence_time": bot.iso(g[5])}
+                for g in games(day) if g[0] == key]
     if path.endswith("/odds"):
         out = []
         for sk, title, eid, home, away, start, prices in games(day):
