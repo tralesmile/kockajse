@@ -8,10 +8,11 @@ RESEARCH NOTES (collected from web search a moment ago; this is your only eviden
 {research}
 
 STEP 1. Judge every candidate.
-Use only the research notes. Do not add facts from memory. Give each candidate a verdict:
-- AGREE: the match is confirmed, data quality is GOOD, and nothing material argues against the pick.
+Use only the research notes. Do not add facts from memory. Every candidate is a real match that
+is on sale at bookmakers now, so never reject one because you doubt the match or league exists. Give each candidate a verdict:
+- AGREE: data quality is GOOD and nothing material argues against the pick.
 - RISKY: data quality is THIN or NONE, or there is a real but not decisive concern.
-- AVOID: any of these: the match is UNCONFIRMED; a key player for the picked side is out or
+- AVOID: any of these: the notes say the match is POSTPONED; a key player for the picked side is out or
   doubtful; heavy rotation or rest is expected; the picked side has little to play for or the
   match is a friendly or preseason game; a tennis player is carrying an injury or retired
   recently; the notes contradict each other on something important.
@@ -25,7 +26,8 @@ STEP 2. Build the ticket.
   RISKY pick. Never use an AVOID pick.
 - The product of the odds must be between {min_odds} and {max_odds}. Multiply the odds yourself
   and check the result before you answer.
-- Among valid tickets, choose the one with the highest product of adjusted chances.
+- Among valid tickets, choose the safest: the one with the highest product of adjusted chances.
+  Prefer picks with GOOD data and clear favourites over picks you know little about.
 - If no ticket meets all the rules, return an empty ticket and explain why. Do not bend a rule to
   produce a ticket.
 

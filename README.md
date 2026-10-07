@@ -4,7 +4,7 @@ Sends one email every morning at about 08:00 Skopje time with:
 
 - the final result of the previous ticket, with 15% tax on winnings applied,
 - the bankroll and the running profit or loss,
-- one new combined ticket (total odds between 2.00 and 3.50) for the next 24 hours.
+- one new combined ticket (total odds between 3.00 and 3.50) for the next 24 hours.
 
 Football, basketball, tennis and handball odds come from The Odds API. Picks are rule-based:
 the bookmaker margin is removed from the odds to estimate each outcome's chance, and the most

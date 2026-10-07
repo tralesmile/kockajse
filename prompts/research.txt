@@ -8,11 +8,15 @@ margin. Treat it as the best available estimate and as your starting point.
 CANDIDATE
 {candidates}
 
-Use Google Search, with several different searches, and report:
+Use Google Search with at least four different searches (team news, injuries, recent results,
+preview of this exact match) across news sites, official club or league pages and statistics
+sites, and report:
 
-1. MATCH CHECK: confirm the match is really scheduled as listed and name the competition stage
-   (league round, playoff game number and series score, cup round, qualifier). If you cannot
-   confirm it, write "UNCONFIRMED".
+1. MATCH CHECK: this match is on sale at several bookmakers right now, so it exists and the
+   league shown is correct for this season. Do not question that from memory: teams change
+   division every year. Name the competition stage (league round, playoff game number and
+   series score, cup round, qualifier). Write "POSTPONED" only if a search result from the
+   last 3 days says the match is postponed, cancelled or moved, and quote it.
 2. FORM: the last 5 results of each side with dates, and their current standing or ranking.
 3. AVAILABILITY: injuries, suspensions, players resting, expected rotation, coach comments about
    the lineup. For tennis: recent retirements, medical timeouts, how many matches and hours the

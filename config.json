@@ -4,10 +4,10 @@
   "currency": "MKD",
   "tax_rate": 0.15,
   "max_total_odds": 3.5,
-  "min_total_odds": 2.0,
+  "min_total_odds": 3.0,
   "min_leg_odds": 1.2,
-  "max_legs": 3,
-  "min_bookmakers": 3,
+  "max_legs": 4,
+  "min_bookmakers": 6,
   "region": "eu",
   "send_hour_local": 8,
   "timezone": "Europe/Skopje",
@@ -34,7 +34,7 @@
     "handball_germany_bundesliga"
   ],
   "gemini_model": "gemini-2.5-flash",
-  "ai_shortlist": 10,
+  "ai_shortlist": 12,
   "skip_keys_containing": [
     "preseason",
     "summer_league",

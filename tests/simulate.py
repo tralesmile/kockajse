@@ -57,7 +57,7 @@ def fake_api(path, **params):
             names = [home, away] + (["Draw"] if len(prices) == 3 else [])
             books = [{"key": f"book{i}", "markets": [{"key": "h2h", "outcomes": [
                 {"name": n, "price": round(p * (1 + 0.01 * i), 2)} for n, p in zip(names, prices)]}]}
-                for i in range(4)]
+                for i in range(7)]
             out.append({"id": eid, "sport_key": sk, "sport_title": title, "home_team": home,
                         "away_team": away, "commence_time": bot.iso(start), "bookmakers": books})
         return out
