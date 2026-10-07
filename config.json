@@ -1,0 +1,25 @@
+{
+  "starting_bankroll": 400,
+  "stake": 100,
+  "currency": "MKD",
+  "tax_rate": 0.15,
+  "max_total_odds": 3.5,
+  "min_total_odds": 2.0,
+  "min_leg_odds": 1.2,
+  "max_legs": 3,
+  "min_bookmakers": 3,
+  "region": "eu",
+  "send_hour_local": 8,
+  "timezone": "Europe/Skopje",
+  "last_start_hour_local": 4.5,
+  "min_minutes_before_start": 60,
+  "max_odds_requests_per_day": 9,
+  "void_after_days": 3,
+  "sport_prefixes": ["soccer_", "basketball_", "tennis_", "handball_"],
+  "priority_keys": [
+    "soccer_uefa_champs_league", "soccer_epl", "soccer_spain_la_liga",
+    "soccer_italy_serie_a", "soccer_germany_bundesliga", "soccer_france_ligue_one",
+    "soccer_uefa_europa_league", "basketball_nba", "basketball_euroleague",
+    "handball_germany_bundesliga"
+  ]
+}
