@@ -21,6 +21,10 @@ on:
         description: "Pick and email a test ticket without saving it"
         type: boolean
         default: false
+      diagnose:
+        description: "Only check which Gemini models each key can use"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -55,7 +59,7 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: python bot.py ${{ inputs.force && '--force' || '' }} ${{ inputs.resend && '--resend' || '' }} ${{ inputs.preview && '--preview' || '' }}
+        run: python bot.py ${{ inputs.force && '--force' || '' }} ${{ inputs.resend && '--resend' || '' }} ${{ inputs.preview && '--preview' || '' }} ${{ inputs.diagnose && '--diagnose' || '' }}
       - name: Save the ledger
         run: |
           git config user.name "betting-bot"

@@ -847,6 +847,51 @@ def run(now=None, force=False, resend=False, preview=False):
     return True
 
 
+def diagnose():
+    """Check which Gemini models each key can use, with and without web search."""
+    report = {}
+    base = "https://generativelanguage.googleapis.com/v1beta/models"
+    for number, key in enumerate(gemini_keys(), 1):
+        entry = report.setdefault(f"key {number}", {})
+        try:
+            req = urllib.request.Request(f"{base}?pageSize=200", headers={"x-goog-api-key": key})
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                names = [m["name"].split("/")[-1] for m in json.loads(resp.read())["models"]
+                         if "generateContent" in m.get("supportedGenerationMethods", [])]
+        except Exception as err:  # noqa: BLE001 - report whatever went wrong
+            entry["list_error"] = str(err)
+            continue
+        flash = [n for n in names if "flash" in n and not any(
+            w in n for w in ("image", "tts", "audio", "live", "preview", "exp"))]
+        entry["models"] = flash
+        for model in flash[:12]:
+            for search in (False, True):
+                payload = {"contents": [{"parts": [{"text": "Reply with the word OK."}]}]}
+                if search:
+                    payload["tools"] = [{"google_search": {}}]
+                try:
+                    req = urllib.request.Request(
+                        f"{base}/{model}:generateContent", data=json.dumps(payload).encode(),
+                        method="POST", headers={"x-goog-api-key": key,
+                                                "Content-Type": "application/json"})
+                    with urllib.request.urlopen(req, timeout=90) as resp:
+                        resp.read()
+                    outcome = "ok"
+                except urllib.error.HTTPError as err:
+                    detail = err.read().decode()
+                    limit = re.search(r"limit: (\d+)", detail)
+                    outcome = f"{err.code}" + (f" (limit {limit.group(1)})" if limit else "")
+                except Exception as err:  # noqa: BLE001
+                    outcome = str(err)[:80]
+                entry[f"{model} {'with search' if search else 'plain'}"] = outcome
+                time.sleep(2)
+    (ROOT / "data" / "diagnose.json").write_text(json.dumps(report, indent=2) + "\n")
+    print(json.dumps(report, indent=2))
+
+
 if __name__ == "__main__":
+    if "--diagnose" in sys.argv:
+        diagnose()
+        sys.exit()
     run(force="--force" in sys.argv, resend="--resend" in sys.argv,
         preview="--preview" in sys.argv)
