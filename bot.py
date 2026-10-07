@@ -840,6 +840,10 @@ def run(now=None, force=False, resend=False, preview=False):
         print(subject)
     if not preview:
         STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
+        # What the AI calls did on this run, for troubleshooting.
+        (ROOT / "data" / "last_run.json").write_text(json.dumps(
+            {"when": iso(now), "ai_log": [line[:700] for line in AI_LOG],
+             "odds_requests_left": credits_left}, indent=2) + "\n")
     return True
 
 
