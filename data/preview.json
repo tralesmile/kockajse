@@ -1,0 +1,55 @@
+{
+  "when": "2026-10-07T17:02:50Z",
+  "ticket": {
+    "no": 2,
+    "date": "2026-10-07",
+    "created": "2026-10-07T17:02:50Z",
+    "stake": 100,
+    "legs": [
+      {
+        "event_id": "9e310ad9a44b0e9e5e1d4244b3b1be8d",
+        "sport_key": "basketball_euroleague",
+        "sport": "Basketball",
+        "league": "Basketball Euroleague",
+        "home": "Paris Basketball",
+        "away": "ASVEL Lyon Villeurbanne",
+        "start": "2026-10-07T18:45:00Z",
+        "pick": "Paris Basketball",
+        "odds": 1.48,
+        "prob": 0.6390477653839719,
+        "books": 19,
+        "result": "pending",
+        "verdict": "AGREE",
+        "summary": "Paris Basketball is favored with no reported injuries and strong recent form, including a EuroLeague win. ASVEL is significantly weakened by Mathis Dossou-Yovo being OUT and TyTy Washington Jr. questionable with an ankle issue, making Paris's home advantage even more pronounced."
+      },
+      {
+        "event_id": "403ddf40d72d5dd09cd109c237884af9",
+        "sport_key": "soccer_brazil_campeonato",
+        "sport": "Football",
+        "league": "Brazil S\u00e9rie A",
+        "home": "Vitoria",
+        "away": "Chapecoense",
+        "start": "2026-10-07T23:00:00Z",
+        "pick": "Vitoria",
+        "odds": 1.52,
+        "prob": 0.6148368700866856,
+        "books": 22,
+        "result": "pending",
+        "verdict": "RISKY",
+        "summary": "No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky."
+      }
+    ],
+    "total_odds": 2.25,
+    "win_prob": 0.3929,
+    "picked_by": "AI",
+    "analysis": "<p><b>Why this ticket:</b> The ticket combines an AGREE pick (ID 1) with a RISKY pick (ID 2) as no single AGREE pick met the odds requirement. ID 1 is strongly supported by ASVEL&#x27;s injuries. ID 2 was chosen as the RISKY pick with the highest adjusted chance, maximizing the overall ticket probability.</p><p><b>ON TICKET</b> <b>Paris Basketball v ASVEL Lyon Villeurbanne</b>, Paris Basketball @ 1.48: <b>AGREE</b> (market 64%, AI 70%). Paris Basketball is favored with no reported injuries and strong recent form, including a EuroLeague win. ASVEL is significantly weakened by Mathis Dossou-Yovo being OUT and TyTy Washington Jr. questionable with an ankle issue, making Paris&#x27;s home advantage even more pronounced.<br><br><b>ON TICKET</b> <b>Vitoria v Chapecoense</b>, Vitoria @ 1.52: <b>RISKY</b> (market 61%, AI 61%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Indiana Pacers v Minnesota Timberwolves</b>, Minnesota Timberwolves @ 1.64: <b>RISKY</b> (market 58%, AI 58%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Bragantino-SP v Mirassol</b>, Bragantino-SP @ 1.62: <b>RISKY</b> (market 58%, AI 58%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Chicago Bulls v Phoenix Suns</b>, Phoenix Suns @ 1.72: <b>RISKY</b> (market 55%, AI 55%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Memphis Grizzlies v Orlando Magic</b>, Orlando Magic @ 1.72: <b>RISKY</b> (market 55%, AI 55%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Atlanta Dream v New York Liberty</b>, Atlanta Dream @ 1.76: <b>RISKY</b> (market 54%, AI 54%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Golden State Valkyries v Las Vegas Aces</b>, Golden State Valkyries @ 1.80: <b>RISKY</b> (market 53%, AI 53%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Cruzeiro v Sao Paulo</b>, Cruzeiro @ 1.79: <b>RISKY</b> (market 52%, AI 52%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Clube de Regatas Brasil v Atletico Goianiense</b>, Clube de Regatas Brasil @ 1.82: <b>RISKY</b> (market 51%, AI 51%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.</p>"
+  },
+  "note": "",
+  "log": [
+    "attempt 1 failed after 1s: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
+    "attempt 2 failed after 3s: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
+    "research: ok on attempt 3, 17s, 5953 chars",
+    "decision: ok on attempt 1, 24s, 3215 chars"
+  ],
+  "credits_left": 485
+}
