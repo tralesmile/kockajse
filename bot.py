@@ -149,7 +149,7 @@ def ai_scout(fixtures, today):
         if event["id"] not in ids:
             ids.append(event["id"])
     SCOUT_NOTE = (f"The AI went through {len(fixtures)} matches on offer today and chose "
-                  f"{len(ids)} to research in depth." if ids else
+                  f"{len(ids)} as the safest candidates." if ids else
                   f"The AI scout named no matches out of {len(fixtures)}; "
                   "the most likely favourites were researched instead.")
     return ids
