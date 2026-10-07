@@ -33,7 +33,7 @@
     "basketball_euroleague",
     "handball_germany_bundesliga"
   ],
-  "gemini_model": "gemini-2.5-flash",
+  "gemini_model": "gemini-3.8-flash",
   "ai_shortlist": 12,
   "skip_keys_containing": [
     "preseason",
@@ -42,7 +42,7 @@
   ],
   "max_leg_odds": 1.85,
   "gemini_fallback_models": [
-    "gemini-3.5-flash-lite"
+    "gemini-2.5-flash"
   ],
   "min_bookmakers_lines": 4,
   "ai_options": 6,
