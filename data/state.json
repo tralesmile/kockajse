@@ -1,7 +1,52 @@
 {
-  "bankroll": 400,
-  "next_ticket_no": 1,
-  "open_tickets": [],
-  "last_run_date": null,
+  "bankroll": 300,
+  "next_ticket_no": 2,
+  "open_tickets": [
+    {
+      "no": 1,
+      "date": "2026-10-07",
+      "created": "2026-10-07T18:15:34Z",
+      "stake": 100,
+      "legs": [
+        {
+          "event_id": "160b49afa70ce1312a6ba4cf93a47ee0",
+          "sport_key": "soccer_brazil_campeonato",
+          "sport": "Football",
+          "league": "Brazil S\u00e9rie A",
+          "home": "Cruzeiro",
+          "away": "Sao Paulo",
+          "start": "2026-10-08T00:30:00Z",
+          "pick": "Cruzeiro",
+          "odds": 1.77,
+          "prob": 0.5287689205967558,
+          "books": 22,
+          "result": "pending",
+          "verdict": "AGREE",
+          "summary": "Cruzeiro has won three consecutive home league games, while Sao Paulo has an extremely poor away record, losing their last three and winning only two of their last fourteen away matches. Sao Paulo also has a long list of key injuries."
+        },
+        {
+          "event_id": "67cfb783c5290b2ff1c47303c87e9cf1",
+          "sport_key": "basketball_wnba",
+          "sport": "Basketball",
+          "league": "WNBA",
+          "home": "Golden State Valkyries",
+          "away": "Las Vegas Aces",
+          "start": "2026-10-08T01:30:00Z",
+          "pick": "Golden State Valkyries",
+          "odds": 1.79,
+          "prob": 0.5316470720716279,
+          "books": 16,
+          "result": "pending",
+          "verdict": "RISKY",
+          "summary": "Data on player availability for both teams is missing, which is a significant concern for a basketball match. The opponent, Las Vegas Aces, is higher ranked and won the last head-to-head meeting."
+        }
+      ],
+      "total_odds": 3.17,
+      "win_prob": 0.2811,
+      "picked_by": "AI",
+      "analysis": "<p>The AI went through 13 matches on offer today and chose 7 as the safest candidates.</p><p><b>Why this ticket:</b> The ticket combines the only &#x27;AGREE&#x27; pick (ID 4) with the &#x27;RISKY&#x27; pick (ID 3) that results in a total odds product between 3.0 and 3.5, while maximizing the product of adjusted chances.</p><p><b>Vitoria v Chapecoense</b>, Vitoria @ 1.51: <b>AVOID</b> (market 62%, AI 62%). Vitoria has numerous key players ruled out or doubtful due to injury, which significantly weakens the team. Despite strong overall home form, they have lost three of their last four home games.<br><br><b>Atlanta Dream v New York Liberty</b>, Atlanta Dream @ 1.76: <b>AVOID</b> (market 54%, AI 54%). Atlanta Dream&#x27;s leading scorer, Allisha Gray, is ruled out for Game 2 due to injury, which is a significant blow to their offensive production in a crucial playoff match.<br><br><b>ON TICKET</b> <b>Golden State Valkyries v Las Vegas Aces</b>, Golden State Valkyries @ 1.79: <b>RISKY</b> (market 53%, AI 53%). Data on player availability for both teams is missing, which is a significant concern for a basketball match. The opponent, Las Vegas Aces, is higher ranked and won the last head-to-head meeting.<br><br><b>ON TICKET</b> <b>Cruzeiro v Sao Paulo</b>, Cruzeiro @ 1.77: <b>AGREE</b> (market 53%, AI 58%). Cruzeiro has won three consecutive home league games, while Sao Paulo has an extremely poor away record, losing their last three and winning only two of their last fourteen away matches. Sao Paulo also has a long list of key injuries.<br><br><b>Bragantino-SP v Mirassol</b>, Bragantino-SP @ 1.62: <b>RISKY</b> (market 58%, AI 58%). There is insufficient current data available regarding recent form, player availability, or match context for both teams, making a proper assessment of this pick impossible.<br><br><b>Clube de Regatas Brasil v Atletico Goianiense</b>, Clube de Regatas Brasil @ 1.82: <b>RISKY</b> (market 51%, AI 51%). Atletico Goianiense is in better recent form, winning four of their last five matches, and is ranked higher in the league. Player availability data for both teams is currently missing.</p>"
+    }
+  ],
+  "last_run_date": "2026-10-07",
   "stopped": false
 }
