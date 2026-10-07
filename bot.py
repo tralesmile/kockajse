@@ -41,7 +41,7 @@ key_index = 0  # which Odds API key is in use
 AI_LOG = []  # what happened in each Gemini call, kept for previews
 SCOUTED = []  # event ids the AI scout chose today, safest first
 SCOUT_NOTE = ""
-MODELS_OUT = set()  # Gemini models that ran out of quota during this run
+MODELS_OUT = set()  # (key number, model) pairs that stopped working during this run
 
 
 # ---------------------------------------------------------------- API ----
@@ -149,7 +149,7 @@ def ai_scout(fixtures, today):
     """
     global SCOUT_NOTE
     fixtures = sorted(fixtures, key=lambda e: (e["sport_key"], e["commence_time"]))[:400]
-    if not fixtures or not os.environ.get("GEMINI_API_KEY"):
+    if not fixtures or not gemini_keys():
         return []
     listing = "\n".join(
         f"F{i}: {SPORT_NAMES.get(sport_of(e['sport_key']), '')}, "
@@ -477,10 +477,17 @@ def send_email(subject, html):
 
 
 # ------------------------------------------------------------------ AI ----
+def gemini_keys():
+    """All configured Gemini keys, in the order they should be tried."""
+    names = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY_{n}" for n in range(2, 10)]
+    keys = [os.environ.get(name, "").strip() for name in names]
+    return [k for k in dict.fromkeys(keys) if k]
+
+
 def gemini(prompt, search=False, schema=None):
     """One Gemini call. Returns the reply text, or "" if it fails."""
-    key = os.environ.get("GEMINI_API_KEY")
-    if not key:
+    keys = gemini_keys()
+    if not keys:
         return ""
     payload = {"contents": [{"parts": [{"text": prompt}]}],
                "generationConfig": {"temperature": 0.2}}
@@ -490,9 +497,12 @@ def gemini(prompt, search=False, schema=None):
         payload["generationConfig"].update(responseMimeType="application/json",
                                            responseSchema=schema)
     kind = "research" if search else "decision"
-    for model in [CONFIG["gemini_model"]] + CONFIG.get("gemini_fallback_models", []):
-        if model in MODELS_OUT:
+    # Preferred model on every key first, then the fallback model on every key.
+    models = [CONFIG["gemini_model"]] + CONFIG.get("gemini_fallback_models", [])
+    for model, (number, key) in itertools.product(models, enumerate(keys, 1)):
+        if (number, model) in MODELS_OUT:
             continue
+        label = f"{model}, key {number}"
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         for attempt in range(4):
             started = time.time()
@@ -505,18 +515,19 @@ def gemini(prompt, search=False, schema=None):
                 parts = data["candidates"][0]["content"]["parts"]
                 text = "".join(p.get("text", "") for p in parts).strip()
                 if text:
-                    AI_LOG.append(f"{kind} ({model}): ok on attempt {attempt + 1}, "
+                    AI_LOG.append(f"{kind} ({label}): ok on attempt {attempt + 1}, "
                                   f"{time.time() - started:.0f}s, {len(text)} chars")
                     return text
-                AI_LOG.append(f"{kind} ({model}) attempt {attempt + 1}: empty reply")
+                AI_LOG.append(f"{kind} ({label}) attempt {attempt + 1}: empty reply")
             except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
                 code = getattr(err, "code", None)
                 detail = err.read().decode()[:1500] if code else ""
-                AI_LOG.append(f"{kind} ({model}) attempt {attempt + 1} failed: {err} {detail}")
+                AI_LOG.append(f"{kind} ({label}) attempt {attempt + 1} failed: {err} {detail}")
                 print(AI_LOG[-1])
-                if code == 404 or (code == 429 and ("PerDay" in detail or attempt >= 1)):
-                    # Unknown model, or the quota is used up: waiting will not help.
-                    MODELS_OUT.add(model)
+                quota_gone = code == 429 and ("PerDay" in detail or attempt >= 1)
+                if code in (400, 401, 403, 404) or quota_gone:
+                    # Bad key, unknown model or used-up quota: waiting will not help.
+                    MODELS_OUT.add((number, model))
                     break
             time.sleep(8 + 12 * attempt)
     return ""
@@ -578,7 +589,7 @@ def ai_pick(cands, today):
     always come from the feed, and the ticket must meet the odds limits.
     """
     short = shortlist(cands)
-    if not short or not os.environ.get("GEMINI_API_KEY"):
+    if not short or not gemini_keys():
         return None
     listing = describe(short)
     day = f"{today:%A %d %B %Y, %H:%M}"
@@ -704,7 +715,7 @@ def run(now=None, force=False, resend=False, preview=False):
             picked = build_ticket(cands)
             if picked:
                 why = ""
-                if not os.environ.get("GEMINI_API_KEY"):
+                if not gemini_keys():
                     why = "no Gemini key"
                 elif any(" 429" in line for line in AI_LOG):
                     why = "Gemini quota used up"

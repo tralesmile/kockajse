@@ -22,6 +22,7 @@ Add these under Settings > Secrets and variables > Actions > New repository secr
 | `RESEND_API_KEY` | free key from resend.com (sign up with the address that receives the tips) |
 | `EMAIL_TO` | the address that receives the tips |
 | `GEMINI_API_KEY` | optional: Google Gemini key, adds a written AI check of each pick |
+| `GEMINI_API_KEY_2`, `_3`, `_4` | optional spare Gemini keys, used when the one before is refused or out of quota |
 
 To send through Gmail instead of Resend, set `SMTP_USER` and `SMTP_PASSWORD` (an app password).
 
