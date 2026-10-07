@@ -18,6 +18,7 @@ Add these under Settings > Secrets and variables > Actions > New repository secr
 | Secret | Value |
 |---|---|
 | `ODDS_API_KEY` | free key from the-odds-api.com |
+| `ODDS_API_KEY_2`, `_3`, `_4` | optional spare keys, used in order when the one before is refused or out of requests |
 | `RESEND_API_KEY` | free key from resend.com (sign up with the address that receives the tips) |
 | `EMAIL_TO` | the address that receives the tips |
 | `GEMINI_API_KEY` | optional: Google Gemini key, adds a written AI check of each pick |

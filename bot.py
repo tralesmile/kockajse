@@ -37,6 +37,7 @@ SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
                "tennis": "Tennis", "handball": "Handball"}
 
 credits_left = None  # filled from the API response headers
+key_index = 0  # which Odds API key is in use
 AI_LOG = []  # what happened in each Gemini call, kept for previews
 SCOUTED = []  # event ids the AI scout chose today, safest first
 SCOUT_NOTE = ""
@@ -44,12 +45,27 @@ MODELS_OUT = set()  # Gemini models that ran out of quota during this run
 
 
 # ---------------------------------------------------------------- API ----
+def odds_keys():
+    """All configured Odds API keys, in the order they should be tried."""
+    names = ["ODDS_API_KEY"] + [f"ODDS_API_KEY_{n}" for n in range(2, 10)]
+    keys = [os.environ.get(name, "").strip() for name in names]
+    return [k for k in dict.fromkeys(keys) if k]
+
+
 def api_get(path, **params):
-    """GET a JSON document from The Odds API, retrying on rate limits."""
-    global credits_left
-    params["apiKey"] = os.environ["ODDS_API_KEY"]
-    url = f"{API}{path}?{urllib.parse.urlencode(params)}"
-    for attempt in range(4):
+    """GET a JSON document from The Odds API.
+
+    Tries each configured key in turn: when one is refused or out of requests, the bot
+    moves to the next and stays on it for the rest of the run.
+    """
+    global credits_left, key_index
+    keys = odds_keys()
+    if not keys:
+        raise SystemExit("No Odds API key is set.")
+    attempt = 0
+    while key_index < len(keys):
+        params["apiKey"] = keys[key_index]
+        url = f"{API}{path}?{urllib.parse.urlencode(params)}"
         try:
             with urllib.request.urlopen(url, timeout=30) as resp:
                 remaining = resp.headers.get("x-requests-remaining")
@@ -57,19 +73,27 @@ def api_get(path, **params):
                     credits_left = int(float(remaining))
                 return json.loads(resp.read().decode())
         except urllib.error.HTTPError as err:
-            if err.code == 429 and attempt < 3:
-                time.sleep(2 + 2 * attempt)
+            detail = err.read().decode()[:300]
+            out_of_credits = "OUT_OF_USAGE_CREDITS" in detail or "quota" in detail.lower()
+            if err.code == 429 and not out_of_credits and attempt < 3:
+                attempt += 1
+                time.sleep(2 + 2 * attempt)  # short-term rate limit: wait and retry
                 continue
-            if err.code in (401, 403):
-                raise SystemExit(f"Odds API refused the key or quota is used up ({err.code}).")
+            if err.code in (401, 403, 429):
+                print(f"Odds API key {key_index + 1} of {len(keys)} is unavailable "
+                      f"({err.code}); trying the next one.")
+                key_index += 1
+                attempt = 0
+                continue
             if err.code in (404, 422):
                 return []
             raise
         except urllib.error.URLError:
-            if attempt == 3:
+            attempt += 1
+            if attempt > 3:
                 raise
             time.sleep(3)
-    return []
+    raise SystemExit("Every Odds API key was refused or is out of requests.")
 
 
 def iso(dt):
@@ -406,7 +430,10 @@ def build_email(state, finished, ticket, note, today):
         f"Total staked: {money(s['staked'])}, tax paid: {money(s['tax'])}<br>"
         f"Profit / loss after tax: <b>{money(s['profit'])}</b></p>")
     if credits_left is not None:
-        parts.append(f"<p><small>Odds API requests left this month: {credits_left}</small></p>")
+        total = len(odds_keys())
+        which = f" on key {key_index + 1} of {total}" if total > 1 else ""
+        parts.append(f"<p><small>Odds API requests left this month{which}: {credits_left}"
+                     "</small></p>")
 
     if ticket:
         subject = f"Ticket #{ticket['no']}: odds {ticket['total_odds']:.2f}, stake {ticket['stake']} MKD"
