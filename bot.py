@@ -36,6 +36,7 @@ SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
                "tennis": "Tennis", "handball": "Handball"}
 
 credits_left = None  # filled from the API response headers
+AI_LOG = []  # what happened in each Gemini call, kept for previews
 
 
 # ---------------------------------------------------------------- API ----
@@ -414,6 +415,7 @@ def gemini(prompt, search=False, schema=None):
     url = ("https://generativelanguage.googleapis.com/v1beta/models/"
            f"{CONFIG['gemini_model']}:generateContent")
     for attempt in range(4):
+        started = time.time()
         try:
             req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
                                          headers={"x-goog-api-key": key,
@@ -423,9 +425,15 @@ def gemini(prompt, search=False, schema=None):
             parts = data["candidates"][0]["content"]["parts"]
             text = "".join(p.get("text", "") for p in parts).strip()
             if text:
+                AI_LOG.append(f"{'research' if search else 'decision'}: ok on attempt "
+                              f"{attempt + 1}, {time.time() - started:.0f}s, {len(text)} chars")
                 return text
+            AI_LOG.append(f"attempt {attempt + 1}: empty reply")
         except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
-            print(f"Gemini attempt {attempt + 1} failed: {err}")
+            detail = err.read().decode()[:300] if isinstance(err, urllib.error.HTTPError) else ""
+            AI_LOG.append(f"attempt {attempt + 1} failed after {time.time() - started:.0f}s: "
+                          f"{err} {detail}")
+            print(AI_LOG[-1])
         time.sleep(5 + 10 * attempt)
     return ""
 
@@ -629,9 +637,9 @@ def run(now=None, force=False, resend=False, preview=False):
         subject, html = build_email(state, finished, ticket, note, local)
         if preview:
             subject = "PREVIEW, not counted | " + subject
-            (ROOT / "out").mkdir(exist_ok=True)
-            (ROOT / "out" / "preview.json").write_text(json.dumps(
-                {"ticket": ticket, "note": note, "credits_left": credits_left}, indent=2))
+            (ROOT / "data" / "preview.json").write_text(json.dumps(
+                {"when": iso(now), "ticket": ticket, "note": note, "log": AI_LOG,
+                 "credits_left": credits_left}, indent=2) + "\n")
         send_email(subject, html)
         print(subject)
     if not preview:

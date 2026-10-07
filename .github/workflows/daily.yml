@@ -31,7 +31,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -49,9 +49,6 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: python bot.py ${{ inputs.force && '--force' || '' }} ${{ inputs.resend && '--resend' || '' }} ${{ inputs.preview && '--preview' || '' }}
-      - name: Keep preview output
-        if: ${{ inputs.preview }}
-        run: python -c "print(open('out/preview.json').read())" || true
       - name: Save the ledger
         run: |
           git config user.name "betting-bot"
