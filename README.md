@@ -1,6 +1,6 @@
 # kockajse
 
-Sends one email every morning at about 08:00 Skopje time with:
+Sends one email every morning at about 09:10 Skopje time with:
 
 - the final result of the previous ticket, with 15% tax on winnings applied,
 - the bankroll and the running profit or loss,

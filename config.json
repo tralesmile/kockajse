@@ -9,7 +9,7 @@
   "max_legs": 4,
   "min_bookmakers": 6,
   "region": "eu",
-  "send_hour_local": 8,
+  "send_hour_local": 9,
   "timezone": "Europe/Skopje",
   "last_start_hour_local": 4.5,
   "min_minutes_before_start": 60,
@@ -42,7 +42,7 @@
   ],
   "max_leg_odds": 1.85,
   "gemini_fallback_models": [
-    "gemini-2.5-flash-lite"
+    "gemini-3.5-flash-lite"
   ],
   "min_bookmakers_lines": 4,
   "ai_options": 6,
