@@ -567,7 +567,9 @@ def gemini(prompt, search=False, schema=None):
                                            responseSchema=schema)
     kind = "research" if search else "decision"
     # Preferred model on every key first, then the fallback model on every key.
-    models = [CONFIG["gemini_model"]] + CONFIG.get("gemini_fallback_models", [])
+    # Web search is only free on some models, so search calls and plain calls use
+    # separate model lists and do not eat into each other's daily quota.
+    models = CONFIG["gemini_search_models"] if search else CONFIG["gemini_plain_models"]
     for model, (number, key) in itertools.product(models, enumerate(keys, 1)):
         if (number, model) in MODELS_OUT:
             continue

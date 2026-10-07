@@ -9,7 +9,7 @@
   "max_legs": 4,
   "min_bookmakers": 6,
   "region": "eu",
-  "send_hour_local": 9,
+  "send_hour_local": 8,
   "timezone": "Europe/Skopje",
   "last_start_hour_local": 4.5,
   "min_minutes_before_start": 60,
@@ -33,7 +33,6 @@
     "basketball_euroleague",
     "handball_germany_bundesliga"
   ],
-  "gemini_model": "gemini-3.8-flash",
   "ai_shortlist": 12,
   "skip_keys_containing": [
     "preseason",
@@ -41,9 +40,6 @@
     "friendl"
   ],
   "max_leg_odds": 1.85,
-  "gemini_fallback_models": [
-    "gemini-2.5-flash"
-  ],
   "min_bookmakers_lines": 4,
   "ai_options": 6,
   "markets": {
@@ -51,5 +47,13 @@
     "basketball": "h2h,spreads,totals",
     "tennis": "h2h",
     "handball": "h2h,totals"
-  }
+  },
+  "gemini_search_models": [
+    "gemini-2.5-flash"
+  ],
+  "gemini_plain_models": [
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-2.5-flash"
+  ]
 }
