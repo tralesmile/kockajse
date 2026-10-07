@@ -37,6 +37,7 @@ SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
 
 credits_left = None  # filled from the API response headers
 AI_LOG = []  # what happened in each Gemini call, kept for previews
+MODELS_OUT = set()  # Gemini models that ran out of quota during this run
 
 
 # ---------------------------------------------------------------- API ----
@@ -136,7 +137,7 @@ def candidates_from_event(event):
         if len(plist) < CONFIG["min_bookmakers"]:
             continue
         odds = round(sum(prices[name]) / len(prices[name]), 2)
-        if not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_total_odds"]:
+        if not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
             continue
         out.append({
             "event_id": event["id"],
@@ -413,29 +414,36 @@ def gemini(prompt, search=False, schema=None):
     if schema:
         payload["generationConfig"].update(responseMimeType="application/json",
                                            responseSchema=schema)
-    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
-           f"{CONFIG['gemini_model']}:generateContent")
-    for attempt in range(4):
-        started = time.time()
-        try:
-            req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
-                                         headers={"x-goog-api-key": key,
-                                                  "Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=180) as resp:
-                data = json.loads(resp.read().decode())
-            parts = data["candidates"][0]["content"]["parts"]
-            text = "".join(p.get("text", "") for p in parts).strip()
-            if text:
-                AI_LOG.append(f"{'research' if search else 'decision'}: ok on attempt "
-                              f"{attempt + 1}, {time.time() - started:.0f}s, {len(text)} chars")
-                return text
-            AI_LOG.append(f"attempt {attempt + 1}: empty reply")
-        except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
-            detail = err.read().decode()[:300] if isinstance(err, urllib.error.HTTPError) else ""
-            AI_LOG.append(f"attempt {attempt + 1} failed after {time.time() - started:.0f}s: "
-                          f"{err} {detail}")
-            print(AI_LOG[-1])
-        time.sleep(5 + 10 * attempt)
+    kind = "research" if search else "decision"
+    for model in [CONFIG["gemini_model"]] + CONFIG.get("gemini_fallback_models", []):
+        if model in MODELS_OUT:
+            continue
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        for attempt in range(4):
+            started = time.time()
+            try:
+                req = urllib.request.Request(
+                    url, data=json.dumps(payload).encode(), method="POST",
+                    headers={"x-goog-api-key": key, "Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=180) as resp:
+                    data = json.loads(resp.read().decode())
+                parts = data["candidates"][0]["content"]["parts"]
+                text = "".join(p.get("text", "") for p in parts).strip()
+                if text:
+                    AI_LOG.append(f"{kind} ({model}): ok on attempt {attempt + 1}, "
+                                  f"{time.time() - started:.0f}s, {len(text)} chars")
+                    return text
+                AI_LOG.append(f"{kind} ({model}) attempt {attempt + 1}: empty reply")
+            except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
+                code = getattr(err, "code", None)
+                detail = err.read().decode()[:1500] if code else ""
+                AI_LOG.append(f"{kind} ({model}) attempt {attempt + 1} failed: {err} {detail}")
+                print(AI_LOG[-1])
+                if code == 404 or (code == 429 and ("PerDay" in detail or attempt >= 1)):
+                    # Unknown model, or the quota is used up: waiting will not help.
+                    MODELS_OUT.add(model)
+                    break
+            time.sleep(8 + 12 * attempt)
     return ""
 
 
@@ -504,7 +512,7 @@ def ai_pick(cands, today):
                       search=True)
         found += bool(text)
         notes.append(text or f"ID {i}: NO RESEARCH AVAILABLE. Data quality: NONE.")
-        time.sleep(4)
+        time.sleep(7)
     if not found:
         return None
     research = "\n\n".join(notes)
@@ -617,7 +625,14 @@ def run(now=None, force=False, resend=False, preview=False):
         if result is None:
             picked = build_ticket(cands)
             if picked:
-                picked["picked_by"] = "rules (AI unavailable)"
+                why = ""
+                if not os.environ.get("GEMINI_API_KEY"):
+                    why = "no Gemini key"
+                elif any(" 429" in line for line in AI_LOG):
+                    why = "Gemini quota used up"
+                elif AI_LOG:
+                    why = "Gemini did not answer"
+                picked["picked_by"] = f"rules, AI unavailable ({why})" if why else "rules"
             note = "No combination of games fits the rules today."
         else:
             picked, analysis, note = result
