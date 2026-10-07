@@ -41,6 +41,7 @@ key_index = 0  # which Odds API key is in use
 AI_LOG = []  # what happened in each Gemini call, kept for previews
 SCOUTED = []  # event ids the AI scout chose today, safest first
 SCOUT_NOTE = ""
+SCOUT_EXTRA = ""  # matches the scout found outside the feed, as HTML
 MODELS_OUT = set()  # (key number, model) pairs that stopped working during this run
 
 
@@ -147,7 +148,7 @@ def ai_scout(fixtures, today):
     Returns the chosen event ids, safest first. The AI can only point at fixtures from the
     feed; anything else in its answer is ignored.
     """
-    global SCOUT_NOTE
+    global SCOUT_NOTE, SCOUT_EXTRA
     fixtures = sorted(fixtures, key=lambda e: (e["sport_key"], e["commence_time"]))[:400]
     if not fixtures or not gemini_keys():
         return []
@@ -160,6 +161,13 @@ def ai_scout(fixtures, today):
         today=f"{today:%A %d %B %Y, %H:%M}", fixtures=listing,
         max_leagues=CONFIG["max_odds_requests_per_day"]), search=True)
     tail = text.rsplit("PICKS:", 1)[-1] if "PICKS:" in text else ""
+    extras = [html_lib.escape(line.strip()[1:].strip(" |"))
+              for line in text.splitlines() if re.match(r"\s*X\s*\|", line)][:5]
+    SCOUT_EXTRA = ("<h3>Other matches the AI found</h3><p style='font-size:14px'>"
+                   + "<br>".join(extras) + "</p><p><small>These are not in the odds feed, so "
+                   "they are not on the ticket and not tracked. Nothing here was verified: "
+                   "check the match and the odds at your bookmaker yourself.</small></p>"
+                   ) if extras else ""
     ids, keys = [], []
     for number in re.findall(r"F\s*(\d+)", tail):
         index = int(number)
@@ -180,43 +188,86 @@ def ai_scout(fixtures, today):
 
 
 def candidates_from_event(event):
-    """Turn one event into candidate selections with a fair win probability.
+    """Turn one event into candidate bets with a fair chance for each.
 
-    For each bookmaker the margin is removed by normalising the implied
-    probabilities; the result is averaged across bookmakers.
+    Covers match winner, double chance (derived from the win/draw/win prices), totals and,
+    for basketball, handicaps. For each bookmaker the margin is removed by normalising the
+    implied probabilities; the result is averaged across bookmakers.
     """
-    probs, prices = {}, {}
-    for book in event.get("bookmakers", []):
-        market = next((m for m in book.get("markets", []) if m["key"] == "h2h"), None)
-        if not market:
-            continue
-        outcomes = [o for o in market["outcomes"] if o.get("price", 0) > 1]
-        if len(outcomes) < 2:
-            continue
-        total = sum(1 / o["price"] for o in outcomes)
-        for o in outcomes:
-            probs.setdefault(o["name"], []).append((1 / o["price"]) / total)
-            prices.setdefault(o["name"], []).append(o["price"])
+    sport = sport_of(event["sport_key"])
+    home, away = event["home_team"], event["away_team"]
+    unit = "goals" if sport in ("soccer", "handball") else "points"
+    groups = {}
 
+    def add(market, sel, point, prob, price):
+        g = groups.setdefault((market, sel, point), {"probs": [], "prices": []})
+        g["probs"].append(prob)
+        g["prices"].append(price)
+
+    for book in event.get("bookmakers", []):
+        for market in book.get("markets", []):
+            outs = [o for o in market.get("outcomes", []) if o.get("price", 0) > 1]
+            if len(outs) < 2:
+                continue
+            total = sum(1 / o["price"] for o in outs)
+            fair = {o["name"]: (1 / o["price"]) / total for o in outs}
+            price = {o["name"]: o["price"] for o in outs}
+            if market["key"] == "h2h":
+                for name in fair:
+                    add("h2h", name, None, fair[name], price[name])
+                if len(outs) == 3 and {home, away, "Draw"} <= set(fair):
+                    # Double chance is not in the feed, so its price is worked out from the
+                    # three match prices and cut by 3% to stay on the cautious side.
+                    for sel, (x, y) in {"1X": (home, "Draw"), "X2": (away, "Draw"),
+                                        "12": (home, away)}.items():
+                        add("dc", sel, None, fair[x] + fair[y],
+                            0.97 / (1 / price[x] + 1 / price[y]))
+            elif market["key"] == "totals" and len(outs) == 2 and sport != "tennis":
+                point = outs[0].get("point")
+                if point is None or point != outs[1].get("point"):
+                    continue
+                if sport == "soccer" and point % 1 != 0.5:
+                    continue  # quarter and whole lines are not offered by local bookmakers
+                for o in outs:
+                    add("totals", o["name"], point, fair[o["name"]], o["price"])
+            elif market["key"] == "spreads" and len(outs) == 2 and sport == "basketball":
+                for o in outs:
+                    if o.get("point") is not None:
+                        add("spreads", o["name"], o["point"], fair[o["name"]], o["price"])
+
+    labels = {"1X": f"{home} or draw (double chance)", "X2": f"{away} or draw (double chance)",
+              "12": "No draw: either team wins (double chance)"}
     out = []
-    for name, plist in probs.items():
-        if len(plist) < CONFIG["min_bookmakers"]:
+    for (market, sel, point), g in groups.items():
+        needed = CONFIG["min_bookmakers"] if market in ("h2h", "dc") else CONFIG["min_bookmakers_lines"]
+        if len(g["probs"]) < needed:
             continue
-        odds = round(sum(prices[name]) / len(prices[name]), 2)
+        odds = round(sum(g["prices"]) / len(g["prices"]), 2)
         if not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
             continue
+        if market == "h2h":
+            pick = "Draw" if sel == "Draw" else f"{sel} to win"
+        elif market == "dc":
+            pick = labels[sel]
+        elif market == "totals":
+            pick = f"{sel} {point:g} {unit}"
+        else:
+            pick = f"{sel} {point:+g} (handicap)"
         out.append({
             "event_id": event["id"],
             "sport_key": event["sport_key"],
-            "sport": SPORT_NAMES.get(sport_of(event["sport_key"]), event["sport_key"]),
+            "sport": SPORT_NAMES.get(sport, event["sport_key"]),
             "league": event.get("sport_title", event["sport_key"]),
-            "home": event["home_team"],
-            "away": event["away_team"],
+            "home": home,
+            "away": away,
             "start": event["commence_time"],
-            "pick": name,
+            "market": market,
+            "sel": sel,
+            "point": point,
+            "pick": pick,
             "odds": odds,
-            "prob": sum(plist) / len(plist),
-            "books": len(plist),
+            "prob": sum(g["probs"]) / len(g["probs"]),
+            "books": len(g["probs"]),
             "result": "pending",
         })
     return out
@@ -224,10 +275,13 @@ def candidates_from_event(event):
 
 def build_ticket(cands):
     """Most likely combination whose total odds are inside the allowed range."""
-    cands = sorted(cands, key=lambda c: c["prob"], reverse=True)[:40]
+    ranked = sorted(cands, key=lambda c: c["prob"], reverse=True)
+    # Very short prices alone cannot reach the target, so keep some longer ones in the pool.
+    longer = [c for c in ranked if c["odds"] >= 1.45]
+    pool = ranked[:25] + [c for c in longer[:25] if c not in ranked[:25]]
     best, best_prob = None, 0
     for size in range(1, CONFIG["max_legs"] + 1):
-        for combo in itertools.combinations(cands, size):
+        for combo in itertools.combinations(pool, size):
             if len({c["event_id"] for c in combo}) < size:
                 continue
             odds = 1.0
@@ -260,7 +314,8 @@ def pick_ticket(now):
     keys = keys[:CONFIG["max_odds_requests_per_day"]]
     cands = []
     for key in keys:
-        events = api_get(f"/sports/{key}/odds", regions=CONFIG["region"], markets="h2h",
+        markets = CONFIG["markets"].get(sport_of(key), "h2h")
+        events = api_get(f"/sports/{key}/odds", regions=CONFIG["region"], markets=markets,
                          oddsFormat="decimal", commenceTimeFrom=iso(start),
                          commenceTimeTo=iso(end))
         for event in events:
@@ -284,9 +339,22 @@ def leg_result(leg, score):
         home, away = points[score["home_team"]], points[score["away_team"]]
     except (KeyError, TypeError, ValueError):
         return "pending"
-    winner = score["home_team"] if home > away else score["away_team"] if away > home else "Draw"
     leg["score"] = f"{home:g}:{away:g}"
-    return "won" if leg["pick"] == winner else "lost"
+    market = leg.get("market", "h2h")
+    sel = leg.get("sel") or leg["pick"]
+    outcome = "1" if home > away else "2" if away > home else "X"
+    if market == "dc":
+        return "won" if outcome in sel else "lost"
+    if market == "totals":
+        diff = home + away - leg["point"]
+        if diff == 0:
+            return "void"
+        return "won" if (diff > 0) == (sel == "Over") else "lost"
+    if market == "spreads":
+        margin = (home - away if sel == score["home_team"] else away - home) + leg["point"]
+        return "void" if margin == 0 else "won" if margin > 0 else "lost"
+    winner = {"1": score["home_team"], "2": score["away_team"], "X": "Draw"}[outcome]
+    return "won" if sel == winner else "lost"
 
 
 def settle(state, now):
@@ -410,7 +478,8 @@ def build_email(state, finished, ticket, note, today):
             f"Estimated chance from the odds: {ticket['win_prob']:.0%}.<br>"
             f"Picked by: {ticket.get('picked_by', 'rules')}.</p>"
             "<p><small>Odds are the average of European bookmakers and will differ slightly "
-            "at Megawin. Times are Skopje time.</small></p>")
+            "at Megawin. Double chance odds are estimated from the win/draw/win prices. "
+            "Times are Skopje time.</small></p>")
         if ticket.get("analysis"):
             parts.append("<h3>AI analysis</h3>"
                          f"<div style='font-size:14px'>{ticket['analysis']}</div>"
@@ -551,24 +620,32 @@ DECISION_SCHEMA = {
 
 
 def shortlist(cands):
-    """The most likely outcome of each match, best first, numbered for the AI."""
-    best = {}
+    """Candidate bets for the AI: the best matches, each with its possible bets, numbered."""
+    by_event = {}
     for c in cands:
-        if c["event_id"] not in best or c["prob"] > best[c["event_id"]]["prob"]:
-            best[c["event_id"]] = c
-    ranked = sorted(best.values(), key=lambda c: c["prob"], reverse=True)
+        by_event.setdefault(c["event_id"], []).append(c)
+    events = sorted(by_event.values(), key=lambda opts: max(o["prob"] for o in opts),
+                    reverse=True)
     # Matches the AI scout chose come first; the rest fill any remaining places.
-    top = ([c for c in ranked if c["event_id"] in SCOUTED]
-           + [c for c in ranked if c["event_id"] not in SCOUTED])[:CONFIG["ai_shortlist"]]
-    return {i: c for i, c in enumerate(top, 1)}
+    events = ([e for e in events if e[0]["event_id"] in SCOUTED]
+              + [e for e in events if e[0]["event_id"] not in SCOUTED])[:CONFIG["ai_shortlist"]]
+    short, number = {}, 1
+    for options in events:
+        for c in sorted(options, key=lambda o: o["prob"], reverse=True)[:CONFIG["ai_options"]]:
+            short[number] = c
+            number += 1
+    return short
 
 
 def describe(short):
-    return "\n".join(
-        f"ID {i}: {c['sport']}, {c['league']}: {c['home']} (home) v {c['away']} (away), "
-        f"starts {local_time(c['start'])} Skopje time. Pick: {c['pick']} to win. "
-        f"Odds {c['odds']:.2f}. Market chance {c['prob']:.0%}."
-        for i, c in short.items())
+    lines, last = [], None
+    for i, c in short.items():
+        if c["event_id"] != last:
+            last = c["event_id"]
+            lines.append(f"MATCH: {c['sport']}, {c['league']}: {c['home']} (home) v {c['away']} "
+                         f"(away), starts {local_time(c['start'])} Skopje time.")
+        lines.append(f"  ID {i}: {c['pick']}. Odds {c['odds']:.2f}. Market chance {c['prob']:.0%}.")
+    return "\n".join(lines)
 
 
 def valid_combo(legs):
@@ -593,14 +670,15 @@ def ai_pick(cands, today):
         return None
     listing = describe(short)
     day = f"{today:%A %d %B %Y, %H:%M}"
-    # One search-backed call per candidate: a single call for all of them only covers a few.
+    # One search-backed call per match: a single call for all of them only covers a few.
     template = (ROOT / "prompts" / "research.txt").read_text()
     notes, found = [], 0
-    for i in short:
-        text = gemini(template.format(today=day, candidates=describe({i: short[i]})),
-                      search=True)
+    for event_id in dict.fromkeys(c["event_id"] for c in short.values()):
+        part = {i: c for i, c in short.items() if c["event_id"] == event_id}
+        text = gemini(template.format(today=day, candidates=describe(part)), search=True)
         found += bool(text)
-        notes.append(text or f"ID {i}: NO RESEARCH AVAILABLE. Data quality: NONE.")
+        notes.append(text or f"IDs {', '.join(map(str, part))}: NO RESEARCH AVAILABLE. "
+                             "Data quality: NONE.")
         time.sleep(7)
     if not found:
         return None
@@ -642,6 +720,7 @@ def ai_pick(cands, today):
         for allow_risky in (False, True):
             pool = [i for i, c in short.items()
                     if c["verdict"] == "AGREE" or (allow_risky and c["verdict"] == "RISKY")]
+            pool = sorted(pool, key=lambda i: short[i]["adj"], reverse=True)[:45]
             for size in range(1, CONFIG["max_legs"] + 1):
                 for combo in itertools.combinations(pool, size):
                     score = 1.0
@@ -653,15 +732,19 @@ def ai_pick(cands, today):
                 break
         source = "AI verdicts, ticket built by the rules"
 
-    lines = []
+    lines, last = [], None
     for i, c in short.items():
+        if c["event_id"] != last:
+            last = c["event_id"]
+            lines.append(f"<br><b>{html_lib.escape(c['home'])} v {html_lib.escape(c['away'])}</b> "
+                         f"({html_lib.escape(c['league'])})")
         mark = "<b>ON TICKET</b> " if i in chosen else ""
-        lines.append(f"{mark}<b>{html_lib.escape(c['home'])} v {html_lib.escape(c['away'])}</b>, "
-                     f"{html_lib.escape(c['pick'])} @ {c['odds']:.2f}: <b>{c['verdict']}</b> "
+        lines.append(f"{mark}{html_lib.escape(c['pick'])} @ {c['odds']:.2f}: <b>{c['verdict']}</b> "
                      f"(market {c['prob']:.0%}, AI {c['adj']:.0%}). "
                      f"{html_lib.escape(c['summary'])}")
     reason = html_lib.escape(str(answer.get("ticket_reason", ""))[:600])
-    analysis = (f"<p>{SCOUT_NOTE}</p><p><b>Why this ticket:</b> {reason}</p><p>" + "<br><br>".join(lines) + "</p>")
+    analysis = (f"<p>{SCOUT_NOTE}</p><p><b>Why this ticket:</b> {reason}</p><p>"
+                + "<br>".join(lines) + "</p>" + SCOUT_EXTRA)
 
     if not chosen:
         return None, analysis, "The AI found no ticket that passes its checks today."
@@ -728,7 +811,7 @@ def run(now=None, force=False, resend=False, preview=False):
         if picked:
             ticket = {"no": state["next_ticket_no"], "date": today, "created": iso(now),
                       "stake": stake, **picked}
-            ticket["analysis"] = analysis
+            ticket["analysis"] = analysis or SCOUT_EXTRA
             state["next_ticket_no"] += 1
             state["bankroll"] = round(state["bankroll"] - stake, 2)
             state["open_tickets"].append(ticket)

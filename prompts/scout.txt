@@ -9,8 +9,10 @@ FIXTURES
 
 TASK
 Go through EVERY match on the list, league by league. Use Google Search (league tables, recent
-results, today's betting previews and team news) to find the matches with the clearest, most
-reliable favourite to win. A good choice has most of these:
+results, today's betting previews and team news) to find the matches that offer the most
+reliable bet of any kind: a favourite to win, a favourite to avoid defeat, or a match that is
+dependably high or low scoring. The exact bet is chosen later from real odds; here you only
+choose the matches. A good choice has most of these:
 - a large, proven gap in quality: far apart in the table or ranking, or a top side against a
   struggling one;
 - the favourite is in good recent form and has its key players available;
@@ -31,10 +33,20 @@ LIMITS
   change every season.
 - If fewer than 14 matches deserve it, choose fewer. If none do, say so.
 
+EXTRA MATCHES (optional)
+While searching, you may come across matches from any league or sport that are NOT on the list
+but look like safer bets than the ones on it. List at most 5. They cannot go on the ticket
+automatically, because there are no verified odds for them; the user will check them by hand.
+Include only matches that a search result from today shows are being played in the next 24
+hours, and only if a bookmaker or odds site shows them on offer. If you are not sure a match is
+real and scheduled, leave it out.
+
 OUTPUT (plain text)
-One line per chosen match, safest first:
-F<ID> | <team or player to win> | <one sentence with the concrete reason>
-Then finish with exactly one final line listing the chosen IDs in the same order:
+One line per chosen match from the list, safest first:
+F<ID> | <the bet you expect to be safest> | <one sentence with the concrete reason>
+Then the extra matches, if any, one per line, each starting with "X |":
+X | <match>, <league>, <start time> | <suggested bet> | <reason and where you saw it>
+Then finish with exactly one final line listing the chosen list IDs in the same order:
 PICKS: F12, F3, F40
 If nothing qualifies, the final line is:
 PICKS: NONE

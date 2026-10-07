@@ -33,4 +33,6 @@ Run it by hand from the Actions tab: Daily ticket > Run workflow.
 - `config.json`: stake, odds limits, tax rate, leagues.
 - `data/state.json`: bankroll and open tickets.
 - `data/ledger.csv`: every settled ticket.
+- `prompts/`: the three instructions given to Gemini (scout, research, decide).
 - `tests/simulate.py`: offline test with fake games.
+- `tests/test_markets.py`: checks for bet types, settlement and the AI path.
