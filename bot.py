@@ -89,7 +89,8 @@ def keys_with_games(start, end):
     sports = api_get("/sports")
     active = [s["key"] for s in sports
               if s.get("active") and not s.get("has_outrights")
-              and s["key"].startswith(tuple(CONFIG["sport_prefixes"]))]
+              and s["key"].startswith(tuple(CONFIG["sport_prefixes"]))
+              and not any(word in s["key"] for word in CONFIG["skip_keys_containing"])]
     priority = [k for k in CONFIG["priority_keys"] if k in active]
     ordered = priority + sorted(k for k in active if k not in priority)
 
@@ -495,10 +496,18 @@ def ai_pick(cands, today):
         return None
     listing = describe(short)
     day = f"{today:%A %d %B %Y, %H:%M}"
-    research = gemini((ROOT / "prompts" / "research.txt").read_text().format(
-        today=day, candidates=listing), search=True)
-    if not research:
+    # One search-backed call per candidate: a single call for all of them only covers a few.
+    template = (ROOT / "prompts" / "research.txt").read_text()
+    notes, found = [], 0
+    for i in short:
+        text = gemini(template.format(today=day, candidates=describe({i: short[i]})),
+                      search=True)
+        found += bool(text)
+        notes.append(text or f"ID {i}: NO RESEARCH AVAILABLE. Data quality: NONE.")
+        time.sleep(4)
+    if not found:
         return None
+    research = "\n\n".join(notes)
     raw = gemini((ROOT / "prompts" / "decide.txt").read_text().format(
         today=day, candidates=listing, research=research, max_legs=CONFIG["max_legs"],
         min_odds=CONFIG["min_total_odds"], max_odds=CONFIG["max_total_odds"]),

@@ -1,14 +1,14 @@
 You are a sports betting researcher. Today is {today}, local time in Skopje. Your only job in
 this step is to collect verified, current facts. You do not choose bets here.
 
-Below are the candidate picks. The matches, start times and odds come from a live bookmaker feed
+Below is the candidate pick. The match, start time and odds come from a live bookmaker feed
 and are correct. The "market chance" is what the bookmakers' odds imply after removing their
 margin. Treat it as the best available estimate and as your starting point.
 
-CANDIDATES
+CANDIDATE
 {candidates}
 
-For EVERY candidate, use Google Search and report:
+Use Google Search, with several different searches, and report:
 
 1. MATCH CHECK: confirm the match is really scheduled as listed and name the competition stage
    (league round, playoff game number and series score, cup round, qualifier). If you cannot
@@ -35,5 +35,5 @@ HARD RULES
 - Do not recommend, rank or reject anything in this step.
 
 FORMAT
-Plain text, no markdown tables. One block per candidate, starting with a line "ID <number>: <match>",
-then the six numbered items above. Keep each block under 170 words.
+Plain text, no markdown tables. Start with the line "ID <number>: <match>" using the ID given
+above, then the six numbered items. Stay under 220 words.

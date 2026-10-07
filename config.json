@@ -34,5 +34,10 @@
     "handball_germany_bundesliga"
   ],
   "gemini_model": "gemini-2.5-flash",
-  "ai_shortlist": 10
+  "ai_shortlist": 10,
+  "skip_keys_containing": [
+    "preseason",
+    "summer_league",
+    "friendl"
+  ]
 }
