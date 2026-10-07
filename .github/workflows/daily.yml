@@ -12,6 +12,10 @@ on:
         description: "Run now, even if today's email was already sent"
         type: boolean
         default: false
+      resend:
+        description: "Only resend the email for the open ticket (no new ticket)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -32,6 +36,7 @@ jobs:
       - name: Settle, pick and email
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -39,7 +44,7 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: python bot.py ${{ inputs.force && '--force' || '' }}
+        run: python bot.py ${{ inputs.force && '--force' || '' }} ${{ inputs.resend && '--resend' || '' }}
       - name: Save the ledger
         run: |
           git config user.name "betting-bot"

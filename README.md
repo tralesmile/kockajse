@@ -20,6 +20,7 @@ Add these under Settings > Secrets and variables > Actions > New repository secr
 | `ODDS_API_KEY` | free key from the-odds-api.com |
 | `RESEND_API_KEY` | free key from resend.com (sign up with the address that receives the tips) |
 | `EMAIL_TO` | the address that receives the tips |
+| `GEMINI_API_KEY` | optional: Google Gemini key, adds a written AI check of each pick |
 
 To send through Gmail instead of Resend, set `SMTP_USER` and `SMTP_PASSWORD` (an app password).
 

@@ -10,6 +10,7 @@ Every morning (Skopje time) it:
 Only the Python standard library is used.
 """
 import csv
+import html as html_lib
 import itertools
 import json
 import os
@@ -334,6 +335,11 @@ def build_email(state, finished, ticket, note, today):
             f"Estimated chance from the odds: {ticket['win_prob']:.0%}.</p>"
             "<p><small>Odds are the average of European bookmakers and will differ slightly "
             "at Megawin. Times are Skopje time.</small></p>")
+        if ticket.get("analysis"):
+            parts.append("<h3>AI analysis of the picks</h3>"
+                         f"<p style='font-size:14px'>{ticket['analysis']}</p>"
+                         "<p><small>Written by Gemini from web search. It can be wrong and "
+                         "it does not change the picks.</small></p>")
     else:
         parts.append(f"<h3>No ticket today</h3><p>{note}</p>")
 
@@ -391,20 +397,79 @@ def send_email(subject, html):
         print("No email settings found; wrote out/email.html instead.")
 
 
+# ------------------------------------------------------------ AI notes ----
+def ai_analysis(ticket, today):
+    """Ask Gemini (with Google Search) for a short written check of each pick.
+
+    Commentary only: it never changes the ticket. Returns HTML, or "" when no
+    key is set or the request fails.
+    """
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        return ""
+    lines = "\n".join(
+        f"{i}. {leg['sport']}, {leg['league']}: {leg['home']} v {leg['away']}, "
+        f"starts {local_time(leg['start'])} Skopje time. Pick: {leg['pick']} at odds "
+        f"{leg['odds']:.2f} (bookmakers imply about {leg['prob']:.0%})."
+        for i, leg in enumerate(ticket["legs"], 1))
+    prompt = (
+        f"Today is {today:%A %d %B %Y}. You are a careful sports analyst. Use Google Search "
+        "to check the latest news for each pick on this betting ticket:\n\n"
+        f"{lines}\n\n"
+        "For each pick write, in plain text without markdown or tables:\n"
+        "- Form: recent results of both sides.\n"
+        "- News: injuries, suspensions, rest or lineup news that matters.\n"
+        "- Risk: the main way this pick loses.\n"
+        "- Verdict: one of AGREE, RISKY or AVOID, with one sentence why.\n"
+        "Keep each pick under 90 words. Start each pick with its number and the match. "
+        "Only state facts you found in search results for this season. If you cannot find "
+        "current information about a match, say so plainly instead of guessing. "
+        "Finish with one line starting 'Overall:' about the whole ticket.")
+    body = json.dumps({"contents": [{"parts": [{"text": prompt}]}],
+                       "tools": [{"google_search": {}}]}).encode()
+    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{CONFIG['gemini_model']}:generateContent")
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(url, data=body, method="POST", headers={
+                "x-goog-api-key": key, "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = json.loads(resp.read().decode())
+            parts = data["candidates"][0]["content"]["parts"]
+            text = "".join(p.get("text", "") for p in parts).strip()
+            if text:
+                return html_lib.escape(text).replace("\n", "<br>")
+        except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
+            print(f"AI analysis attempt {attempt + 1} failed: {err}")
+        time.sleep(5 + 10 * attempt)
+    return ""
+
+
 # ---------------------------------------------------------------- main ----
-def run(now=None, force=False):
+def run(now=None, force=False, resend=False):
     now = now or datetime.now(timezone.utc)
     local = now.astimezone(TZ)
     today = local.date().isoformat()
     state = json.loads(STATE_PATH.read_text())
 
-    if not force:
+    if not force and not resend:
         if local.hour < CONFIG["send_hour_local"]:
             print(f"Too early ({local:%H:%M} local); nothing to do.")
             return False
         if state.get("last_run_date") == today:
             print("Already ran today; nothing to do.")
             return False
+
+    if resend:
+        # Send the report again for the newest open ticket without changing anything else.
+        ticket = state["open_tickets"][-1] if state["open_tickets"] else None
+        if ticket:
+            ticket["analysis"] = ai_analysis(ticket, local)
+        subject, html = build_email(state, [], ticket, "No open ticket.", local)
+        send_email(subject, html)
+        print(subject)
+        STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
+        return True
 
     finished = settle(state, now)
     stake = CONFIG["stake"]
@@ -416,6 +481,7 @@ def run(now=None, force=False):
         if picked:
             ticket = {"no": state["next_ticket_no"], "date": today, "created": iso(now),
                       "stake": stake, **picked}
+            ticket["analysis"] = ai_analysis(ticket, local)
             state["next_ticket_no"] += 1
             state["bankroll"] = round(state["bankroll"] - stake, 2)
             state["open_tickets"].append(ticket)
@@ -442,4 +508,4 @@ def run(now=None, force=False):
 
 
 if __name__ == "__main__":
-    run(force="--force" in sys.argv)
+    run(force="--force" in sys.argv, resend="--resend" in sys.argv)
