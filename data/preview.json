@@ -1,9 +1,9 @@
 {
-  "when": "2026-10-07T17:02:50Z",
+  "when": "2026-10-07T17:06:31Z",
   "ticket": {
     "no": 2,
     "date": "2026-10-07",
-    "created": "2026-10-07T17:02:50Z",
+    "created": "2026-10-07T17:06:31Z",
     "stake": 100,
     "legs": [
       {
@@ -20,7 +20,7 @@
         "books": 19,
         "result": "pending",
         "verdict": "AGREE",
-        "summary": "Paris Basketball is favored with no reported injuries and strong recent form, including a EuroLeague win. ASVEL is significantly weakened by Mathis Dossou-Yovo being OUT and TyTy Washington Jr. questionable with an ankle issue, making Paris's home advantage even more pronounced."
+        "summary": "Home team has won all 4 EuroLeague H2H. Paris won last H2H at home. ASVEL has key injuries (Dossou-Yovo out, Washington Jr. questionable)."
       },
       {
         "event_id": "403ddf40d72d5dd09cd109c237884af9",
@@ -36,20 +36,27 @@
         "books": 22,
         "result": "pending",
         "verdict": "RISKY",
-        "summary": "No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky."
+        "summary": "Vitoria has a strong home record and Chapecoense a poor away record. However, Vitoria has extensive injuries and recently surrendered points from winning positions."
       }
     ],
     "total_odds": 2.25,
     "win_prob": 0.3929,
     "picked_by": "AI",
-    "analysis": "<p><b>Why this ticket:</b> The ticket combines an AGREE pick (ID 1) with a RISKY pick (ID 2) as no single AGREE pick met the odds requirement. ID 1 is strongly supported by ASVEL&#x27;s injuries. ID 2 was chosen as the RISKY pick with the highest adjusted chance, maximizing the overall ticket probability.</p><p><b>ON TICKET</b> <b>Paris Basketball v ASVEL Lyon Villeurbanne</b>, Paris Basketball @ 1.48: <b>AGREE</b> (market 64%, AI 70%). Paris Basketball is favored with no reported injuries and strong recent form, including a EuroLeague win. ASVEL is significantly weakened by Mathis Dossou-Yovo being OUT and TyTy Washington Jr. questionable with an ankle issue, making Paris&#x27;s home advantage even more pronounced.<br><br><b>ON TICKET</b> <b>Vitoria v Chapecoense</b>, Vitoria @ 1.52: <b>RISKY</b> (market 61%, AI 61%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Indiana Pacers v Minnesota Timberwolves</b>, Minnesota Timberwolves @ 1.64: <b>RISKY</b> (market 58%, AI 58%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Bragantino-SP v Mirassol</b>, Bragantino-SP @ 1.62: <b>RISKY</b> (market 58%, AI 58%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Chicago Bulls v Phoenix Suns</b>, Phoenix Suns @ 1.72: <b>RISKY</b> (market 55%, AI 55%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Memphis Grizzlies v Orlando Magic</b>, Orlando Magic @ 1.72: <b>RISKY</b> (market 55%, AI 55%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Atlanta Dream v New York Liberty</b>, Atlanta Dream @ 1.76: <b>RISKY</b> (market 54%, AI 54%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Golden State Valkyries v Las Vegas Aces</b>, Golden State Valkyries @ 1.80: <b>RISKY</b> (market 53%, AI 53%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Cruzeiro v Sao Paulo</b>, Cruzeiro @ 1.79: <b>RISKY</b> (market 52%, AI 52%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.<br><br><b>Clube de Regatas Brasil v Atletico Goianiense</b>, Clube de Regatas Brasil @ 1.82: <b>RISKY</b> (market 51%, AI 51%). No research notes were provided for this candidate, making it impossible to assess match details, team form, or player availability. Therefore, the pick is considered risky.</p>"
+    "analysis": "<p><b>Why this ticket:</b> Selected the only AGREE pick and combined it with the RISKY pick that yielded the highest adjusted chance product, while keeping the total odds within the required range. Vitoria&#x27;s extensive injuries are a concern, but Paris&#x27;s home advantage and ASVEL&#x27;s injuries are strong.</p><p><b>ON TICKET</b> <b>Paris Basketball v ASVEL Lyon Villeurbanne</b>, Paris Basketball @ 1.48: <b>AGREE</b> (market 64%, AI 68%). Home team has won all 4 EuroLeague H2H. Paris won last H2H at home. ASVEL has key injuries (Dossou-Yovo out, Washington Jr. questionable).<br><br><b>ON TICKET</b> <b>Vitoria v Chapecoense</b>, Vitoria @ 1.52: <b>RISKY</b> (market 61%, AI 53%). Vitoria has a strong home record and Chapecoense a poor away record. However, Vitoria has extensive injuries and recently surrendered points from winning positions.<br><br><b>Bragantino-SP v Mirassol</b>, Bragantino-SP @ 1.62: <b>AVOID</b> (market 58%, AI 58%). Match unconfirmed for Brazil S\u00e9rie A; Mirassol is in S\u00e9rie B.<br><br><b>Atlanta Dream v New York Liberty</b>, Atlanta Dream @ 1.76: <b>AVOID</b> (market 54%, AI 54%). Match unconfirmed; WNBA season typically concludes earlier than October 8.<br><br><b>Golden State Valkyries v Las Vegas Aces</b>, Golden State Valkyries @ 1.80: <b>RISKY</b> (market 53%, AI 45%). Valkyries lead the series 1-0 at home. However, key Aces players Loyd and Talbot are not on the injury report, suggesting potential return. Aces are highly motivated and experienced.<br><br><b>Cruzeiro v Sao Paulo</b>, Cruzeiro @ 1.79: <b>AVOID</b> (market 52%, AI 52%). Match unconfirmed for Brazil S\u00e9rie A.<br><br><b>Clube de Regatas Brasil v Atletico Goianiense</b>, Clube de Regatas Brasil @ 1.82: <b>AVOID</b> (market 51%, AI 51%). Match unconfirmed for Brazil S\u00e9rie B.<br><br><b>Am\u00e9rica Mineiro v Fortaleza</b>, Fortaleza @ 1.90: <b>AVOID</b> (market 49%, AI 49%). Match unconfirmed for Brazil S\u00e9rie B.<br><br><b>Operario PR v Botafogo-SP</b>, Operario PR @ 1.94: <b>RISKY</b> (market 48%, AI 43%). Data quality is thin with no recent form or H2H. Botafogo-SP is in the relegation zone and highly motivated, posing a risk.<br><br><b>Remo v Gr\u00eamio</b>, Remo @ 2.00: <b>AVOID</b> (market 47%, AI 47%). Match unconfirmed for Brazil S\u00e9rie A; Remo is in S\u00e9rie C.</p>"
   },
   "note": "",
   "log": [
-    "attempt 1 failed after 1s: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-    "attempt 2 failed after 3s: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-    "research: ok on attempt 3, 17s, 5953 chars",
-    "decision: ok on attempt 1, 24s, 3215 chars"
+    "research: ok on attempt 1, 23s, 4686 chars",
+    "research: ok on attempt 1, 180s, 2900 chars",
+    "research: ok on attempt 1, 5s, 716 chars",
+    "research: ok on attempt 1, 6s, 1077 chars",
+    "research: ok on attempt 1, 60s, 2799 chars",
+    "research: ok on attempt 1, 66s, 496 chars",
+    "research: ok on attempt 1, 4s, 1039 chars",
+    "research: ok on attempt 1, 106s, 550 chars",
+    "research: ok on attempt 1, 14s, 1035 chars",
+    "research: ok on attempt 1, 4s, 1032 chars",
+    "decision: ok on attempt 1, 23s, 2289 chars"
   ],
-  "credits_left": 485
+  "credits_left": 481
 }
