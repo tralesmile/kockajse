@@ -1,54 +1,7 @@
 {
-  "bankroll": 300,
-  "next_ticket_no": 2,
-  "open_tickets": [
-    {
-      "no": 1,
-      "date": "2026-10-07",
-      "created": "2026-10-07T19:22:22Z",
-      "stake": 100,
-      "legs": [
-        {
-          "event_id": "6608125b38823d94d6eef41f1717d86c",
-          "sport_key": "basketball_wnba",
-          "sport": "Basketball",
-          "league": "WNBA",
-          "home": "Atlanta Dream",
-          "away": "New York Liberty",
-          "start": "2026-10-07T23:30:00Z",
-          "market": "h2h",
-          "sel": "Atlanta Dream",
-          "point": null,
-          "pick": "Atlanta Dream to win",
-          "odds": 1.76,
-          "prob": 0.5433799849898827,
-          "books": 16,
-          "result": "pending"
-        },
-        {
-          "event_id": "c56131e8d18b9a0d3eb0abb582e18394",
-          "sport_key": "soccer_brazil_serie_b",
-          "sport": "Football",
-          "league": "Brazil S\u00e9rie B",
-          "home": "Clube de Regatas Brasil",
-          "away": "Atletico Goianiense",
-          "start": "2026-10-07T23:30:00Z",
-          "market": "totals",
-          "sel": "Over",
-          "point": 2.5,
-          "pick": "Over 2.5 goals",
-          "odds": 1.73,
-          "prob": 0.5398512814502514,
-          "books": 10,
-          "result": "pending"
-        }
-      ],
-      "total_odds": 3.04,
-      "win_prob": 0.2933,
-      "picked_by": "rules, AI unavailable (Gemini quota used up)",
-      "analysis": ""
-    }
-  ],
+  "bankroll": 400,
+  "next_ticket_no": 1,
+  "open_tickets": [],
   "last_run_date": "2026-10-07",
   "stopped": false
 }
