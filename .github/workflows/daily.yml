@@ -2,11 +2,15 @@ name: Daily ticket
 
 on:
   schedule:
-    # 08:00 Skopje time. Two entries cover summer (UTC+2) and winter (UTC+1); the script
-    # skips the run that is too early or a repeat. Gemini's free daily quota resets at
-    # 00:00 UTC, well before this.
-    - cron: "0 6 * * *"
-    - cron: "0 7 * * *"
+    # Around 08:00 Skopje time. GitHub often runs scheduled jobs late or skips them, so
+    # there are several backup times; the script only acts on the first one after 08:00
+    # local time each day and ignores the rest. Off-the-hour minutes are less congested.
+    - cron: "17 6 * * *"
+    - cron: "47 6 * * *"
+    - cron: "17 7 * * *"
+    - cron: "47 7 * * *"
+    - cron: "23 8 * * *"
+    - cron: "53 9 * * *"
   workflow_dispatch:
     inputs:
       force:
@@ -66,4 +70,5 @@ jobs:
           git config user.email "betting-bot@users.noreply.github.com"
           git add data
           git diff --cached --quiet || git commit -m "Update ledger"
+          git pull --rebase
           git push
