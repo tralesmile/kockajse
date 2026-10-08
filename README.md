@@ -30,7 +30,7 @@ Run it by hand from the Actions tab: Daily ticket > Run workflow.
 
 ## Files
 
-- `config.json`: stake, odds limits, tax rate, leagues.
+- `config.json`: stake (25% of the available bankroll, minimum 50 MKD), odds limits, tax rate, leagues.
 - `data/state.json`: bankroll and open tickets.
 - `data/ledger.csv`: every settled ticket.
 - `prompts/`: the three instructions given to Gemini (scout, research, decide).

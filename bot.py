@@ -324,6 +324,18 @@ def pick_ticket(now):
 
 
 # ------------------------------------------------------------ settling ----
+def stake_for(bankroll):
+    """Stake for the next ticket: a share of the available bankroll.
+
+    Rounded to the nearest 10 MKD, never below the minimum stake and never more than
+    what is available. Returns 0 when the bankroll is below the minimum.
+    """
+    if bankroll < CONFIG["min_stake"]:
+        return 0
+    stake = round(bankroll * CONFIG["stake_percent"] / 100 / 10) * 10
+    return min(max(stake, CONFIG["min_stake"]), int(bankroll))
+
+
 def tax_and_payout(stake, odds):
     """Macedonian rule: 15% of (payout - stake), withheld by the bookmaker."""
     gross = round(stake * odds, 2)
@@ -788,10 +800,10 @@ def run(now=None, force=False, resend=False, preview=False):
 
     # A preview picks and emails a ticket but saves nothing and settles nothing.
     finished = [] if preview else settle(state, now)
-    stake = CONFIG["stake"]
+    stake = stake_for(state["bankroll"])
     ticket, note = None, ""
 
-    if state["bankroll"] >= stake:
+    if stake:
         state["stopped"] = False
         cands = pick_ticket(now)
         result = ai_pick(cands, local)
@@ -822,12 +834,12 @@ def run(now=None, force=False, resend=False, preview=False):
     elif state["open_tickets"]:
         note = "The remaining money is on open tickets. Waiting for their results."
     else:
-        note = ("The bankroll is below the stake, so the run is over. "
+        note = ("The bankroll is below the minimum stake, so the run is over. "
                 "Change the bankroll in data/state.json to start again.")
 
     # When the run is over, send one final email and then stay quiet.
     silent = state.get("stopped") and not finished and not ticket
-    if state["bankroll"] < stake and not state["open_tickets"]:
+    if not stake_for(state["bankroll"]) and not state["open_tickets"]:
         state["stopped"] = True
 
     state["last_run_date"] = today

@@ -1,6 +1,5 @@
 {
   "starting_bankroll": 400,
-  "stake": 100,
   "currency": "MKD",
   "tax_rate": 0.15,
   "max_total_odds": 3.5,
@@ -55,5 +54,7 @@
     "gemini-3.8-flash",
     "gemini-3.6-flash",
     "gemini-2.5-flash"
-  ]
+  ],
+  "stake_percent": 25,
+  "min_stake": 50
 }
