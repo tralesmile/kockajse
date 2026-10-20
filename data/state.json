@@ -1,7 +1,77 @@
 {
-  "bankroll": 141.05,
-  "next_ticket_no": 12,
-  "open_tickets": [],
-  "last_run_date": "2026-10-19",
+  "bankroll": 91.05,
+  "next_ticket_no": 13,
+  "open_tickets": [
+    {
+      "no": 12,
+      "date": "2026-10-20",
+      "created": "2026-10-20T06:05:25Z",
+      "stake": 50,
+      "legs": [
+        {
+          "event_id": "aafba3f0c1c8e5898e7e144a264fec6c",
+          "sport_key": "soccer_england_league1",
+          "sport": "Football",
+          "league": "League 1",
+          "home": "Bromley FC",
+          "away": "Leicester City",
+          "start": "2026-10-20T18:45:00Z",
+          "market": "totals",
+          "sel": "Over",
+          "point": 2.5,
+          "pick": "Over 2.5 goals",
+          "odds": 1.53,
+          "prob": 0.6065425794544025,
+          "books": 6,
+          "result": "pending",
+          "verdict": "AGREE",
+          "summary": "Bromley concedes 2.3 goals per game with a 3.63 match average, while Leicester matches average 3.0 goals."
+        },
+        {
+          "event_id": "b9567e9c3df909f8f6f21425b4b38d3f",
+          "sport_key": "soccer_uefa_champs_league",
+          "sport": "Football",
+          "league": "UEFA Champions League",
+          "home": "Liverpool",
+          "away": "Villarreal",
+          "start": "2026-10-20T19:00:00Z",
+          "market": "h2h",
+          "sel": "Liverpool",
+          "point": null,
+          "pick": "Liverpool to win",
+          "odds": 1.49,
+          "prob": 0.6389735778117995,
+          "books": 22,
+          "result": "pending",
+          "verdict": "AGREE",
+          "summary": "Liverpool is second in the Premier League, won four of five matches, and boasts a clean injury report."
+        },
+        {
+          "event_id": "bc48d00379f8fbc8a9404b831adaed3f",
+          "sport_key": "soccer_mexico_ligamx",
+          "sport": "Football",
+          "league": "Liga MX",
+          "home": "Guadalajara",
+          "away": "Necaxa",
+          "start": "2026-10-21T00:07:00Z",
+          "market": "h2h",
+          "sel": "Guadalajara",
+          "point": null,
+          "pick": "Guadalajara to win",
+          "odds": 1.38,
+          "prob": 0.6699884634792332,
+          "books": 18,
+          "result": "pending",
+          "verdict": "AGREE",
+          "summary": "Guadalajara is fourth with 2.15 home points per game facing winless away side Necaxa missing striker Carranza."
+        }
+      ],
+      "total_odds": 3.15,
+      "win_prob": 0.2597,
+      "picked_by": "AI",
+      "analysis": "<p>The AI went through 56 matches on offer today and chose 9 as the safest candidates.</p><p><b>Why this ticket:</b> Combined odds are exactly 3.15 (1.38 * 1.49 * 1.53), fitting the 3.0 to 3.5 target. All three picks carry AGREE verdicts: Guadalajara dominates poor travellers Necaxa, Liverpool holds strong form at Anfield, and Bromley&#x27;s porous defense strongly supports over 2.5 goals.</p><p><br><b>Guo Hanyu v Ekaterina Alexandrova</b> (WTA Ningbo Open)<br>Ekaterina Alexandrova to win @ 1.22: <b>RISKY</b> (market 77%, AI 74%). Data quality is thin with no current form, availability, or context for either player.<br><br><b>Napoli v Bod\u00f8/Glimt</b> (UEFA Champions League)<br>No draw: either team wins (double chance) @ 1.21: <b>RISKY</b> (market 76%, AI 72%). Napoli has lost both opening Champions League matches and carries attacking injuries, making a draw possible.<br>Over 2.5 goals @ 1.58: <b>RISKY</b> (market 60%, AI 57%). Both clubs scored only one goal each in their first two Champions League matches.<br>Under 3.5 goals @ 1.58: <b>RISKY</b> (market 59%, AI 58%). Napoli conceded four and Bodo/Glimt conceded five in two European matches, leaving totals volatile.<br>Napoli to win @ 1.74: <b>AVOID</b> (market 55%, AI 48%). Napoli has lost both Champions League matches and missing key attackers Alisson Santos and David Neres.<br><br><b>Doncaster Rovers v Stockport County FC</b> (League 1)<br>Stockport County FC or draw (double chance) @ 1.21: <b>AGREE</b> (market 75%, AI 77%). Stockport sits second, has won three consecutive games, and has won four straight against seventeenth-placed Doncaster.<br>No draw: either team wins (double chance) @ 1.21: <b>RISKY</b> (market 75%, AI 71%). Doncaster has drawn three of their last eight league games and Stockport has drawn away.<br>Over 2.5 goals @ 1.66: <b>RISKY</b> (market 56%, AI 52%). Doncaster kept three consecutive clean sheets recently and Stockport&#x27;s most frequent scoreline is 1-0.<br>Doncaster Rovers or draw (double chance) @ 1.80: <b>AVOID</b> (market 50%, AI 42%). Doncaster is winless in their last seven meetings across all competitions against Stockport.<br><br><b>Atl\u00e9tico San Luis v Quer\u00e9taro</b> (Liga MX)<br>No draw: either team wins (double chance) @ 1.23: <b>AVOID</b> (market 73%, AI 70%). Notes contain contradictory standings information for San Luis, listing them as both fifteenth and first.<br>Atl\u00e9tico San Luis or draw (double chance) @ 1.30: <b>AVOID</b> (market 69%, AI 66%). Notes contain contradictory standings, and Queretaro has won four of their last five matches.<br>Quer\u00e9taro or draw (double chance) @ 1.54: <b>AVOID</b> (market 58%, AI 56%). Contradictory standings information in the research notes prevents reliable evaluation.<br>Over 2.5 goals @ 1.73: <b>AVOID</b> (market 54%, AI 52%). Contradictory data on league table, and only 40 percent of Queretaro matches exceeded 2.5 goals.<br><br><b>Guadalajara v Necaxa</b> (Liga MX)<br><b>ON TICKET</b> Guadalajara to win @ 1.38: <b>AGREE</b> (market 67%, AI 68%). Guadalajara is fourth with 2.15 home points per game facing winless away side Necaxa missing striker Carranza.<br>Under 3.5 goals @ 1.67: <b>RISKY</b> (market 56%, AI 54%). Necaxa conceded twelve goals across their last five matches and 70 percent went over 2.5.<br><br><b>Liverpool v Villarreal</b> (UEFA Champions League)<br><b>ON TICKET</b> Liverpool to win @ 1.49: <b>AGREE</b> (market 64%, AI 65%). Liverpool is second in the Premier League, won four of five matches, and boasts a clean injury report.<br>Under 3.5 goals @ 1.72: <b>RISKY</b> (market 55%, AI 54%). Liverpool scored three or more goals in two of their last five matches, threatening the under line.<br><br><b>Bromley FC v Leicester City</b> (League 1)<br><b>ON TICKET</b> Over 2.5 goals @ 1.53: <b>AGREE</b> (market 61%, AI 62%). Bromley concedes 2.3 goals per game with a 3.63 match average, while Leicester matches average 3.0 goals.<br>Under 3.5 goals @ 1.60: <b>RISKY</b> (market 58%, AI 54%). Bromley&#x27;s poor defense has leaked 21 goals in nine matches, elevating high-scoring potential.<br>Leicester City to win @ 1.72: <b>RISKY</b> (market 54%, AI 50%). Leicester sits fourteenth with mixed results and several injuries, facing a motivated host.<br><br><b>Huddersfield Town v Peterborough United</b> (League 1)<br>Huddersfield Town to win @ 1.54: <b>RISKY</b> (market 61%, AI 60%). Huddersfield has won just two of five games and Peterborough recently won 3-1 away at Leicester.<br>Under 3.5 goals @ 1.70: <b>RISKY</b> (market 55%, AI 52%). Recent meetings average 3.2 goals and 67 percent of Huddersfield matches went over 2.5.<br><br><b>IFK Norrkoping v \u00d6rebro SK</b> (Superettan - Sweden)<br>Under 3.5 goals @ 1.58: <b>AVOID</b> (market 59%, AI 55%). Data quality is none with zero scoring statistics provided to assess the total.<br>IFK Norrkoping to win @ 1.65: <b>RISKY</b> (market 57%, AI 53%). Data quality is completely absent with no current form, injuries, or contextual facts available.<br><br><b>VfB Stuttgart v Atl\u00e9tico Madrid</b> (UEFA Champions League)<br>No draw: either team wins (double chance) @ 1.23: <b>RISKY</b> (market 75%, AI 72%). Stuttgart has won both Champions League games, and the lone past meeting between these clubs was a draw.<br>Atl\u00e9tico Madrid or draw (double chance) @ 1.30: <b>AGREE</b> (market 71%, AI 73%). Atletico is on a six-game winning streak facing a Stuttgart squad missing eleven injured or suspended players.<br>Under 3.5 goals @ 1.71: <b>RISKY</b> (market 56%, AI 53%). 78 percent of Atletico league matches went over 2.5, and Stuttgart scored three in both European games.<br>VfB Stuttgart or draw (double chance) @ 1.71: <b>AVOID</b> (market 54%, AI 46%). Stuttgart is suffering from an extreme injury crisis with eleven players sidelined.<br><br><b>Oxford United v Wigan Athletic</b> (League 1)<br>Oxford United or draw (double chance) @ 1.21: <b>AGREE</b> (market 75%, AI 76%). Oxford is tenth and unbeaten in five, facing bottom-placed Wigan who have five defeats in seven away matches.<br>No draw: either team wins (double chance) @ 1.24: <b>AVOID</b> (market 73%, AI 65%). Oxford has drawn each of their last three league fixtures and four of their last five overall.<br>Wigan Athletic or draw (double chance) @ 1.74: <b>RISKY</b> (market 52%, AI 48%). Wigan sits bottom of League One with five defeats in their last seven away games.<br>Over 2.5 goals @ 1.81: <b>RISKY</b> (market 52%, AI 49%). Wigan averages only 0.6 goals scored and 62 percent of their matches stayed under 2.5.<br><br><b>Burton Albion v Bradford City</b> (League 1)<br>Bradford City or draw (double chance) @ 1.22: <b>AGREE</b> (market 74%, AI 75%). League leaders Bradford are unbeaten in six, while Burton has won just once in five home league games.<br>No draw: either team wins (double chance) @ 1.26: <b>RISKY</b> (market 72%, AI 69%). Burton has drawn three of their five home league matches this season.<br>Burton Albion or draw (double chance) @ 1.68: <b>RISKY</b> (market 54%, AI 50%). Bradford sits first in the table and is unbeaten in six matches.<br>Under 2.5 goals @ 1.77: <b>AVOID</b> (market 53%, AI 45%). Eight of Burton Albion&#x27;s last ten League One matches finished with over 2.5 goals.</p>"
+    }
+  ],
+  "last_run_date": "2026-10-20",
   "stopped": false
 }
