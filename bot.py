@@ -1076,9 +1076,45 @@ def diagnose():
     print(json.dumps(report, indent=2))
 
 
+def notify_changes():
+    """Email the newest entry of CHANGES.md (sent when the review task changes the bot)."""
+    path = ROOT / "CHANGES.md"
+    text = path.read_text() if path.exists() else ""
+    entries = re.split(r"(?m)^## ", text)[1:]
+    if not entries:
+        print("CHANGES.md has no entries.")
+        return
+    title, _, body = entries[0].partition("\n")
+    html, in_list = [f"<h2>Bot update: {html_lib.escape(title.strip())}</h2>"], False
+    for line in body.strip().splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("- ", "* ")):
+            if not in_list:
+                html.append("<ul>")
+                in_list = True
+            html.append(f"<li>{html_lib.escape(stripped[2:])}</li>")
+            continue
+        if in_list:
+            html.append("</ul>")
+            in_list = False
+        if stripped.startswith("### "):
+            html.append(f"<h3>{html_lib.escape(stripped[4:])}</h3>")
+        elif stripped:
+            html.append(f"<p>{html_lib.escape(stripped)}</p>")
+    if in_list:
+        html.append("</ul>")
+    html.append("<p><small>Full history: CHANGES.md and data/learning_log.md in the "
+                "repository.</small></p>")
+    send_email(f"Bot update: {title.strip()}", "\n".join(html))
+    print(f"Sent: {title.strip()}")
+
+
 if __name__ == "__main__":
     if "--diagnose" in sys.argv:
         diagnose()
+        sys.exit()
+    if "--notify-changes" in sys.argv:
+        notify_changes()
         sys.exit()
     run(force="--force" in sys.argv, resend="--resend" in sys.argv,
         preview="--preview" in sys.argv)

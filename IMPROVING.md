@@ -1,66 +1,69 @@
 # How the review task improves the bot
 
-A Claude scheduled task reads this file twice a day and follows it. Its job is to learn
-from settled results and make small, evidence-based improvements. Most reviews should
-end with "no change": the sample is small and most short-run patterns are luck.
+A Claude scheduled task follows this file twice a day (10:20 and 21:20 Skopje time). The
+owner wants the best results possible and wants the bot to get better every day, so the
+review is free to change anything that could help: the prompts, the way matches are
+researched and judged, the code, the data sources, the bet types, the selection logic.
+Be open to new ideas and try them. The daily tips email keeps going throughout.
 
-## What to read
+## Each review
 
-- `data/picks.csv`: every bet the AI judged, with the market's chance, the AI's verdict and
-  chance, whether it went on the ticket, and the result once settled.
-- `data/ledger.csv`: every settled ticket (`mode` is `real` or `paper`).
-- `data/research/<date>.json`: that day's research notes and the AI's raw decision.
-- `data/state.json`, `data/last_run.json`: open tickets and the last run's AI call log.
-- `prompts/scout.txt`, `prompts/research.txt`, `prompts/decide.txt`, `prompts/lessons.md`.
-- `data/learning_log.md`: what earlier reviews found and changed.
+1. **Learn from results.** With code, measure the pick log (`data/picks.csv`): win rate
+   against the market's chance by verdict, bet type, sport, league, odds band, number of
+   picks, day of week. For each lost ticket pick, read that day's research
+   (`data/research/<date>.json`) and decide whether the loss was foreseeable.
+2. **Research.** Search the web for better methods and data and bring back what applies.
+   Rotate topics so each review looks at something new; record what you looked at in
+   `data/learning_log.md`. Starting ideas, not limits:
+   - Closing line value: record the odds again shortly before kick-off and measure whether
+     our picks beat the closing price. It is the standard early sign of a real edge and
+     needs far fewer bets than win rate.
+   - Use a sharp bookmaker (for example Pinnacle, if the odds feed carries it) as the fair
+     price, and prefer picks where other bookmakers' prices are above it.
+   - Free data that improves research: confirmed lineups, injury lists, expected goals,
+     team ratings (Elo, ClubElo), schedule congestion, travel, weather for outdoor games.
+   - Better prompts: structured checklists, asking for sources with dates, a second pass
+     that argues against each pick, self-consistency across two runs.
+   - Leagues, sports or bet types where the market is weaker or our scorecard is better;
+     dropping ones that keep losing.
+   - Model choice and quota use (see Limits below).
+3. **Improve.** Implement the most promising change. Bigger changes are welcome when the
+   evidence or research supports them. Keep each change focused enough that its effect can
+   be measured, and note in `prompts/lessons.md` any lesson the AI should apply daily.
+4. **Check.** Add or update tests for new code. Run `python tests/test_markets.py`,
+   `python tests/test_tracking.py` and `python tests/simulate.py`; all must pass. After a
+   change to how picks are chosen, you may start one preview run to see it work live:
+   `gh api -X POST repos/tralesmile/kockajse/actions/workflows/daily.yml/dispatches -f ref=main -F 'inputs[preview]=true'`
+   and read `data/preview.json` when it finishes (about 15 to 25 minutes).
+5. **Record and report.**
+   - Add an entry to `data/learning_log.md`: what you measured (numbers), what you
+     researched, what you concluded, what you changed.
+   - If you changed the bot, add a new entry at the top of `CHANGES.md` (under the intro,
+     as `## <date>: <short title>` followed by 3 to 6 short bullet points in plain
+     language for the owner: what changed, why, and what to expect). Pushing a change to
+     `CHANGES.md` emails it to the owner automatically. If nothing changed, do not touch
+     `CHANGES.md`, so no email is sent.
+   - Commit with a message starting "Review:", `git pull --rebase`, `git push`.
 
-## What to look for
+## Firm rules
 
-1. **Calibration.** For each group (verdict, bet type, sport, league, odds band, on/off
-   ticket): picks, win rate, average market chance, difference in points. The AI adds value
-   only where its AGREE picks beat the market chance.
-2. **Losing picks.** For each lost pick on a ticket, open that day's research notes and ask:
-   was the loss foreseeable from what the research found or should have found (injury,
-   rotation, motivation, weather, a factual error), or was it ordinary bad luck?
-3. **Repeated research failures.** Stale or invented facts, contradicting itself, wrong
-   competition, missing news that was available before kick-off.
-4. **Run problems.** AI fallbacks to rules, quota errors, settlement errors in `last_run.json`.
+These protect the owner's money and the honesty of the results, not the scope of ideas.
 
-## What may be changed
+- **Results are never edited.** Do not change recorded results or history in
+  `data/ledger.csv`, `data/picks.csv`, `data/state.json` or `data/research/`. Code may add
+  new columns or new files, but past rows stay as they were.
+- **Real money is the owner's decision.** Do not turn off `paper_mode` or change
+  `paper_stake`, `stake_percent`, `min_stake` or `tax_rate`. If the evidence says real
+  betting is justified, say so in `CHANGES.md` as a recommendation and leave it to the owner.
+- **The daily run must keep working.** Never push code whose tests fail. Never start the
+  daily workflow without `preview`, and never with `force`.
+- **No secrets in the repository,** no change to who receives the emails, and only free
+  services unless the owner has agreed to pay.
 
-- `prompts/lessons.md`: the main tool. At most 15 lessons, each with the evidence behind it
-  (counts, dates) and the date added. Remove a lesson when later data no longer supports it.
-- Wording in `prompts/scout.txt`, `prompts/research.txt`, `prompts/decide.txt`, to fix a
-  repeated research or reasoning failure. Every `{placeholder}` must stay exactly as it is.
-- These keys in `config.json`, only within these ranges:
-  - `ai_shortlist` 8 to 14, `ai_options` 3 to 8
-  - `min_bookmakers` 4 to 10, `min_bookmakers_lines` 3 to 8
-  - `min_leg_odds` 1.15 to 1.40, `max_leg_odds` 1.60 to 2.20
-  - `priority_keys`, `skip_keys_containing`
-  - `markets`: values may only use `h2h`, `totals`, `spreads`
+## Limits to plan around
 
-## Evidence needed before a change
-
-- A lesson or config change about a group needs at least 20 settled picks in that group and
-  a difference of at least 10 points from the market chance, or a factual research failure
-  seen at least 3 times.
-- Never act on a single day's results.
-- Prefer removing a bad habit over adding a clever rule.
-
-## Never change
-
-- Money and risk settings: `paper_mode`, `paper_stake`, `stake_percent`, `min_stake`,
-  `tax_rate`, `min_total_odds`, `max_total_odds`, `max_legs`, `starting_bankroll`.
-- `data/state.json`, `data/ledger.csv`, `data/picks.csv`, `data/research/`: read only.
-- `.github/`, secrets, API keys, email settings.
-- `bot.py`, except to fix a clear bug (a crash or a wrong settlement), with a test that
-  shows it.
-- Never start the workflow and never place, suggest or size real bets.
-
-## Every review
-
-1. Add an entry to `data/learning_log.md`: date and time, picks analysed, the key numbers,
-   what you concluded, and exactly what you changed (or "no change" and why).
-2. Run `python tests/test_markets.py`, `python tests/test_tracking.py` and
-   `python tests/simulate.py`. If any fails, undo your changes and log that.
-3. Commit with a message starting "Review:", then `git pull --rebase` and `git push`.
+- Gemini: web search works only with `gemini-2.5-flash` on keys 1 and 2, about 20 search
+  requests a day each. A daily run uses about 14. Requests without search work on all four
+  keys with newer models. Quota resets at 02:00 Skopje time.
+- The Odds API: 500 requests a month per key, 4 keys. A daily run uses about 30.
+- GitHub Actions run time is free for this repository; a run may take up to 40 minutes.
