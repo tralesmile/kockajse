@@ -5,7 +5,7 @@
   "max_total_odds": 3.5,
   "min_total_odds": 2.5,
   "min_leg_odds": 1.2,
-  "max_legs": 4,
+  "max_legs": 3,
   "min_bookmakers": 6,
   "region": "eu",
   "send_hour_local": 8,
