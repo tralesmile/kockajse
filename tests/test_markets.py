@@ -10,6 +10,7 @@ os.environ["GEMINI_API_KEY"] = "test"
 import bot  # noqa: E402
 
 bot.time.sleep = lambda *_: None
+CFG_MIN, CFG_MAX = bot.CONFIG["min_total_odds"], bot.CONFIG["max_total_odds"]
 
 
 def book(i, markets):
@@ -61,7 +62,7 @@ even = {c["pick"]: c for c in bot.candidates_from_event(
     soccer_event("s9", "Home FC", "Away FC", (2.3, 3.2, 3.3)))}
 dc = even["Home FC or draw (double chance)"]
 assert 1.2 <= dc["odds"] <= 1.4 and dc["prob"] > 0.7, dc
-assert all(1.2 <= c["odds"] <= 1.85 for c in soccer.values())
+assert all(1.2 <= c["odds"] <= bot.CONFIG["max_leg_odds"] for c in soccer.values())
 nba = {c["pick"]: c for c in bot.candidates_from_event(nba_event())}
 assert {"Celtics to win", "Celtics -6.5 (handicap)", "Over 221.5 points",
         "Under 221.5 points"} <= set(nba), nba.keys()
@@ -109,12 +110,12 @@ now = datetime.datetime.now(bot.TZ)
 bot.gemini = fake({"picks": picks, "ticket": [a, b, c3], "ticket_reason": "r"})
 ticket, analysis, _ = bot.ai_pick(cands, now)
 assert len(research_calls) == 3, len(research_calls)  # one research call per match
-assert ticket["picked_by"] == "AI" and 3.0 <= ticket["total_odds"] <= 3.5, ticket
+assert ticket["picked_by"] == "AI" and CFG_MIN <= ticket["total_odds"] <= CFG_MAX, ticket
 # Two bets on one match must be rejected and rebuilt by the rules.
 bot.gemini = fake({"picks": picks, "ticket": [a, same_match, c3], "ticket_reason": "r"})
 ticket, _, _ = bot.ai_pick(cands, now)
 assert ticket["picked_by"] != "AI" and len({l["event_id"] for l in ticket["legs"]}) == len(ticket["legs"])
-assert 3.0 <= ticket["total_odds"] <= 3.5
+assert CFG_MIN <= ticket["total_odds"] <= CFG_MAX
 
 # --- scout extras -----------------------------------------------------------
 fx = [{"id": "s1", "sport_key": "soccer_epl", "sport_title": "EPL", "home_team": "Home FC",
@@ -124,5 +125,5 @@ bot.gemini = lambda *a, **k: ("F1 | Home FC to win | reason\n"
                               "PICKS: F1")
 assert bot.ai_scout(fx, now) == ["s1"] and "Kiel v Minden" in bot.SCOUT_EXTRA
 rules = bot.build_ticket(cands)
-assert rules and 3.0 <= rules["total_odds"] <= 3.5
+assert rules and CFG_MIN <= rules["total_odds"] <= CFG_MAX
 print("all checks passed;", "AI ticket:", [l["pick"] for l in ticket["legs"]], ticket["total_odds"])

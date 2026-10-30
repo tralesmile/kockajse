@@ -31,6 +31,13 @@ ROOT = Path(__file__).resolve().parent
 CONFIG = json.loads((ROOT / "config.json").read_text())
 STATE_PATH = ROOT / "data" / "state.json"
 LEDGER_PATH = ROOT / "data" / "ledger.csv"
+PICKS_PATH = ROOT / "data" / "picks.csv"
+LESSONS_PATH = ROOT / "prompts" / "lessons.md"
+LEDGER_FIELDS = ["ticket_no", "date", "picks", "total_odds", "stake", "result", "payout", "tax",
+                 "net_profit", "bankroll_after", "mode"]
+PICK_FIELDS = ["date", "ticket_no", "mode", "event_id", "sport_key", "sport", "league", "match",
+               "start", "market", "sel", "point", "pick", "odds", "market_chance", "verdict",
+               "ai_chance", "on_ticket", "result", "score"]
 API = "https://api.the-odds-api.com/v4"
 TZ = ZoneInfo(CONFIG["timezone"])
 SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
@@ -42,6 +49,9 @@ AI_LOG = []  # what happened in each Gemini call, kept for previews
 SCOUTED = []  # event ids the AI scout chose today, safest first
 SCOUT_NOTE = ""
 SCOUT_EXTRA = ""  # matches the scout found outside the feed, as HTML
+RESEARCH = {}  # today's research notes and raw AI decision, saved for the review task
+LAST_SHORT = None  # (shortlist, chosen ids) from the latest AI decision
+SCORES = {}  # final scores fetched during this run, by event id
 MODELS_OUT = set()  # (key number, model) pairs that stopped working during this run
 
 
@@ -158,7 +168,7 @@ def ai_scout(fixtures, today):
         f"(away), {local_time(e['commence_time'])}"
         for i, e in enumerate(fixtures, 1))
     text = gemini((ROOT / "prompts" / "scout.txt").read_text().format(
-        today=f"{today:%A %d %B %Y, %H:%M}", fixtures=listing,
+        today=f"{today:%A %d %B %Y, %H:%M}", fixtures=listing, lessons=lessons(),
         max_leagues=CONFIG["max_odds_requests_per_day"]), search=True)
     tail = text.rsplit("PICKS:", 1)[-1] if "PICKS:" in text else ""
     extras = [html_lib.escape(line.strip()[1:].strip(" |"))
@@ -369,15 +379,24 @@ def leg_result(leg, score):
     return "won" if sel == winner else "lost"
 
 
+def fetch_scores(keys):
+    """Final scores of the last 3 days for these leagues, each league fetched once a run."""
+    for key in sorted(set(keys) - FETCHED_KEYS):
+        FETCHED_KEYS.add(key)
+        for item in api_get(f"/sports/{key}/scores", daysFrom=3):
+            SCORES[item["id"]] = item
+    return SCORES
+
+
+FETCHED_KEYS = set()
+
+
 def settle(state, now):
     """Check every open ticket. Returns the tickets that reached a final result."""
     finished = []
     open_keys = {leg["sport_key"] for t in state["open_tickets"] for leg in t["legs"]
                  if leg["result"] == "pending"}
-    scores = {}
-    for key in sorted(open_keys):
-        for item in api_get(f"/sports/{key}/scores", daysFrom=3):
-            scores[item["id"]] = item
+    scores = fetch_scores(open_keys)
 
     still_open = []
     for ticket in state["open_tickets"]:
@@ -401,27 +420,47 @@ def settle(state, now):
             gross, tax, net = tax_and_payout(ticket["stake"], round(odds, 2))
             ticket.update(result="void" if odds == 1.0 else "won", payout=gross, tax=tax,
                           net_profit=round(net - ticket["stake"], 2))
-            state["bankroll"] = round(state["bankroll"] + net, 2)
-        ticket["bankroll_after"] = state["bankroll"]
+            if not ticket.get("paper"):
+                state["bankroll"] = round(state["bankroll"] + net, 2)
+        if ticket.get("paper"):
+            # Paper tickets never touch the real bankroll; only their running result is kept.
+            state["paper_profit"] = round(state.get("paper_profit", 0) + ticket["net_profit"], 2)
+            ticket["bankroll_after"] = state["paper_profit"]
+        else:
+            ticket["bankroll_after"] = state["bankroll"]
         finished.append(ticket)
         append_ledger(ticket)
     state["open_tickets"] = still_open
     return finished
 
 
+def ledger_rows():
+    """All settled tickets. Rows written before paper mode existed count as real."""
+    if not LEDGER_PATH.exists():
+        return []
+    with LEDGER_PATH.open() as fh:
+        rows = list(csv.DictReader(fh))
+    for row in rows:
+        row["mode"] = row.get("mode") or "real"
+    return rows
+
+
 def append_ledger(ticket):
     picks = " | ".join(f"{l['home']} v {l['away']}: {l['pick']} @{l['odds']} ({l['result']})"
                        for l in ticket["legs"])
-    with LEDGER_PATH.open("a", newline="") as fh:
-        csv.writer(fh).writerow([
-            ticket["no"], ticket["date"], picks, ticket["total_odds"], ticket["stake"],
-            ticket["result"], ticket["payout"], ticket["tax"], ticket["net_profit"],
-            ticket["bankroll_after"]])
+    rows = ledger_rows()
+    rows.append(dict(zip(LEDGER_FIELDS, [
+        ticket["no"], ticket["date"], picks, ticket["total_odds"], ticket["stake"],
+        ticket["result"], ticket["payout"], ticket["tax"], ticket["net_profit"],
+        ticket["bankroll_after"], "paper" if ticket.get("paper") else "real"])))
+    with LEDGER_PATH.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, LEDGER_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
-def ledger_summary():
-    with LEDGER_PATH.open() as fh:
-        rows = list(csv.DictReader(fh))
+def ledger_summary(mode="real"):
+    rows = [r for r in ledger_rows() if r["mode"] == mode]
     won = sum(1 for r in rows if r["result"] == "won")
     lost = sum(1 for r in rows if r["result"] == "lost")
     return {
@@ -430,6 +469,94 @@ def ledger_summary():
         "tax": sum(float(r["tax"]) for r in rows),
         "profit": sum(float(r["net_profit"]) for r in rows),
     }
+
+
+# ------------------------------------------------------------- pick log ----
+def read_picks():
+    if not PICKS_PATH.exists():
+        return []
+    with PICKS_PATH.open() as fh:
+        return list(csv.DictReader(fh))
+
+
+def write_picks(rows):
+    with PICKS_PATH.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, PICK_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def log_picks(ticket_no, mode, today, short, chosen, rules_legs=None):
+    """Record every bet the AI judged today (or the rule-picked legs), for the scorecard."""
+    rows = read_picks()
+    items = [(c, c.get("verdict", ""), c.get("adj"), i in chosen) for i, c in short.items()]
+    if rules_legs:
+        items = [(leg, "RULES", None, True) for leg in rules_legs]
+    for c, verdict, adj, on_ticket in items:
+        rows.append({
+            "date": today, "ticket_no": ticket_no if on_ticket else "", "mode": mode,
+            "event_id": c["event_id"], "sport_key": c["sport_key"], "sport": c["sport"],
+            "league": c["league"], "match": f"{c['home']} v {c['away']}", "start": c["start"],
+            "market": c.get("market", "h2h"), "sel": c.get("sel") or c["pick"],
+            "point": "" if c.get("point") is None else c["point"], "pick": c["pick"],
+            "odds": c["odds"], "market_chance": round(c["prob"], 4), "verdict": verdict,
+            "ai_chance": "" if adj is None else round(adj, 4),
+            "on_ticket": "yes" if on_ticket else "no", "result": "pending", "score": ""})
+    write_picks(rows)
+
+
+def settle_picks(now):
+    """Settle logged picks from final scores, the same way ticket legs are settled."""
+    rows = read_picks()
+    pending = [r for r in rows if r["result"] == "pending"]
+    if not pending:
+        return
+    scores = fetch_scores({r["sport_key"] for r in pending})
+    for row in pending:
+        score = scores.get(row["event_id"])
+        if score:
+            # home and away come from the score itself, as for ticket legs.
+            leg = {"market": row["market"], "sel": row["sel"], "pick": row["pick"],
+                   "point": float(row["point"]) if row["point"] else None}
+            row["result"] = leg_result(leg, score)
+            row["score"] = leg.get("score", "")
+        if row["result"] == "pending" and (now - parse_time(row["start"])).days >= CONFIG["void_after_days"]:
+            row["result"] = "void"
+    write_picks(rows)
+
+
+def scorecard_html():
+    """How the AI's judgements compare with what actually happened."""
+    rows = [r for r in read_picks() if r["result"] in ("won", "lost")]
+    if len(rows) < 10:
+        return (f"<h3>AI scorecard</h3><p>{len(rows)} judged picks settled so far; the "
+                "scorecard starts at 10.</p>")
+
+    def line(label, group):
+        if not group:
+            return ""
+        n = len(group)
+        won = sum(r["result"] == "won" for r in group) / n
+        market = sum(float(r["market_chance"]) for r in group) / n
+        diff = (won - market) * 100
+        colour = "#1a7f37" if diff > 0 else "#b42318"
+        return (f"<tr><td>{label}</td><td>{n}</td><td>{won:.0%}</td><td>{market:.0%}</td>"
+                f"<td style='color:{colour}'>{diff:+.0f}</td></tr>")
+
+    table = ""
+    for verdict in ("AGREE", "RISKY", "AVOID", "RULES"):
+        table += line(f"Verdict {verdict}", [r for r in rows if r["verdict"] == verdict])
+    table += line("On the ticket", [r for r in rows if r["on_ticket"] == "yes"])
+    names = {"h2h": "To win", "dc": "Double chance", "totals": "Over/under", "spreads": "Handicap"}
+    for market, name in names.items():
+        table += line(name, [r for r in rows if r["market"] == market])
+    table += line("All judged picks", rows)
+    return ("<h3>AI scorecard</h3><table border='1' cellpadding='5' cellspacing='0' "
+            "style='border-collapse:collapse;font-size:13px'><tr><th>Group</th><th>Picks</th>"
+            "<th>Won</th><th>Odds said</th><th>Difference (points)</th></tr>" + table +
+            "</table><p><small>The AI adds value only if its AGREE picks win clearly more "
+            "often than the odds said, over 100 or more picks. Small groups are mostly "
+            "luck.</small></p>")
 
 
 # --------------------------------------------------------------- email ----
@@ -480,7 +607,12 @@ def build_email(state, finished, ticket, note, today):
 
     if ticket:
         gross, tax, net = tax_and_payout(ticket["stake"], ticket["total_odds"])
-        parts.append(f"<h3>Today's ticket #{ticket['no']}</h3>")
+        if ticket.get("paper"):
+            parts.append(f"<h3>Today's PAPER ticket #{ticket['no']}: do not place</h3>"
+                         "<p>Paper mode is on: this ticket is tracked with a virtual stake "
+                         "to measure the picks. No real money is involved.</p>")
+        else:
+            parts.append(f"<h3>Today's ticket #{ticket['no']}</h3>")
         parts.append(legs_table(ticket["legs"], False))
         parts.append(
             f"<p>Total odds: <b>{ticket['total_odds']:.2f}</b><br>"
@@ -500,8 +632,8 @@ def build_email(state, finished, ticket, note, today):
     else:
         parts.append(f"<h3>No ticket today</h3><p>{note}</p>")
 
-    s = ledger_summary()
-    reserved = sum(t["stake"] for t in state["open_tickets"])
+    s = ledger_summary("real")
+    reserved = sum(t["stake"] for t in state["open_tickets"] if not t.get("paper"))
     parts.append(
         "<h3>Bankroll</h3>"
         f"<p>Available: <b>{money(state['bankroll'])}</b>"
@@ -510,6 +642,16 @@ def build_email(state, finished, ticket, note, today):
         f"Settled tickets: {s['tickets']} ({s['won']} won, {s['lost']} lost)<br>"
         f"Total staked: {money(s['staked'])}, tax paid: {money(s['tax'])}<br>"
         f"Profit / loss after tax: <b>{money(s['profit'])}</b></p>")
+    paper = ledger_summary("paper")
+    if CONFIG.get("paper_mode") or paper["tickets"]:
+        rate = paper["profit"] / paper["staked"] if paper["staked"] else 0
+        parts.append(
+            "<h3>Paper results</h3>"
+            f"<p>Settled paper tickets: {paper['tickets']} ({paper['won']} won, "
+            f"{paper['lost']} lost), each at a virtual {money(CONFIG['paper_stake'])}<br>"
+            f"Paper profit / loss after tax: <b>{money(paper['profit'])}</b> "
+            f"({rate:+.0%} of the amount staked)</p>")
+    parts.append(scorecard_html())
     if credits_left is not None:
         total = len(odds_keys())
         which = f" on key {key_index + 1} of {total}" if total > 1 else ""
@@ -517,7 +659,7 @@ def build_email(state, finished, ticket, note, today):
                      "</small></p>")
 
     if ticket:
-        subject = f"Ticket #{ticket['no']}: odds {ticket['total_odds']:.2f}, stake {ticket['stake']} MKD"
+        subject = ("PAPER " if ticket.get("paper") else "") + f"Ticket #{ticket['no']}: odds {ticket['total_odds']:.2f}, stake {ticket['stake']} MKD"
     else:
         subject = "No ticket today"
     if finished:
@@ -558,6 +700,12 @@ def send_email(subject, html):
 
 
 # ------------------------------------------------------------------ AI ----
+def lessons():
+    """Lessons from past results, written by the review task, for the AI prompts."""
+    text = LESSONS_PATH.read_text().strip() if LESSONS_PATH.exists() else ""
+    return text or "No lessons recorded yet."
+
+
 def gemini_keys():
     """All configured Gemini keys, in the order they should be tried."""
     names = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY_{n}" for n in range(2, 10)]
@@ -697,10 +845,13 @@ def ai_pick(cands, today):
     if not found:
         return None
     research = "\n\n".join(notes)
+    RESEARCH["notes"] = research
     raw = gemini((ROOT / "prompts" / "decide.txt").read_text().format(
         today=day, candidates=listing, research=research, max_legs=CONFIG["max_legs"],
+        lessons=lessons(),
         min_odds=CONFIG["min_total_odds"], max_odds=CONFIG["max_total_odds"]),
         schema=DECISION_SCHEMA)
+    RESEARCH["decision"] = raw
     try:
         answer = json.loads(raw)
         verdicts = {int(p["id"]): p for p in answer["picks"] if int(p["id"]) in short}
@@ -760,6 +911,8 @@ def ai_pick(cands, today):
     analysis = (f"<p>{SCOUT_NOTE}</p><p><b>Why this ticket:</b> {reason}</p><p>"
                 + "<br>".join(lines) + "</p>" + SCOUT_EXTRA)
 
+    global LAST_SHORT
+    LAST_SHORT = (short, chosen)
     if not chosen:
         return None, analysis, "The AI found no ticket that passes its checks today."
     legs = sorted(({k: v for k, v in short[i].items() if k not in ("adj",)} for i in chosen),
@@ -780,6 +933,8 @@ def run(now=None, force=False, resend=False, preview=False):
     local = now.astimezone(TZ)
     today = local.date().isoformat()
     state = json.loads(STATE_PATH.read_text())
+    SCORES.clear()
+    FETCHED_KEYS.clear()
 
     if not force and not resend and not preview:
         if local.hour < CONFIG["send_hour_local"]:
@@ -800,7 +955,10 @@ def run(now=None, force=False, resend=False, preview=False):
 
     # A preview picks and emails a ticket but saves nothing and settles nothing.
     finished = [] if preview else settle(state, now)
-    stake = stake_for(state["bankroll"])
+    if not preview:
+        settle_picks(now)
+    paper = bool(CONFIG.get("paper_mode"))
+    stake = CONFIG["paper_stake"] if paper else stake_for(state["bankroll"])
     ticket, note = None, ""
 
     if stake:
@@ -826,11 +984,26 @@ def run(now=None, force=False, resend=False, preview=False):
             ticket = {"no": state["next_ticket_no"], "date": today, "created": iso(now),
                       "stake": stake, **picked}
             ticket["analysis"] = analysis or SCOUT_EXTRA
+            if paper:
+                ticket["paper"] = True
             state["next_ticket_no"] += 1
-            state["bankroll"] = round(state["bankroll"] - stake, 2)
+            if not paper:
+                state["bankroll"] = round(state["bankroll"] - stake, 2)
             state["open_tickets"].append(ticket)
         elif analysis:
             note += analysis
+        if not preview:
+            mode = "paper" if paper else "real"
+            number = ticket["no"] if ticket else ""
+            if result is not None and LAST_SHORT:
+                log_picks(number, mode, today, *LAST_SHORT)
+            if RESEARCH or SCOUT_NOTE:
+                folder = STATE_PATH.parent / "research"
+                folder.mkdir(exist_ok=True)
+                (folder / f"{today}.json").write_text(json.dumps(
+                    {"ticket_no": number, "scout": SCOUT_NOTE, **RESEARCH}, indent=2) + "\n")
+            elif ticket:
+                log_picks(number, mode, today, {}, [], rules_legs=ticket["legs"])
     elif state["open_tickets"]:
         note = "The remaining money is on open tickets. Waiting for their results."
     else:
@@ -839,7 +1012,7 @@ def run(now=None, force=False, resend=False, preview=False):
 
     # When the run is over, send one final email and then stay quiet.
     silent = state.get("stopped") and not finished and not ticket
-    if not stake_for(state["bankroll"]) and not state["open_tickets"]:
+    if not paper and not stake_for(state["bankroll"]) and not state["open_tickets"]:
         state["stopped"] = True
 
     state["last_run_date"] = today
@@ -855,7 +1028,7 @@ def run(now=None, force=False, resend=False, preview=False):
     if not preview:
         STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
         # What the AI calls did on this run, for troubleshooting.
-        (ROOT / "data" / "last_run.json").write_text(json.dumps(
+        (STATE_PATH.parent / "last_run.json").write_text(json.dumps(
             {"when": iso(now), "ai_log": [line[:700] for line in AI_LOG],
              "odds_requests_left": credits_left}, indent=2) + "\n")
     return True

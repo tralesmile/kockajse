@@ -4,7 +4,7 @@ Sends one email every morning at about 08:00 Skopje time with:
 
 - the final result of the previous ticket, with 15% tax on winnings applied,
 - the bankroll and the running profit or loss,
-- one new combined ticket (total odds between 3.00 and 3.50) for the next 24 hours.
+- one new combined ticket (total odds between 2.50 and 3.50) for the next 24 hours.
 
 Football, basketball, tennis and handball odds come from The Odds API. Picks are rule-based:
 the bookmaker margin is removed from the odds to estimate each outcome's chance, and the most
@@ -28,11 +28,22 @@ To send through Gmail instead of Resend, set `SMTP_USER` and `SMTP_PASSWORD` (an
 
 Run it by hand from the Actions tab: Daily ticket > Run workflow.
 
+## Paper mode
+
+With `"paper_mode": true` in `config.json`, tickets are tracked with a virtual stake
+(`paper_stake`) and never touch the real bankroll. The email marks them "do not place".
+
 ## Files
 
 - `config.json`: stake (25% of the available bankroll, minimum 50 MKD), odds limits, tax rate, leagues.
 - `data/state.json`: bankroll and open tickets.
 - `data/ledger.csv`: every settled ticket.
-- `prompts/`: the three instructions given to Gemini (scout, research, decide).
+- `prompts/`: the instructions given to Gemini (scout, research, decide) and `lessons.md`,
+  the lessons learned from past results that are added to them.
+- `data/picks.csv`: every bet the AI judged, with its verdict and the result.
+- `data/research/`: each day's research notes and AI decision.
+- `data/learning_log.md`: what each review found and changed.
+- `IMPROVING.md`: the rules the twice-daily review task follows.
+- `tests/test_tracking.py`: checks for paper mode, the pick log and scorecard.
 - `tests/simulate.py`: offline test with fake games.
 - `tests/test_markets.py`: checks for bet types, settlement and the AI path.

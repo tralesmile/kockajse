@@ -9,6 +9,11 @@ of both sides. A handicap such as -4.5 means that side must win by 5 or more.)
 RESEARCH NOTES (collected from web search a moment ago; this is your only evidence)
 {research}
 
+LESSONS FROM PAST RESULTS
+These were learned from this bot's own settled picks. Follow them unless today's evidence
+clearly points the other way, and never let them override the rules below.
+{lessons}
+
 STEP 1. Judge every candidate ID separately. Different bets on the same match can get
 different verdicts: a side missing its striker may be a poor bet to win but a fair one to avoid
 defeat, or point to few goals.

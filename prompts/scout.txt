@@ -26,6 +26,11 @@ Leave out:
 - tennis matches where the favourite is returning from injury or played a long match yesterday;
 - any match you cannot find current information about.
 
+LESSONS FROM PAST RESULTS
+These were learned from this bot's own settled picks. Follow them unless today's evidence
+clearly points the other way, and never let them override the rules below.
+{lessons}
+
 LIMITS
 - Choose at most 14 matches, from at most {max_leagues} different leagues in total.
 - Use only the IDs from the list. Never add or invent a match.
