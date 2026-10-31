@@ -37,7 +37,11 @@ LEDGER_FIELDS = ["ticket_no", "date", "picks", "total_odds", "stake", "result", 
                  "net_profit", "bankroll_after", "mode"]
 PICK_FIELDS = ["date", "ticket_no", "mode", "event_id", "sport_key", "sport", "league", "match",
                "start", "market", "sel", "point", "pick", "odds", "market_chance", "verdict",
-               "ai_chance", "on_ticket", "result", "score"]
+               "ai_chance", "on_ticket", "result", "score", "consensus_chance", "sharp_chance",
+               "sharp_book", "edge"]
+# Bookmakers whose prices are the most accurate (low margin, sharp customers allowed), best
+# first. Their margin-free price is used as the fair chance when they carry the bet.
+SHARP_BOOKS = ["pinnacle", "betfair_ex_eu", "matchbook"]
 API = "https://api.the-odds-api.com/v4"
 TZ = ZoneInfo(CONFIG["timezone"])
 SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
@@ -202,7 +206,10 @@ def candidates_from_event(event):
 
     Covers match winner, double chance (derived from the win/draw/win prices), totals and,
     for basketball, handicaps. For each bookmaker the margin is removed by normalising the
-    implied probabilities; the result is averaged across bookmakers.
+    implied probabilities; the result is averaged across bookmakers ("consensus").
+    When a sharp bookmaker (see SHARP_BOOKS) prices the bet, its margin-free chance is used
+    as "prob" instead, because sharp prices predict results better than the soft average.
+    "edge" is how much the average price pays above that fair chance (prob x odds - 1).
     """
     sport = sport_of(event["sport_key"])
     home, away = event["home_team"], event["away_team"]
@@ -210,11 +217,14 @@ def candidates_from_event(event):
     groups = {}
 
     def add(market, sel, point, prob, price):
-        g = groups.setdefault((market, sel, point), {"probs": [], "prices": []})
+        g = groups.setdefault((market, sel, point), {"probs": [], "prices": [], "sharp": {}})
+        if bkey in SHARP_BOOKS:
+            g["sharp"][bkey] = prob
         g["probs"].append(prob)
         g["prices"].append(price)
 
     for book in event.get("bookmakers", []):
+        bkey = book.get("key", "")
         for market in book.get("markets", []):
             outs = [o for o in market.get("outcomes", []) if o.get("price", 0) > 1]
             if len(outs) < 2:
@@ -255,6 +265,12 @@ def candidates_from_event(event):
         odds = round(sum(g["prices"]) / len(g["prices"]), 2)
         if not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
             continue
+        consensus = sum(g["probs"]) / len(g["probs"])
+        sharp_book = next((b for b in SHARP_BOOKS if b in g["sharp"]), "")
+        sharp = g["sharp"][sharp_book] if sharp_book else None
+        if sharp is not None and abs(sharp - consensus) > 0.10:
+            sharp, sharp_book = None, ""  # far from every other book: likely a stale price
+        prob = sharp if sharp is not None else consensus
         if market == "h2h":
             pick = "Draw" if sel == "Draw" else f"{sel} to win"
         elif market == "dc":
@@ -276,7 +292,11 @@ def candidates_from_event(event):
             "point": point,
             "pick": pick,
             "odds": odds,
-            "prob": sum(g["probs"]) / len(g["probs"]),
+            "prob": prob,
+            "consensus": consensus,
+            "sharp": sharp,
+            "sharp_book": sharp_book,
+            "edge": round(prob * odds - 1, 4),
             "books": len(g["probs"]),
             "result": "pending",
         })
@@ -481,7 +501,7 @@ def read_picks():
 
 def write_picks(rows):
     with PICKS_PATH.open("w", newline="") as fh:
-        writer = csv.DictWriter(fh, PICK_FIELDS)
+        writer = csv.DictWriter(fh, PICK_FIELDS, restval="")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -501,7 +521,11 @@ def log_picks(ticket_no, mode, today, short, chosen, rules_legs=None):
             "point": "" if c.get("point") is None else c["point"], "pick": c["pick"],
             "odds": c["odds"], "market_chance": round(c["prob"], 4), "verdict": verdict,
             "ai_chance": "" if adj is None else round(adj, 4),
-            "on_ticket": "yes" if on_ticket else "no", "result": "pending", "score": ""})
+            "on_ticket": "yes" if on_ticket else "no", "result": "pending", "score": "",
+            "consensus_chance": round(c.get("consensus", c["prob"]), 4),
+            "sharp_chance": "" if c.get("sharp") is None else round(c["sharp"], 4),
+            "sharp_book": c.get("sharp_book", ""),
+            "edge": "" if c.get("edge") is None else round(c["edge"], 4)})
     write_picks(rows)
 
 
@@ -806,7 +830,13 @@ def describe(short):
             last = c["event_id"]
             lines.append(f"MATCH: {c['sport']}, {c['league']}: {c['home']} (home) v {c['away']} "
                          f"(away), starts {local_time(c['start'])} Skopje time.")
-        lines.append(f"  ID {i}: {c['pick']}. Odds {c['odds']:.2f}. Market chance {c['prob']:.0%}.")
+        if c.get("sharp") is not None:
+            price = (f"Price vs sharp fair price: {c['edge']:+.0%} "
+                     f"({'value' if c['edge'] >= 0 else 'below fair'}).")
+        else:
+            price = "No sharp price for this bet."
+        lines.append(f"  ID {i}: {c['pick']}. Odds {c['odds']:.2f}. Market chance {c['prob']:.0%}. "
+                     + price)
     return "\n".join(lines)
 
 

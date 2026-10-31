@@ -3,7 +3,11 @@ sceptical by default: bookmakers are usually right, and a "no bet" day is a good
 
 CANDIDATES (the only bets you may use, grouped by match; odds and market chance come from a
 live feed. Double chance wins on either of two results. Over/Under is the total goals or points
-of both sides. A handicap such as -4.5 means that side must win by 5 or more.)
+of both sides. A handicap such as -4.5 means that side must win by 5 or more.
+The market chance comes from a sharp bookmaker's margin-free price when one is available; it is
+the most accurate estimate there is. "Price vs sharp fair price" shows how much the offered odds
+pay above (+, value) or below (-) that fair chance. Long-run profit comes only from bets with
+value, so it matters as much as the chance itself.)
 {candidates}
 
 RESEARCH NOTES (collected from web search a moment ago; this is your only evidence)
@@ -41,6 +45,9 @@ STEP 2. Build the ticket.
 - Among valid tickets, choose the safest: the one with the highest product of adjusted chances.
   Prefer picks with GOOD data and clear favourites over picks you know little about. A double
   chance or totals bet is only safer than a win bet if its adjusted chance is higher.
+- Value: between tickets of similar safety (within about 3 points of combined chance), choose
+  the one whose picks pay more versus the sharp fair price. Do not use a pick whose price is more
+  than 6% below the sharp fair price unless no valid ticket exists without it.
 - If no ticket meets all the rules, return an empty ticket and explain why. Do not bend a rule to
   produce a ticket.
 

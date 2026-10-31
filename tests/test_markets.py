@@ -67,6 +67,37 @@ nba = {c["pick"]: c for c in bot.candidates_from_event(nba_event())}
 assert {"Celtics to win", "Celtics -6.5 (handicap)", "Over 221.5 points",
         "Under 221.5 points"} <= set(nba), nba.keys()
 
+# --- sharp fair price --------------------------------------------------------
+# Without a sharp bookmaker the chance is the soft average.
+assert soccer["Home FC to win"]["sharp"] is None
+assert soccer["Home FC to win"]["prob"] == soccer["Home FC to win"]["consensus"]
+ev = soccer_event("s5", "Home FC", "Away FC", (1.80, 4.5, 3.6))
+pin = {"key": "pinnacle", "markets": [
+    {"key": "h2h", "outcomes": [{"name": "Home FC", "price": 1.70},
+                                {"name": "Away FC", "price": 5.2},
+                                {"name": "Draw", "price": 3.9}]}]}
+ev["bookmakers"].append(pin)
+sh = {c["pick"]: c for c in bot.candidates_from_event(ev)}
+win = sh["Home FC to win"]
+fair = (1 / 1.70) / (1 / 1.70 + 1 / 5.2 + 1 / 3.9)
+assert win["sharp_book"] == "pinnacle" and abs(win["prob"] - fair) < 1e-9, win
+assert win["prob"] > win["consensus"] and win["edge"] > 0, win  # soft books pay too much
+assert abs(win["edge"] - (win["prob"] * win["odds"] - 1)) < 1e-3
+# The double chance gets its fair chance from the sharp match prices too.
+assert sh["Away FC or draw (double chance)"]["sharp_book"] == "pinnacle"
+# Totals Pinnacle does not price keep the soft average.
+assert sh["Over 2.5 goals"]["sharp"] is None
+# A sharp price far from every other book is treated as stale and ignored.
+ev2 = soccer_event("s6", "Home FC", "Away FC", (1.80, 4.5, 3.6))
+ev2["bookmakers"].append({"key": "pinnacle", "markets": [
+    {"key": "h2h", "outcomes": [{"name": "Home FC", "price": 1.25},
+                                {"name": "Away FC", "price": 12.0},
+                                {"name": "Draw", "price": 6.5}]}]})
+stale = {c["pick"]: c for c in bot.candidates_from_event(ev2)}["Home FC to win"]
+assert stale["sharp"] is None and stale["prob"] == stale["consensus"], stale
+assert "Price vs sharp fair price: +" in bot.describe({1: win})
+assert "No sharp price" in bot.describe({1: soccer["Home FC to win"]})
+
 # --- settlement -------------------------------------------------------------
 def result(cand, hs, as_):
     return bot.leg_result(dict(cand), score(cand["home"], cand["away"], hs, as_))
