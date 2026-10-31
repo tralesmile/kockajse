@@ -13,7 +13,7 @@ Each review adds an entry here: what was analysed, what was found, and what chan
   `data/picks.csv` with the AI's verdict, and the research saved to `data/research/`.
 - Reviews from here on follow `IMPROVING.md`.
 
-## 2026-10-31 (evening review): sharp fair price
+## 2026-10-31 (morning review): sharp fair price
 
 Measured (22 settled tickets in the ledger, legs parsed from the ticket text; `picks.csv` has
 no settled rows yet):
