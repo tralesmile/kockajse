@@ -58,5 +58,7 @@
   "stake_percent": 25,
   "min_stake": 50,
   "paper_mode": true,
-  "paper_stake": 100
+  "paper_stake": 100,
+  "closing_window_minutes": 45,
+  "max_closing_credits_per_day": 16
 }

@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-10-31: checking prices again just before kick-off
+
+- A new small job checks the odds of every judged bet again in the last 45 minutes before it starts (the "closing price").
+- It records whether the price we were offered was better than the final sharp price, and whether the market moved towards our pick.
+- Why: beating the closing price is the standard early sign of a real edge. It needs about 50 to 100 bets to judge, while win rate needs hundreds.
+- The daily email gets a "Closing line" table once the first prices are recorded. Tickets are picked exactly as before.
+- It uses at most 16 Odds API credits a day, well inside the monthly quota.
+
 ## 2026-10-31: chances now come from the sharpest bookmaker
 
 - Each bet's chance is now taken from Pinnacle (or Betfair Exchange) when they price it, instead of the average of ordinary bookmakers. Their prices are known to predict results best.

@@ -32,6 +32,12 @@ CONFIG = json.loads((ROOT / "config.json").read_text())
 STATE_PATH = ROOT / "data" / "state.json"
 LEDGER_PATH = ROOT / "data" / "ledger.csv"
 PICKS_PATH = ROOT / "data" / "picks.csv"
+CLOSING_PATH = ROOT / "data" / "closing.csv"
+CLOSING_BUDGET_PATH = ROOT / "data" / "closing_budget.json"
+CLOSING_FIELDS = ["date", "event_id", "sport_key", "match", "market", "sel", "point", "pick",
+                  "start", "on_ticket", "captured", "minutes_before", "open_odds",
+                  "open_consensus", "open_sharp", "close_odds", "close_consensus",
+                  "close_sharp", "close_book", "clv", "move"]
 LESSONS_PATH = ROOT / "prompts" / "lessons.md"
 LEDGER_FIELDS = ["ticket_no", "date", "picks", "total_odds", "stake", "result", "payout", "tax",
                  "net_profit", "bankroll_after", "mode"]
@@ -201,7 +207,7 @@ def ai_scout(fixtures, today):
     return ids
 
 
-def candidates_from_event(event):
+def candidates_from_event(event, strict=True):
     """Turn one event into candidate bets with a fair chance for each.
 
     Covers match winner, double chance (derived from the win/draw/win prices), totals and,
@@ -210,6 +216,8 @@ def candidates_from_event(event):
     When a sharp bookmaker (see SHARP_BOOKS) prices the bet, its margin-free chance is used
     as "prob" instead, because sharp prices predict results better than the soft average.
     "edge" is how much the average price pays above that fair chance (prob x odds - 1).
+    With strict=False the bookmaker-count and odds-range filters are skipped (used to read
+    closing prices, where only matching an earlier bet matters).
     """
     sport = sport_of(event["sport_key"])
     home, away = event["home_team"], event["away_team"]
@@ -260,10 +268,10 @@ def candidates_from_event(event):
     out = []
     for (market, sel, point), g in groups.items():
         needed = CONFIG["min_bookmakers"] if market in ("h2h", "dc") else CONFIG["min_bookmakers_lines"]
-        if len(g["probs"]) < needed:
+        if strict and len(g["probs"]) < needed:
             continue
         odds = round(sum(g["prices"]) / len(g["prices"]), 2)
-        if not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
+        if strict and not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
             continue
         consensus = sum(g["probs"]) / len(g["probs"])
         sharp_book = next((b for b in SHARP_BOOKS if b in g["sharp"]), "")
@@ -583,6 +591,133 @@ def scorecard_html():
             "luck.</small></p>")
 
 
+# -------------------------------------------------------- closing line ----
+def bet_key(event_id, market, sel, point):
+    point = "" if point in (None, "") else f"{float(point):g}"
+    return (event_id, market, sel, point)
+
+
+def read_closing():
+    if not CLOSING_PATH.exists():
+        return []
+    with CLOSING_PATH.open() as fh:
+        return list(csv.DictReader(fh))
+
+
+def closing_row(pick, cand, now):
+    """One closing-line record: the logged bet next to the prices shortly before the start.
+
+    clv: what the price we logged pays against the closing fair chance (sharp if priced,
+    else consensus), as a share; above 0 means we got a better price than the close.
+    move: how much the fair chance of our side rose between the pick and the close,
+    sharp to sharp when both exist, otherwise consensus to consensus.
+    """
+    minutes = round((parse_time(pick["start"]) - now).total_seconds() / 60)
+    row = {"date": pick["date"], "event_id": pick["event_id"], "sport_key": pick["sport_key"],
+           "match": pick["match"], "market": pick["market"], "sel": pick["sel"],
+           "point": pick["point"], "pick": pick["pick"], "start": pick["start"],
+           "on_ticket": pick["on_ticket"], "captured": iso(now), "minutes_before": minutes,
+           "open_odds": pick["odds"],
+           "open_consensus": pick.get("consensus_chance") or pick["market_chance"],
+           "open_sharp": pick.get("sharp_chance", "")}
+    if cand is None:
+        return row  # the line moved away (or the bet left the feed): nothing to compare
+    close = cand["sharp"] if cand["sharp"] is not None else cand["consensus"]
+    row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
+               close_sharp="" if cand["sharp"] is None else round(cand["sharp"], 4),
+               close_book=cand["sharp_book"],
+               clv=round(float(pick["odds"]) * close - 1, 4))
+    if row["open_sharp"] and cand["sharp"] is not None:
+        row["move"] = round(cand["sharp"] - float(row["open_sharp"]), 4)
+    else:
+        row["move"] = round(cand["consensus"] - float(row["open_consensus"]), 4)
+    return row
+
+
+def capture_closing(now=None):
+    """Record the prices of logged picks shortly before they start (closing line value).
+
+    Run every 30 minutes by .github/workflows/closing.yml. Picks starting within
+    closing_window_minutes are fetched once, one request per league, ticket legs first,
+    within a daily credit budget. Makes no request when nothing is about to start.
+    """
+    now = now or datetime.now(timezone.utc)
+    window = timedelta(minutes=CONFIG.get("closing_window_minutes", 45))
+    done = {bet_key(r["event_id"], r["market"], r["sel"], r["point"]) for r in read_closing()}
+    due = [r for r in read_picks() if r["result"] == "pending"
+           and now < parse_time(r["start"]) <= now + window
+           and bet_key(r["event_id"], r["market"], r["sel"], r["point"]) not in done]
+    if not due:
+        print("No logged pick starts soon; nothing to capture.")
+        return 0
+    today = now.date().isoformat()
+    budget = {}
+    if CLOSING_BUDGET_PATH.exists():
+        budget = json.loads(CLOSING_BUDGET_PATH.read_text())
+    used = budget.get(today, 0)
+    limit = CONFIG.get("max_closing_credits_per_day", 16)
+    leagues = {}
+    for r in due:
+        leagues.setdefault(r["sport_key"], []).append(r)
+    order = sorted(leagues, key=lambda k: (not any(r["on_ticket"] == "yes" for r in leagues[k]),
+                                           min(r["start"] for r in leagues[k])))
+    rows = read_closing()
+    added = 0
+    for key in order:
+        picks = leagues[key]
+        markets = sorted({"h2h" if r["market"] == "dc" else r["market"] for r in picks})
+        if used + len(markets) > limit:
+            print(f"Closing budget reached ({used}/{limit}); skipping {key}.")
+            continue
+        ids = sorted({r["event_id"] for r in picks})
+        events = api_get(f"/sports/{key}/odds", regions=CONFIG["region"],
+                         markets=",".join(markets), oddsFormat="decimal",
+                         eventIds=",".join(ids), commenceTimeFrom=iso(now))
+        used += len(markets)
+        cands = {}
+        for event in events or []:
+            for c in candidates_from_event(event, strict=False):
+                cands[bet_key(c["event_id"], c["market"], c["sel"], c["point"])] = c
+        for r in picks:
+            rows.append(closing_row(r, cands.get(bet_key(r["event_id"], r["market"], r["sel"],
+                                                         r["point"])), now))
+            added += 1
+    budget = {today: used}  # only today's count is needed
+    CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
+    with CLOSING_PATH.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, CLOSING_FIELDS, restval="")
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"Captured closing prices for {added} picks ({used}/{limit} credits today).")
+    return added
+
+
+def clv_html():
+    """Closing line value summary for the email: the earliest sign of a real edge."""
+    rows = [r for r in read_closing() if r.get("clv")]
+    if not rows:
+        return ""
+
+    def line(label, group):
+        if not group:
+            return ""
+        n = len(group)
+        clv = sum(float(r["clv"]) for r in group) / n
+        move = sum(float(r["move"]) for r in group) / n
+        beat = sum(float(r["move"]) > 0 for r in group) / n
+        return (f"<tr><td>{label}</td><td>{n}</td><td>{clv:+.1%}</td><td>{move * 100:+.1f}</td>"
+                f"<td>{beat:.0%}</td></tr>")
+
+    table = line("On the ticket", [r for r in rows if r["on_ticket"] == "yes"])
+    table += line("All logged picks", rows)
+    return ("<h3>Closing line</h3><table border='1' cellpadding='5' cellspacing='0' "
+            "style='border-collapse:collapse;font-size:13px'><tr><th>Group</th><th>Picks</th>"
+            "<th>Price vs close</th><th>Chance moved (points)</th><th>Moved our way</th></tr>"
+            + table + "</table><p><small>Prices are checked again shortly before each start. "
+            "Picks whose chance keeps rising before kick-off show a real edge long before "
+            "win rates can.</small></p>")
+
+
 # --------------------------------------------------------------- email ----
 def money(value):
     return f"{value:,.2f} {CONFIG['currency']}"
@@ -676,6 +811,7 @@ def build_email(state, finished, ticket, note, today):
             f"Paper profit / loss after tax: <b>{money(paper['profit'])}</b> "
             f"({rate:+.0%} of the amount staked)</p>")
     parts.append(scorecard_html())
+    parts.append(clv_html())
     if credits_left is not None:
         total = len(odds_keys())
         which = f" on key {key_index + 1} of {total}" if total > 1 else ""
@@ -1142,6 +1278,9 @@ def notify_changes():
 if __name__ == "__main__":
     if "--diagnose" in sys.argv:
         diagnose()
+        sys.exit()
+    if "--closing" in sys.argv:
+        capture_closing()
         sys.exit()
     if "--notify-changes" in sys.argv:
         notify_changes()

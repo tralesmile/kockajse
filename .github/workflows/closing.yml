@@ -1,0 +1,43 @@
+name: Closing prices
+
+# Every 30 minutes through the betting day, record the prices of logged picks that start
+# within the next 45 minutes (closing line value). Runs that find nothing about to start
+# make no Odds API request and commit nothing.
+on:
+  schedule:
+    - cron: "11,41 10-23 * * *"
+    - cron: "11,41 0-3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: closing-prices
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Capture closing prices
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ODDS_API_KEY_2: ${{ secrets.ODDS_API_KEY_2 }}
+          ODDS_API_KEY_3: ${{ secrets.ODDS_API_KEY_3 }}
+          ODDS_API_KEY_4: ${{ secrets.ODDS_API_KEY_4 }}
+        run: python bot.py --closing
+      - name: Save closing prices
+        run: |
+          git config user.name "betting-bot"
+          git config user.email "betting-bot@users.noreply.github.com"
+          git add data/closing.csv data/closing_budget.json 2>/dev/null || true
+          git diff --cached --quiet && exit 0
+          git commit -m "Update closing prices"
+          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 10; done
+          exit 1

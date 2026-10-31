@@ -49,3 +49,34 @@ Leicester v Stevenage Over 2.5 @1.64, both with a sharp price from Matchbook, ed
 margin), so the "more than 6% below fair" rule is close to the normal range: next review should
 check the edge spread across all candidates in `picks.csv` and loosen or tighten it. Gemini key
 1 hit its 20 search requests in the preview, as expected after the daily run.
+
+## 2026-10-31 (evening review): closing line value
+
+Measured: nothing new is settled. `picks.csv` has 33 judged picks from today, all pending, and
+all logged before the sharp-price change, so they have no sharp_chance or edge yet; the
+edge-spread check asked for by the morning review must wait for tomorrow's rows. Ticket 23
+(Man City to win @1.67 + Hornets v 76ers Under 215.5 @1.88) is still open. No lost ticket
+has saved research yet, so there was no loss review. Odds API key 1 had 181 credits left
+after the preview.
+
+Researched: closing line value (CLV). The standard test is whether the price taken beats the
+margin-free sharp closing price (Pinnacle as benchmark); it separates skill from luck in
+roughly 50 to 100 bets, where win rate needs many hundreds. The Odds API charges markets x
+regions per request and accepts an eventIds filter, so one request per league covers every
+due pick in it.
+
+Changed: new workflow `closing.yml` runs every 30 minutes (10:11 to 03:41 UTC). It looks at
+pending picks in `picks.csv` that start within 45 minutes and, only then, fetches their
+league's odds once (ticket legs first, at most 16 credits a day) and writes
+`data/closing.csv`: closing average odds, consensus and sharp chance, `clv` (logged odds x
+closing fair chance − 1) and `move` (fair chance at close − at pick, sharp to sharp when
+both exist). A totals or handicap line that moved away is recorded with blank closing
+fields. The daily email gains a "Closing line" table. Tonight's Hornets v 76ers and Bucks v
+Cavaliers picks should be the first captures.
+
+To measure next: average `move` and share of picks moved our way, for AGREE vs AVOID and for
+ticket legs, once about 40 captures exist (a positive move on AGREE picks is the first real
+sign the AI research adds value); how often lines are missing at the close; whether 45
+minutes is close enough or GitHub delays cause misses (check minutes_before). Then the
+edge spread. Next research topic idea: free injury/lineup sources or a second-pass prompt
+that argues against each pick.
