@@ -42,3 +42,10 @@ against edge < 0; whether sharp_chance is better calibrated than consensus_chanc
 score) once about 100 picks are settled. Next topic idea: closing line value (record the
 Pinnacle price again near kick-off with a small extra workflow; about 5 Odds API requests a
 day fits the quota).
+
+Preview run (same morning): worked end to end. Ticket Levante v Atlético Under 3.5 @1.61 +
+Leicester v Stevenage Over 2.5 @1.64, both with a sharp price from Matchbook, edge −5.2% and
+−5.5%. Because "odds" is the average soft price, a typical edge sits near −5% (the soft
+margin), so the "more than 6% below fair" rule is close to the normal range: next review should
+check the edge spread across all candidates in `picks.csv` and loosen or tighten it. Gemini key
+1 hit its 20 search requests in the preview, as expected after the daily run.
