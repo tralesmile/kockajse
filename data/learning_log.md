@@ -119,3 +119,43 @@ win_prob; AGREE vs RISKY win rate against market once about 100 picks are settle
 keeps matching AGREE, verdicts may only be useful as an AVOID filter); first CLV `move` values
 for ticket legs. Next research topic idea: a second-pass critic prompt, or free injury/lineup
 feeds for late news after the morning research.
+
+## 2026-11-01 (evening review): shadow tickets and value bets at the best price
+
+Measured: nothing new settled since the morning (33 settled picks, ticket 24 still open, its
+legs play tonight). On the 35 bets judged today every one was below fair at the average
+price: mean edge −5.8%, best −0.4%; 30 of 35 had a sharp price. A two-leg ticket therefore
+starts near −11% expected return, and the 15% tax on winnings takes roughly another 5 to 8
+points. Closing line: 7 captures so far, mean price vs close −4.5% (that is the soft margin
+again), chance moved our way on 4 of 7, mean move about 0. No lost ticket today to review.
+
+Ideas considered (scored in IDEAS.md): shadow tickets; value betting at the best price in the
+feed; Megawin odds; singles vs accumulators; steam following after sharp moves; prediction
+markets as a second sharp price; Poisson/xG totals model; wider odds for value bets; dropping
+double chance; self-consistency and critic prompts; late news; Elo ratings.
+
+Researched: Kaunitz, Zhong and Kreiner, "Beating the bookies with their own numbers" (arXiv
+1710.02824): bet when the best price across bookmakers beats the consensus fair chance by a
+margin; 56,435 historical bets returned +3.5% at closing odds and +9.9% on earlier odds; 672
+paper and real bets returned +6.2% before the bookmakers limited the accounts. OddsPapi's
+practitioner write-up uses Pinnacle de-vigged (proportional) as fair, EV = price x fair − 1,
+a 1% threshold, and treats prices 5%+ above consensus as suspect. The Odds API eu region has
+27 books (onexbet, marathonbet, betsson, unibet, williamhill, pinnacle, betfair_ex_eu,
+matchbook, ...). Karl Whelan and others on parlays: each leg compounds the margin.
+
+Concluded: the AI and the ticket rules choose among bets that are all priced below fair, so
+no selection rule can make the current ticket profitable; the only measurable route to an
+edge is a price above fair. We had never looked at the best price, only the average.
+
+Changed: each candidate now carries the best non-exchange price in the feed (outliers more
+than 10% above the average ignored), its bookmaker and its value against the sharp fair
+chance; `picks.csv` gains best_odds, best_book, best_edge. New `data/shadow.csv` logs and
+settles each day: actual, market, ai_own, edge_first, value_ticket and up to 10
+value_single bets, all at the virtual paper stake and taxed like real tickets. Shadows only
+use leagues on the AI's shortlist, so settling them costs no extra Odds API credits. The
+email gains a strategy comparison table. The real ticket is chosen exactly as before.
+
+To measure next: how many value singles appear per day and from which bookmakers (if almost
+none, raise the odds cap or add a wider value candidate list); their ROI and their CLV once
+~100 are settled (CLV capture does not yet cover shadows; adding it is a cheap next step);
+ai_own vs actual (does the code override help?); edge_first vs actual.

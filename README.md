@@ -42,8 +42,11 @@ With `"paper_mode": true` in `config.json`, tickets are tracked with a virtual s
   the lessons learned from past results that are added to them.
 - `data/picks.csv`: every bet the AI judged, with its verdict and the result.
 - `data/research/`: each day's research notes and AI decision.
+- `data/shadow.csv`: shadow tickets, the bets other strategies would have made each day, settled
+  like paper tickets so strategies can be compared.
 - `data/learning_log.md`: what each review found and changed.
 - `IMPROVING.md`: the rules the twice-daily review task follows.
 - `tests/test_tracking.py`: checks for paper mode, the pick log and scorecard.
 - `tests/simulate.py`: offline test with fake games.
 - `tests/test_markets.py`: checks for bet types, settlement and the AI path.
+- `tests/test_shadow.py`: checks for best prices, value bets and shadow tickets.

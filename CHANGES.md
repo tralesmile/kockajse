@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-01: strategies compared side by side, and the best price is now checked
+
+- Every day the bot now also records five other ways it could have bet, on the same matches, and settles them like paper tickets: the most likely ticket without the AI, the AI's own ticket, the ticket with the best expected return, and "value" bets at the best price any bookmaker offers. A new table in the email compares them.
+- Why: on today's 35 bets every price was below the fair chance (by 5.8% on average). With all choices below fair, no way of picking among them can win in the long run; only a price above fair can. Until now the bot only looked at average prices.
+- The value bets follow a published method (Kaunitz and others, 2017) that made 6 to 10% over thousands of bets by betting only where one bookmaker paid more than the fair price.
+- Your real paper ticket is chosen exactly as before. The value bets may be at bookmakers other than Megawin; if they keep winning, the email will show which ones, and opening an account there would be your decision.
+- No extra Odds API or Gemini use.
+
 ## 2026-11-01: the most likely ticket is now chosen by code
 
 - The AI still researches every match and says AGREE, RISKY or AVOID for each bet, but the final ticket is now worked out in code: every allowed combination is checked and the one most likely to win is taken.

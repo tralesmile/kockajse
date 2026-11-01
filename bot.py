@@ -44,10 +44,12 @@ LEDGER_FIELDS = ["ticket_no", "date", "picks", "total_odds", "stake", "result", 
 PICK_FIELDS = ["date", "ticket_no", "mode", "event_id", "sport_key", "sport", "league", "match",
                "start", "market", "sel", "point", "pick", "odds", "market_chance", "verdict",
                "ai_chance", "on_ticket", "result", "score", "consensus_chance", "sharp_chance",
-               "sharp_book", "edge"]
+               "sharp_book", "edge", "best_odds", "best_book", "best_edge"]
 # Bookmakers whose prices are the most accurate (low margin, sharp customers allowed), best
 # first. Their margin-free price is used as the fair chance when they carry the bet.
 SHARP_BOOKS = ["pinnacle", "betfair_ex_eu", "matchbook"]
+# Exchanges charge commission on winnings, so their prices are not counted as "best price".
+EXCHANGES = {"betfair_ex_eu", "matchbook"}
 API = "https://api.the-odds-api.com/v4"
 TZ = ZoneInfo(CONFIG["timezone"])
 SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
@@ -62,6 +64,7 @@ SCOUT_EXTRA = ""  # matches the scout found outside the feed, as HTML
 RESEARCH = {}  # today's research notes and raw AI decision, saved for the review task
 LAST_SHORT = None  # (shortlist, chosen ids) from the latest AI decision
 SCORES = {}  # final scores fetched during this run, by event id
+SHADOW_TODAY = []  # today's shadow tickets, (strategy, legs)
 MODELS_OUT = set()  # (key number, model) pairs that stopped working during this run
 
 
@@ -225,11 +228,14 @@ def candidates_from_event(event, strict=True):
     groups = {}
 
     def add(market, sel, point, prob, price):
-        g = groups.setdefault((market, sel, point), {"probs": [], "prices": [], "sharp": {}})
+        g = groups.setdefault((market, sel, point),
+                              {"probs": [], "prices": [], "sharp": {}, "offers": []})
         if bkey in SHARP_BOOKS:
             g["sharp"][bkey] = prob
         g["probs"].append(prob)
         g["prices"].append(price)
+        if bkey not in EXCHANGES:
+            g["offers"].append((price, bkey))
 
     for book in event.get("bookmakers", []):
         bkey = book.get("key", "")
@@ -279,6 +285,7 @@ def candidates_from_event(event, strict=True):
         if sharp is not None and abs(sharp - consensus) > 0.10:
             sharp, sharp_book = None, ""  # far from every other book: likely a stale price
         prob = sharp if sharp is not None else consensus
+        best_odds, best_book = best_offer(g["offers"], odds) if market != "dc" else (None, "")
         if market == "h2h":
             pick = "Draw" if sel == "Draw" else f"{sel} to win"
         elif market == "dc":
@@ -305,10 +312,29 @@ def candidates_from_event(event, strict=True):
             "sharp": sharp,
             "sharp_book": sharp_book,
             "edge": round(prob * odds - 1, 4),
+            "best_odds": best_odds,
+            "best_book": best_book,
+            # Value at the best bookmaker price, only when a sharp price says what is fair.
+            "best_edge": (round(sharp * best_odds - 1, 4)
+                          if sharp is not None and best_odds else None),
             "books": len(g["probs"]),
             "result": "pending",
         })
     return out
+
+
+def best_offer(offers, average):
+    """Highest price any (non-exchange) bookmaker offers, ignoring outliers.
+
+    A price more than 10% above the average is usually a stale line or a palpable error that
+    the bookmaker would void, so the best price is taken from the rest (as value-betting
+    practitioners advise). Returns (odds, bookmaker key) or (None, "").
+    """
+    usable = [(p, b) for p, b in offers if p <= average * 1.10]
+    if not usable:
+        return None, ""
+    price, book = max(usable)
+    return round(price, 2), book
 
 
 def build_ticket(cands):
@@ -533,7 +559,9 @@ def log_picks(ticket_no, mode, today, short, chosen, rules_legs=None):
             "consensus_chance": round(c.get("consensus", c["prob"]), 4),
             "sharp_chance": "" if c.get("sharp") is None else round(c["sharp"], 4),
             "sharp_book": c.get("sharp_book", ""),
-            "edge": "" if c.get("edge") is None else round(c["edge"], 4)})
+            "edge": "" if c.get("edge") is None else round(c["edge"], 4),
+            "best_odds": c.get("best_odds") or "", "best_book": c.get("best_book", ""),
+            "best_edge": "" if c.get("best_edge") is None else c["best_edge"]})
     write_picks(rows)
 
 
@@ -718,6 +746,201 @@ def clv_html():
             "win rates can.</small></p>")
 
 
+# ------------------------------------------------------------- shadow tickets ----
+# Other strategies are run on the same matches every day and settled like paper tickets, so
+# reviews can compare them with the real choice. Nothing here changes the emailed ticket.
+SHADOW_FIELDS = ["date", "strategy", "shadow_id", "event_id", "sport_key", "match", "start",
+                 "market", "sel", "point", "pick", "odds", "book", "fair_chance", "edge",
+                 "result", "score"]
+SHADOW_NAMES = {
+    "actual": "The real paper ticket",
+    "market": "Market only (most likely ticket, no AI)",
+    "ai_own": "The AI's own ticket",
+    "edge_first": "Best expected return within the AI's verdicts",
+    "value_ticket": "Value ticket at the best bookmaker price",
+    "value_single": "Value singles at the best bookmaker price",
+}
+
+
+def shadow_path():
+    return STATE_PATH.parent / "shadow.csv"
+
+
+def read_shadow():
+    path = shadow_path()
+    if not path.exists():
+        return []
+    with path.open() as fh:
+        return list(csv.DictReader(fh))
+
+
+def write_shadow(rows):
+    with shadow_path().open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, SHADOW_FIELDS, restval="")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def value_bets(cands):
+    """Bets where some bookmaker pays more than the sharp fair chance is worth.
+
+    The idea of Kaunitz, Zhong and Kreiner (2017, "Beating the bookies with their own
+    numbers"): the sharp, margin-free price is the true chance, and a soft bookmaker whose
+    price is above it is a positive expected value bet. Needs a sharp price, at least
+    value_min_edge of value, and keeps one bet (the biggest value) per match.
+    """
+    low = CONFIG.get("value_min_edge", 0.02)
+    hi = CONFIG.get("value_max_odds", 4.0)
+    best = {}
+    for c in cands:
+        e = c.get("best_edge")
+        if e is None or e < low or not c.get("best_odds") or c["best_odds"] > hi:
+            continue
+        if c["event_id"] not in best or e > best[c["event_id"]]["best_edge"]:
+            best[c["event_id"]] = c
+    return sorted(best.values(), key=lambda c: c["best_edge"], reverse=True)
+
+
+def shadow_tickets(cands, short=None, ticket=None):
+    """Today's shadow tickets as (strategy, legs); each leg has odds and the bookmaker.
+
+    Only leagues on the AI's shortlist are used (when there is one), because their scores
+    are fetched anyway to settle the pick log, so the shadows cost no extra API credits.
+    """
+    out = []
+    if ticket:
+        out.append(("actual", [dict(l, book="average") for l in ticket["legs"]]))
+    keys = {c["sport_key"] for c in (short or {}).values()}
+    pool = [c for c in cands if not keys or c["sport_key"] in keys]
+    market = build_ticket(pool)
+    if market:
+        out.append(("market", [dict(l, book="average") for l in market["legs"]]))
+    info = RESEARCH.get("ai_ticket") or {}
+    for strategy, ids in (("ai_own", info.get("ids")), ("edge_first", info.get("edge_first_ids"))):
+        if short and ids and all(i in short for i in ids):
+            out.append((strategy, [dict(short[i], book="average") for i in ids]))
+    values = value_bets(pool)
+    priced = [dict(c, odds=c["best_odds"], prob=c["sharp"], book=c["best_book"])
+              for c in values[:15]]
+    best, best_ev = None, 0
+    for size in range(1, CONFIG["max_legs"] + 1):
+        for combo in itertools.combinations(priced, size):
+            total, ev = 1.0, 1.0
+            for c in combo:
+                total *= c["odds"]
+                ev *= c["prob"] * c["odds"]
+            if CONFIG["min_total_odds"] <= round(total, 2) <= CONFIG["max_total_odds"] and ev > best_ev:
+                best, best_ev = list(combo), ev
+    if best:
+        out.append(("value_ticket", best))
+    for c in priced[:CONFIG.get("value_max_singles", 10)]:
+        out.append(("value_single", [c]))
+    return out
+
+
+def shadow_rows(today, tickets):
+    rows, count = [], {}
+    for strategy, legs in tickets:
+        count[strategy] = count.get(strategy, 0) + 1
+        sid = f"{today}-{strategy}-{count[strategy]}"
+        for c in legs:
+            fair = c["sharp"] if c.get("sharp") is not None else c["prob"]
+            rows.append({
+                "date": today, "strategy": strategy, "shadow_id": sid,
+                "event_id": c["event_id"], "sport_key": c["sport_key"],
+                "match": f"{c['home']} v {c['away']}", "start": c["start"],
+                "market": c.get("market", "h2h"), "sel": c.get("sel") or c["pick"],
+                "point": "" if c.get("point") is None else c["point"], "pick": c["pick"],
+                "odds": c["odds"], "book": c.get("book", ""), "fair_chance": round(fair, 4),
+                "edge": round(fair * float(c["odds"]) - 1, 4), "result": "pending", "score": ""})
+    return rows
+
+
+def log_shadow(today, tickets):
+    rows = [r for r in read_shadow() if r["date"] != today]  # a forced re-run replaces today
+    write_shadow(rows + shadow_rows(today, tickets))
+
+
+def settle_shadow(now):
+    rows = read_shadow()
+    pending = [r for r in rows if r["result"] == "pending"]
+    if not pending:
+        return
+    scores = fetch_scores({r["sport_key"] for r in pending})
+    for row in pending:
+        score = scores.get(row["event_id"])
+        if score:
+            leg = {"market": row["market"], "sel": row["sel"], "pick": row["pick"],
+                   "point": float(row["point"]) if row["point"] else None}
+            row["result"] = leg_result(leg, score)
+            row["score"] = leg.get("score", "")
+        if row["result"] == "pending" and (now - parse_time(row["start"])).days >= CONFIG["void_after_days"]:
+            row["result"] = "void"
+    write_shadow(rows)
+
+
+def shadow_summary(rows=None):
+    """Settled shadow tickets per strategy: count, won, profit after tax at the paper stake."""
+    rows = read_shadow() if rows is None else rows
+    tickets = {}
+    for r in rows:
+        tickets.setdefault((r["strategy"], r["shadow_id"]), []).append(r)
+    stake = CONFIG.get("paper_stake", 100)
+    out = {}
+    for (strategy, _), legs in tickets.items():
+        results = [l["result"] for l in legs]
+        s = out.setdefault(strategy, {"tickets": 0, "won": 0, "pending": 0, "profit": 0.0,
+                                      "staked": 0, "edge": 0.0, "chance": 0.0})
+        if "pending" in results and "lost" not in results:
+            s["pending"] += 1
+            continue
+        odds, chance, edge = 1.0, 1.0, 1.0
+        for l in legs:
+            chance *= float(l["fair_chance"])
+            edge *= 1 + float(l["edge"])
+            if l["result"] == "won":
+                odds *= float(l["odds"])
+        if "lost" in results:
+            profit = -stake
+        elif odds == 1.0:
+            continue  # all void: stake returned
+        else:
+            s["won"] += 1
+            profit = tax_and_payout(stake, round(odds, 2))[2] - stake
+        s["tickets"] += 1
+        s["staked"] += stake
+        s["profit"] = round(s["profit"] + profit, 2)
+        s["chance"] += chance
+        s["edge"] += edge - 1
+    return out
+
+
+def shadow_html():
+    summary = shadow_summary()
+    if not summary:
+        return ""
+    lines = []
+    for strategy in SHADOW_NAMES:
+        s = summary.get(strategy)
+        if not s:
+            continue
+        n = s["tickets"]
+        rate = f"{s['profit'] / s['staked']:+.0%}" if s["staked"] else "-"
+        expected = f"{s['chance'] / n:.0%}" if n else "-"
+        edge = f"{s['edge'] / n:+.1%}" if n else "-"
+        lines.append(f"<tr><td>{SHADOW_NAMES[strategy]}</td><td>{n}</td><td>{s['won']}</td>"
+                     f"<td>{expected}</td><td>{edge}</td><td>{money(s['profit'])}</td>"
+                     f"<td>{rate}</td><td>{s['pending']}</td></tr>")
+    return ("<h3>Strategy comparison (shadow tickets)</h3><table border='1' cellpadding='5' "
+            "cellspacing='0' style='border-collapse:collapse;font-size:13px'><tr><th>Strategy"
+            "</th><th>Settled</th><th>Won</th><th>Expected win rate</th><th>Value vs fair</th>"
+            "<th>Profit after tax</th><th>Return</th><th>Waiting</th></tr>" + "".join(lines)
+            + "</table><p><small>Each strategy is run on the same days and settled at a "
+            f"virtual {CONFIG.get('paper_stake', 100)} MKD per ticket; none is placed. Value "
+            "bets use the best price any listed bookmaker offers, which may not be "
+            "available at Megawin.</small></p>")
+
+
 # --------------------------------------------------------------- email ----
 def money(value):
     return f"{value:,.2f} {CONFIG['currency']}"
@@ -812,6 +1035,7 @@ def build_email(state, finished, ticket, note, today):
             f"({rate:+.0%} of the amount staked)</p>")
     parts.append(scorecard_html())
     parts.append(clv_html())
+    parts.append(shadow_html())
     if credits_left is not None:
         total = len(odds_keys())
         which = f" on key {key_index + 1} of {total}" if total > 1 else ""
@@ -1065,11 +1289,23 @@ def ai_pick(cands, today):
         for combo in itertools.combinations(pool, size):
             if usable(combo) and chance(combo) > best_score:
                 best, best_score = list(combo), chance(combo)
+    # Shadow strategy "edge_first": the allowed ticket with the best expected return
+    # (chance x odds) instead of the best chance. Logged only, never placed.
+    edge_best, edge_score = [], 0
+    for size in range(1, CONFIG["max_legs"] + 1):
+        for combo in itertools.combinations(pool, size):
+            if usable(combo):
+                value = chance(combo)
+                for i in combo:
+                    value *= short[i]["odds"]
+                if value > edge_score:
+                    edge_best, edge_score = list(combo), value
     ai_ok = bool(chosen and len(set(chosen)) == len(chosen)
                  and all(i in short for i in chosen) and usable(chosen))
     RESEARCH["ai_ticket"] = {"ids": chosen if ai_ok else [], "valid": ai_ok,
                              "chance": round(chance(chosen), 4) if ai_ok else None,
-                             "best_ids": best, "best_chance": round(best_score, 4)}
+                             "best_ids": best, "best_chance": round(best_score, 4),
+                             "edge_first_ids": edge_best}
     if ai_ok and chance(chosen) >= best_score - 0.005:
         source = "AI"
     else:
@@ -1137,6 +1373,7 @@ def run(now=None, force=False, resend=False, preview=False):
     finished = [] if preview else settle(state, now)
     if not preview:
         settle_picks(now)
+        settle_shadow(now)
     paper = bool(CONFIG.get("paper_mode"))
     stake = CONFIG["paper_stake"] if paper else stake_for(state["bankroll"])
     ticket, note = None, ""
@@ -1172,7 +1409,16 @@ def run(now=None, force=False, resend=False, preview=False):
             state["open_tickets"].append(ticket)
         elif analysis:
             note += analysis
+        shadows = []
+        try:
+            shadows = shadow_tickets(cands, LAST_SHORT[0] if result is not None and LAST_SHORT
+                                     else None, ticket)
+        except Exception as exc:  # the experiment must never stop the daily ticket
+            print(f"Shadow tickets failed: {exc}")
+        SHADOW_TODAY[:] = shadows
         if not preview:
+            if shadows:
+                log_shadow(today, shadows)
             mode = "paper" if paper else "real"
             number = ticket["no"] if ticket else ""
             if result is not None and LAST_SHORT:
@@ -1202,6 +1448,7 @@ def run(now=None, force=False, resend=False, preview=False):
             subject = "PREVIEW, not counted | " + subject
             (ROOT / "data" / "preview.json").write_text(json.dumps(
                 {"when": iso(now), "ticket": ticket, "note": note, "log": AI_LOG,
+                 "shadow": shadow_rows(today, SHADOW_TODAY),
                  "credits_left": credits_left}, indent=2) + "\n")
         send_email(subject, html)
         print(subject)
