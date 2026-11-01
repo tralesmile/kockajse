@@ -6,7 +6,33 @@ review is free to change anything that could help: the prompts, the way matches 
 researched and judged, the code, the data sources, the bet types, the selection logic.
 Be open to new ideas and try them. The daily tips email keeps going throughout.
 
-## Each review
+## Be creative
+
+The owner wants the most creative, best possible solution each time, not the safest small
+tweak. Every review:
+
+- **Brainstorm widely before choosing.** Write down at least 8 different ideas, spread over
+  these areas: new data, modelling and maths, prompts and AI workflow, ticket selection,
+  bet types and markets, timing (when we pick, when we re-check), sports and leagues,
+  experiments and measurement. Include at least two unconventional ones: borrow from
+  quantitative finance, forecasting tournaments, prediction markets, sports analytics
+  research, machine learning, or how professional bettors and syndicates work.
+- **Research deeply.** Use several sources per topic: academic papers, practitioner blogs,
+  open-source betting and sports-modelling projects on GitHub, data-provider docs. Look for
+  what has measurably worked for others, then adapt it to this bot's limits.
+- **Score and pick.** Rate each idea for expected impact, confidence and effort, and build
+  the best one. A bold idea with a big possible upside beats a safe tweak when both fit the
+  quota. At least one review per week should ship something bold.
+- **Keep a backlog.** `IDEAS.md` holds every idea with its status (new, building, live,
+  measuring, dropped) and, once known, its result. Add new ideas each review, move tried ones
+  to their outcome, and drop ideas the data rejects. Do not repeat a dropped idea without new
+  evidence.
+- **Run experiments, not guesses.** Where possible, test an idea side by side instead of
+  replacing what works: for example, log the ticket an alternative strategy would have
+  chosen ("shadow tickets") and settle it like a real paper ticket, so strategies can be
+  compared on the same days. Prefer changes that make the next review smarter.
+
+
 
 1. **Learn from results.** With code, measure the pick log (`data/picks.csv`): win rate
    against the market's chance by verdict, bet type, sport, league, odds band, number of
