@@ -35,14 +35,16 @@ Good news that is already public is already in the odds, so it rarely justifies 
 
 STEP 2. Build the ticket.
 - Use 1 to {max_legs} picks. Use at most ONE bet per match.
-- Use AGREE picks only. If no valid ticket exists with AGREE picks alone, you may add at most one
-  RISKY pick. Never use an AVOID pick.
+- Use AGREE picks, plus at most one RISKY pick when that makes the ticket more likely to win.
+  Never use an AVOID pick.
 - The product of the odds must be between {min_odds} and {max_odds}. Multiply the odds yourself
   and check the result before you answer.
 - Prefer 2 picks. Every extra pick adds the bookmaker's margin, so a ticket of 2 picks at
   about 1.6 each is usually more likely to win than 3 or 4 short-priced picks with the same
   total odds. Use 3 picks only when no 2-pick ticket in range has a comparable chance.
-- Among valid tickets, choose the safest: the one with the highest product of adjusted chances.
+- Among valid tickets, choose the safest: the one with the highest product of chances. The code
+  checks your choice against every valid ticket and replaces it if another is clearly more likely,
+  so compare carefully and multiply the chances yourself.
   Prefer picks with GOOD data and clear favourites over picks you know little about. A double
   chance or totals bet is only safer than a win bet if its adjusted chance is higher.
 - Value: between tickets of similar safety (within about 3 points of combined chance), choose

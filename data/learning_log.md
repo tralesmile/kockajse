@@ -80,3 +80,42 @@ sign the AI research adds value); how often lines are missing at the close; whet
 minutes is close enough or GitHub delays cause misses (check minutes_before). Then the
 edge spread. Next research topic idea: free injury/lineup sources or a second-pass prompt
 that argues against each pick.
+
+## 2026-11-01 (morning review): code picks the most likely ticket, AI chance blended lightly
+
+Measured (`picks.csv`, 33 settled judged picks from 31 Oct, 35 pending from 1 Nov):
+- By verdict: AGREE 6/11 (55%, market 54%), RISKY 10/16 (63%, market 56%), AVOID 4/6 (67%,
+  market 57%). No sign yet that the verdicts separate winners from losers.
+- Brier score: market 0.2235, AI adjusted chance 0.2365 (worse). Blends: 30% AI 0.2270, 50% AI
+  0.2295. The AI raises AGREE picks by about 2 points and lowers the rest by 2 to 4.
+- Edge spread on 1 Nov (35 candidates): mean −5.8%, range −12.2% to −0.4%; 86% have a sharp
+  price. Without a sharp price (soccer/handball totals) the edge averages −8.6%; double chance
+  −10.7% (includes the 3% cut). So the "more than 6% below fair" rule removes about half the
+  list and is mostly measuring the soft margin, not value.
+- Ticket choice: the AI's ticket was not the most likely one its own rules allowed. 31 Oct:
+  AI ticket (Man City + Under 215.5) had 28.5% market chance; the best allowed (Cavaliers to
+  win + PSV v Willem II Under 4.5) had 35.6%. 1 Nov: AI 3-pick ticket 32.8% against 37.0% for a
+  2-pick (Santander v Real Madrid Under 4.5 + Lakers). About 20% fewer winning tickets than
+  available, caused by the prompt's "AGREE only" preference plus LLM arithmetic.
+- Loss review, ticket 23: Man City to win @1.67 lost (market 57%). Research was good (City
+  rested starters midweek, Brighton injuries); a 43% outcome, not foreseeable. The AI added 2
+  points for public news that was already priced in.
+
+Researched: combining LLM forecasts with market prices. "Forecasting Future Language" (arXiv
+2602.21229, Kalshi mention markets, 856 questions): an LLM told to start from the market price
+and adjust it scored worse than the market (Brier 0.147 vs 0.140); only a blend of 70% market
++ 30% LLM beat the market, and by a hair (0.139). Same pattern as our own 33 picks.
+
+Changed: after the AI's verdicts, code now searches every allowed ticket (no AVOID, at most one
+RISKY, 1 to 3 picks, total odds in range) and takes the one with the highest product of
+"blend" = 80% market chance + 20% AI chance (`ai_weight` 0.2 in config; lower than the paper's
+0.3 because our own data favours the market). The AI's own ticket is kept when it is within 0.5
+points of the best. RISKY is no longer second-class in code (still max one per ticket). The
+decide prompt now matches this. `data/research/<date>.json` gains "ai_ticket" with the AI's
+choice, its chance and the code's best, so reviews can see how often code overrode it.
+
+To measure next: how often code overrides the AI; the hit rate of tickets against their
+win_prob; AGREE vs RISKY win rate against market once about 100 picks are settled (if RISKY
+keeps matching AGREE, verdicts may only be useful as an AVOID filter); first CLV `move` values
+for ticket legs. Next research topic idea: a second-pass critic prompt, or free injury/lineup
+feeds for late news after the morning research.

@@ -141,7 +141,23 @@ now = datetime.datetime.now(bot.TZ)
 bot.gemini = fake({"picks": picks, "ticket": [a, b, c3], "ticket_reason": "r"})
 ticket, analysis, _ = bot.ai_pick(cands, now)
 assert len(research_calls) == 3, len(research_calls)  # one research call per match
+# The AI's 3-pick ticket is clearly less likely than the best valid one, so code replaces it.
+best = bot.RESEARCH["ai_ticket"]
+assert best["valid"] and best["best_chance"] > best["chance"] + 0.005, best
+assert ticket["picked_by"] != "AI" and CFG_MIN <= ticket["total_odds"] <= CFG_MAX, ticket
+
+assert all("blend" not in leg and "adj" not in leg for leg in ticket["legs"])
+# When the AI picks the best ticket itself, its choice stands.
+bot.gemini = fake({"picks": picks, "ticket": best["best_ids"], "ticket_reason": "r"})
+ticket, _, _ = bot.ai_pick(cands, now)
 assert ticket["picked_by"] == "AI" and CFG_MIN <= ticket["total_odds"] <= CFG_MAX, ticket
+# Blending: an AI estimate moves the chance used for ranking by only ai_weight of the gap.
+low = [dict(p, adjusted_chance=1.0) if p["id"] == best["best_ids"][0] else p for p in picks]
+bot.gemini = fake({"picks": low, "ticket": [], "ticket_reason": "r"})
+bot.ai_pick(cands, now)
+first = bot.LAST_SHORT[0][best["best_ids"][0]]
+w = bot.CONFIG["ai_weight"]
+assert abs(first["blend"] - ((1 - w) * first["prob"] + w * 0.01)) < 1e-9
 # Two bets on one match must be rejected and rebuilt by the rules.
 bot.gemini = fake({"picks": picks, "ticket": [a, same_match, c3], "ticket_reason": "r"})
 ticket, _, _ = bot.ai_pick(cands, now)

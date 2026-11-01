@@ -41,6 +41,7 @@
   "max_leg_odds": 2.0,
   "min_bookmakers_lines": 4,
   "ai_options": 6,
+  "ai_weight": 0.2,
   "markets": {
     "soccer": "h2h,totals",
     "basketball": "h2h,spreads,totals",

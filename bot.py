@@ -1043,24 +1043,37 @@ def ai_pick(cands, today):
         return (all(l["verdict"] != "AVOID" for l in legs) and risky <= 1
                 and valid_combo(legs))
 
-    source = "AI"
-    if not (chosen and len(set(chosen)) == len(chosen)
-            and all(i in short for i in chosen) and usable(chosen)):
-        # The AI's ticket broke a rule (or was empty): build the best one its verdicts allow.
-        chosen, best_score = [], 0
-        for allow_risky in (False, True):
-            pool = [i for i, c in short.items()
-                    if c["verdict"] == "AGREE" or (allow_risky and c["verdict"] == "RISKY")]
-            pool = sorted(pool, key=lambda i: short[i]["adj"], reverse=True)[:45]
-            for size in range(1, CONFIG["max_legs"] + 1):
-                for combo in itertools.combinations(pool, size):
-                    score = 1.0
-                    for i in combo:
-                        score *= short[i]["adj"]
-                    if usable(combo) and score > best_score:
-                        chosen, best_score = list(combo), score
-            if chosen:
-                break
+    # The ticket is built in code from the AI's verdicts. Each pick's chance is the market's
+    # (sharp) chance blended with a small share of the AI's estimate ("blend"), because
+    # forecasting studies find an LLM's own number is worse than the market's and only a
+    # light blend helps. The AI's own ticket is kept when it is as likely as the best one
+    # (within 0.5 points), so its judgement wins ties. Reviews compare both in research/.
+    weight = CONFIG.get("ai_weight", 0.2)
+    for c in short.values():
+        c["blend"] = (1 - weight) * c["prob"] + weight * c["adj"]
+
+    def chance(ids):
+        value = 1.0
+        for i in ids:
+            value *= short[i]["blend"]
+        return value
+
+    best, best_score = [], 0
+    pool = sorted((i for i, c in short.items() if c["verdict"] in ("AGREE", "RISKY")),
+                  key=lambda i: short[i]["blend"], reverse=True)[:45]
+    for size in range(1, CONFIG["max_legs"] + 1):
+        for combo in itertools.combinations(pool, size):
+            if usable(combo) and chance(combo) > best_score:
+                best, best_score = list(combo), chance(combo)
+    ai_ok = bool(chosen and len(set(chosen)) == len(chosen)
+                 and all(i in short for i in chosen) and usable(chosen))
+    RESEARCH["ai_ticket"] = {"ids": chosen if ai_ok else [], "valid": ai_ok,
+                             "chance": round(chance(chosen), 4) if ai_ok else None,
+                             "best_ids": best, "best_chance": round(best_score, 4)}
+    if ai_ok and chance(chosen) >= best_score - 0.005:
+        source = "AI"
+    else:
+        chosen = best
         source = "AI verdicts, ticket built by the rules"
 
     lines, last = [], None
@@ -1081,7 +1094,8 @@ def ai_pick(cands, today):
     LAST_SHORT = (short, chosen)
     if not chosen:
         return None, analysis, "The AI found no ticket that passes its checks today."
-    legs = sorted(({k: v for k, v in short[i].items() if k not in ("adj",)} for i in chosen),
+    legs = sorted(({k: v for k, v in short[i].items() if k not in ("adj", "blend")}
+                   for i in chosen),
                   key=lambda c: c["start"])
     total, prob = 1.0, 1.0
     for leg in legs:

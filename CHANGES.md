@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-01: the most likely ticket is now chosen by code
+
+- The AI still researches every match and says AGREE, RISKY or AVOID for each bet, but the final ticket is now worked out in code: every allowed combination is checked and the one most likely to win is taken.
+- Why: on both recent days the AI's own ticket was not the safest one its rules allowed (28% vs 36% chance on 31 Oct, 33% vs 37% on 1 Nov). That is about one winning ticket in five left on the table.
+- The chance used is mostly the sharp bookmaker's (80%) with a little of the AI's estimate (20%). So far the AI's own estimates were less accurate than the market's, and research on AI forecasting finds the same.
+- Same limits as before: no AVOID picks, at most one RISKY pick, total odds 2.50 to 3.50. If the AI picks the best ticket itself, its choice is kept.
+- Expect slightly more 2-pick tickets. Each day's research file records the AI's choice next to the code's, so the next reviews can check this helped.
+
 ## 2026-10-31: checking prices again just before kick-off
 
 - A new small job checks the odds of every judged bet again in the last 45 minutes before it starts (the "closing price").
