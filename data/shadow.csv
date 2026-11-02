@@ -1,0 +1,10 @@
+date,strategy,shadow_id,event_id,sport_key,match,start,market,sel,point,pick,odds,book,fair_chance,edge,result,score
+2026-11-02,actual,2026-11-02-actual-1,66608b64d462d1d3deabe573c8456d86,soccer_italy_serie_a,Sassuolo v Fiorentina,2026-11-02T17:30:00Z,totals,Over,2.5,Over 2.5 goals,1.54,average,0.6097,-0.0611,pending,
+2026-11-02,actual,2026-11-02-actual-1,7a2cd2744fdf15ea675423a6c23df46b,soccer_spain_la_liga,Deportivo La Coruña v CA Osasuna,2026-11-02T20:00:00Z,dc,X2,,CA Osasuna or draw (double chance),1.64,average,0.5581,-0.0848,pending,
+2026-11-02,market,2026-11-02-market-1,2e488800d615a94e5377c195810303c0,soccer_italy_serie_a,Atalanta BC v Parma,2026-11-02T19:45:00Z,totals,Over,2.5,Over 2.5 goals,1.6,average,0.6005,-0.0392,pending,
+2026-11-02,market,2026-11-02-market-1,fdf913d713fd5851d418c59872bdf265,basketball_nba,Charlotte Hornets v Detroit Pistons,2026-11-03T00:40:00Z,h2h,Detroit Pistons,,Detroit Pistons to win,1.57,average,0.618,-0.0297,pending,
+2026-11-02,ai_own,2026-11-02-ai_own-1,0b15b685479df1479050365848bcfe54,tennis_atp_paris_masters,Alejandro Tabilo v Rafael Jodar,2026-11-02T11:10:00Z,h2h,Rafael Jodar,,Rafael Jodar to win,1.21,average,0.7908,-0.0431,pending,
+2026-11-02,ai_own,2026-11-02-ai_own-1,5bab6fa1aa508d533a40f86e0b82605e,soccer_brazil_campeonato,Bragantino-SP v Santos,2026-11-02T23:00:00Z,totals,Under,3.5,Under 3.5 goals,1.56,average,0.6058,-0.055,pending,
+2026-11-02,ai_own,2026-11-02-ai_own-1,66608b64d462d1d3deabe573c8456d86,soccer_italy_serie_a,Sassuolo v Fiorentina,2026-11-02T17:30:00Z,totals,Over,2.5,Over 2.5 goals,1.54,average,0.6097,-0.0611,pending,
+2026-11-02,edge_first,2026-11-02-edge_first-1,5bab6fa1aa508d533a40f86e0b82605e,soccer_brazil_campeonato,Bragantino-SP v Santos,2026-11-02T23:00:00Z,totals,Under,3.5,Under 3.5 goals,1.56,average,0.6058,-0.055,pending,
+2026-11-02,edge_first,2026-11-02-edge_first-1,df7f8fce0b1c11db5140d60e1e126eb3,basketball_nba,Dallas Mavericks v Sacramento Kings,2026-11-03T01:10:00Z,spreads,Dallas Mavericks,-10.0,Dallas Mavericks -10 (handicap),1.91,average,0.5141,-0.018,pending,
