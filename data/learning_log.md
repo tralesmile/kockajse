@@ -159,3 +159,44 @@ To measure next: how many value singles appear per day and from which bookmakers
 none, raise the odds cap or add a wider value candidate list); their ROI and their CLV once
 ~100 are settled (CLV capture does not yet cover shadows; adding it is a cheap next step);
 ai_own vs actual (does the code override help?); edge_first vs actual.
+
+## 2026-11-02 (morning review): wide value scan, the Kaunitz rule as published, odds archive
+
+Measured (`picks.csv`, 68 settled judged picks, 48 pending from 2 Nov):
+- By verdict: AGREE 9/16 (56%, market 58%), RISKY 26/42 (62%, market 55%), AVOID 8/10 (80%,
+  market 61%). Still no sign the verdicts sort winners from losers; AVOID won most.
+- By market: h2h 14/19 (74% vs 65%), totals 21/35 (60% vs 54%), spreads 5/10 (50% vs 50%),
+  double chance 3/4. Brier: market 0.2278, AI 0.2358 (AI still worse).
+- Paper tickets: 23 and 24 both lost (24: Young Boys @1.24 lost, a 76% favourite). Research for
+  YB v Zurich was thorough and correct (6-0 at home, 5 straight H2H wins); not foreseeable.
+- Value: of the 16 bets judged on 2 Nov with a sharp price, the best price beat fair on none
+  (best −0.5%, mean −3.3%). So the value shadows logged zero bets today. Cause: the value
+  search only saw the ticket candidates, which stop at odds 2.00, and short favourites carry
+  the bookmaker margin most evenly, leaving little room for one book to be above fair.
+- Shadows: 2 Nov logged actual, market, ai_own and edge_first only; nothing settled yet.
+- Reliability: Gemini key 1 hit its 20/day search limit on the first research call (likely
+  used by an earlier run), keys 3 and 4 cannot use gemini-2.5-flash, many 503s; the decision
+  call took 9 tries. The ticket still went out.
+
+Researched: Kaunitz, Zhong and Kreiner (arXiv 1710.02824) in detail: consensus = 1/mean
+price, bet when max price > 1/(consensus − 0.05); bets averaged odds 2.30 (SD 0.99), 60% home,
+38% away, 2% draws; 5h–1h before kick-off. SharpAPI EV docs: Pinnacle proportional devig,
+EV under 2% historically negative after line movement, 2–4% about break-even, 4%+ the real
+tier. Data Golf on favourite-longshot bias: longer prices carry more margin even at Pinnacle,
+so value at long prices needs a bigger threshold, not a looser one.
+
+Ideas considered (scored in IDEAS.md): wide value scan; Kaunitz rule as published; odds
+archive for offline backtests; late value scan in the 5h–1h window; second odds region;
+CLV for value shadows; bookmaker dispersion signal; Gemini quota guard; backtest harness.
+
+Changed: value shadows now use every priced match in the shortlisted leagues at odds up to
+4.00 (no extra credits; settled from the same score feeds). New "kaunitz_single" shadow uses
+the paper's rule exactly (needs no sharp price, so it also covers soccer totals; outliers
+allowed to 25% above the average, the strict best price still caps at 10%). Every price the
+run fetches is saved to `data/odds/<date>.json.gz` (a few hundred KB) so reviews can backtest
+new rules offline. The real ticket is unchanged, so no preview run was started (also saves
+the scarce Gemini search quota).
+
+To measure next: value and Kaunitz singles per day and their sports/books; settle results
+over ~2 weeks; build the offline backtest script once 5+ archive days exist; check archive
+size per day.

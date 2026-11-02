@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-02: a wider hunt for prices above fair, and every price is now kept
+
+- On today's bets no bookmaker paid more than the fair chance on anything, so the "value" bets added yesterday found nothing. They only looked at odds up to 2.00; the published method they copy found most of its value around 2.30.
+- The value experiment now looks at every match in the leagues the bot priced, at odds up to 4.00. A second version follows the 2017 paper's rule exactly, which also works where no sharp bookmaker prices the bet (many football totals).
+- Every price the bot downloads is now saved each day, so future reviews can test new ideas on past prices straight away instead of waiting weeks.
+- Your daily paper ticket is chosen exactly as before. No extra Odds API or Gemini use.
+- Both paper tickets so far lost on one leg each (the Young Boys loss on 1 November was a 76% favourite with sound research behind it, just bad luck).
+
 ## 2026-11-01: strategies compared side by side, and the best price is now checked
 
 - Every day the bot now also records five other ways it could have bet, on the same matches, and settles them like paper tickets: the most likely ticket without the AI, the AI's own ticket, the ticket with the best expected return, and "value" bets at the best price any bookmaker offers. A new table in the email compares them.

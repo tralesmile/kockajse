@@ -6,6 +6,14 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Wide value scan + Kaunitz rule + odds archive (2 Nov morning, bold, 5/3/2). Value shadows
+  now search every priced match in the shortlisted leagues at odds up to 4.00 (the ticket list
+  stops at 2.00; Kaunitz's bets averaged 2.30). New "kaunitz_single" shadow uses the paper's
+  exact rule (best price > 1/(1/average − 0.05), no sharp book needed, outliers up to 25%
+  allowed). Every fetched price is archived in `data/odds/<date>.json.gz` so later reviews can
+  replay any rule offline. Measuring: value singles per day (was 0 on 2 Nov), Kaunitz singles
+  per day, their ROI after ~150 bets, which bookmakers carry them.
+
 - Shadow tickets, `data/shadow.csv` (1 Nov evening). Every day the real ticket, a market-only
   ticket, the AI's own ticket and an "edge first" ticket (best chance x odds within the AI's
   verdicts) are logged and settled side by side, plus the two value strategies below.
@@ -31,6 +39,24 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- Late value scan in the Kaunitz window (timing, 4/3/3): the paper's 9.9% came from bets 5h
+  to 1h before kick-off, and soft books are slowest then; our scan is at 08:00, often 12h
+  before. The closing job could re-scan events of the day (1 credit per league) and log
+  shadow value bets there. Check credit budget first (key 1 had 404 left on 2 Nov).
+- Second odds region (data, 3/2/2): adding "uk" (Betfred, Coral, Paddy Power, Sky Bet ...)
+  to the value scan widens the best-price search; costs 1 credit per league. Try only if the
+  archive shows near-misses (best_edge between 0 and 2%) are common.
+- CLV for value shadows (measurement, 4/4/2): closing job captures prices only for judged
+  picks; adding value and Kaunitz singles gives an early read of whether they are real value.
+- Bookmaker dispersion as a signal (modelling, unconventional, from market microstructure,
+  2/2/2): high spread between books on one outcome means stale prices or news; test on the
+  odds archive whether high-dispersion favourites win more or less than their chance.
+- Gemini search quota guard (AI workflow, 3/4/2): on 2 Nov key 1 hit its daily limit of 20
+  search calls at the start of the run and keys 3 and 4 cannot use gemini-2.5-flash; plan the
+  research calls to fit one key's 20 and skip re-tries that burn quota on 503s.
+- Offline backtest harness over `data/odds/` (experiments, 4/4/3): once a week of archives
+  exists, a script that replays any rule against settled scores, so ideas are judged in
+  minutes instead of weeks of shadow logging.
 - Megawin prices (new data, 4/2/3): the owner's real odds are unknown; every figure assumes
   the European average. Find whether Megawin publishes odds in a readable form (site JSON or
   an aggregator such as OddsPortal listing it) and log them, so value and tax maths use real
@@ -47,9 +73,6 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   both exist, and use them where Pinnacle is missing (soccer and handball totals).
 - Poisson / Dixon-Coles totals model from free xG (modelling, 3/2/4): the totals with no sharp
   price average −8.6% edge; a model could give an independent fair chance there.
-- Raise the value-bet odds cap (bet types, 3/3/1): candidates stop at average odds 2.00
-  (`max_leg_odds`), while Kaunitz's value bets averaged 2.30. A separate wider candidate list
-  for the value shadows only would give more bets.
 - Drop double chance (selection, 2/3/1): derived price is cut 3% and averages −10.7% edge;
   check its record in the shadows before dropping.
 - Self-consistency: run the decision prompt twice and keep only verdicts both runs agree on
@@ -62,4 +85,5 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Dropped
 
-(none yet)
+(none yet. The old "raise the value-bet odds cap" idea was built on 2 Nov as part of the
+wide value scan above.)

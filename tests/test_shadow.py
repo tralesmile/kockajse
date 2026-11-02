@@ -115,4 +115,42 @@ bot.shadow_summary()
 bot.log_picks(1, "paper", "2026-11-02", {1: dict(short[1])}, [1])
 row = bot.read_picks()[0]
 assert row["best_book"] == "onexbet" and float(row["best_edge"]) > 0, row
+# --- wide value scan, Kaunitz rule and the odds archive (2 Nov) --------------
+# A 2.60 underdog is outside the ticket's odds cap but inside the wide value list.
+dog = event("e4", "Bucks", "Knicks", sharp=(1.55, 2.60), soft=(1.50, 2.50), best=(1.45, 2.78))
+assert not [c for c in bot.candidates_from_event(dog) if c["sel"] == "Knicks"]
+wide = bot.wide_candidates([dog])
+knicks = next(c for c in wide if c["sel"] == "Knicks")
+assert knicks["best_odds"] == 2.78 and knicks["best_edge"] > 0.02, knicks
+assert [v["event_id"] for v in bot.value_bets(wide)] == ["e4"]
+
+# Kaunitz: average about 2.55, threshold 1 / (1/2.55 - 0.05) = 2.92. 2.78 is not enough,
+# 3.05 is (it is 20% above the average, so only the looser 25% outlier cap keeps it).
+assert not bot.kaunitz_bets(wide)
+dog2 = event("e5", "Suns", "Jazz", sharp=(1.55, 2.60), soft=(1.50, 2.50), best=(1.45, 3.05))
+k = bot.kaunitz_bets(bot.wide_candidates([dog2]))
+assert len(k) == 1 and k[0]["sel"] == "Jazz" and k[0]["top_odds"] == 3.05, k
+assert k[0]["best_odds"] != 3.05  # the strict best price still drops it as an outlier
+# Far outliers (more than 25% above average) never count.
+typo = event("e6", "Mavs", "Spurs", sharp=(1.55, 2.60), soft=(1.50, 2.50), best=(1.45, 3.40))
+assert not bot.kaunitz_bets(bot.wide_candidates([typo]))
+
+bot.RESEARCH["ai_ticket"] = {}
+tk = bot.shadow_tickets(pool, short, ticket, wide=pool + bot.wide_candidates([dog, dog2]))
+names = [s for s, _ in tk]
+assert "kaunitz_single" in names, names
+ks = dict(tk)["kaunitz_single"][0]
+assert ks["odds"] == 3.05 and ks["book"] == "onexbet", ks
+rows = bot.shadow_rows("2026-11-03", tk)
+assert any(r["strategy"] == "kaunitz_single" for r in rows)
+assert "Kaunitz" in bot.SHADOW_NAMES["kaunitz_single"]
+
+import gzip, json as _json
+path = bot.save_odds_snapshot("2026-11-03", datetime(2026, 11, 3, 7, 0, tzinfo=timezone.utc),
+                              [dog, dog2])
+snap = _json.loads(gzip.open(path, "rt").read())
+assert snap["fetched"] == "2026-11-03T07:00:00Z" and len(snap["events"]) == 2
+assert snap["events"][0]["books"]["onexbet"]["h2h"][1] == ["Knicks", None, 2.78]
+assert bot.save_odds_snapshot("2026-11-04", datetime.now(timezone.utc), []) is None
+print("wide value checks passed")
 print("all shadow checks passed")

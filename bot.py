@@ -65,6 +65,7 @@ RESEARCH = {}  # today's research notes and raw AI decision, saved for the revie
 LAST_SHORT = None  # (shortlist, chosen ids) from the latest AI decision
 SCORES = {}  # final scores fetched during this run, by event id
 SHADOW_TODAY = []  # today's shadow tickets, (strategy, legs)
+RAW_EVENTS = []  # every event with odds fetched this run (wide value scan, odds archive)
 MODELS_OUT = set()  # (key number, model) pairs that stopped working during this run
 
 
@@ -210,7 +211,7 @@ def ai_scout(fixtures, today):
     return ids
 
 
-def candidates_from_event(event, strict=True):
+def candidates_from_event(event, strict=True, max_odds=None):
     """Turn one event into candidate bets with a fair chance for each.
 
     Covers match winner, double chance (derived from the win/draw/win prices), totals and,
@@ -220,7 +221,10 @@ def candidates_from_event(event, strict=True):
     as "prob" instead, because sharp prices predict results better than the soft average.
     "edge" is how much the average price pays above that fair chance (prob x odds - 1).
     With strict=False the bookmaker-count and odds-range filters are skipped (used to read
-    closing prices, where only matching an earlier bet matters).
+    closing prices, where only matching an earlier bet matters). max_odds replaces the
+    max_leg_odds cap (the wide value scan looks at longer prices than the ticket uses).
+    "top_odds" is the best price allowing outliers up to 25% above the average, as the
+    Kaunitz rule bets exactly on such outliers.
     """
     sport = sport_of(event["sport_key"])
     home, away = event["home_team"], event["away_team"]
@@ -277,7 +281,8 @@ def candidates_from_event(event, strict=True):
         if strict and len(g["probs"]) < needed:
             continue
         odds = round(sum(g["prices"]) / len(g["prices"]), 2)
-        if strict and not CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
+        cap = max_odds if max_odds is not None else CONFIG["max_leg_odds"]
+        if strict and not CONFIG["min_leg_odds"] <= odds <= cap:
             continue
         consensus = sum(g["probs"]) / len(g["probs"])
         sharp_book = next((b for b in SHARP_BOOKS if b in g["sharp"]), "")
@@ -286,6 +291,8 @@ def candidates_from_event(event, strict=True):
             sharp, sharp_book = None, ""  # far from every other book: likely a stale price
         prob = sharp if sharp is not None else consensus
         best_odds, best_book = best_offer(g["offers"], odds) if market != "dc" else (None, "")
+        top_odds, top_book = (best_offer(g["offers"], odds, 1.25) if market != "dc"
+                              else (None, ""))
         if market == "h2h":
             pick = "Draw" if sel == "Draw" else f"{sel} to win"
         elif market == "dc":
@@ -317,20 +324,23 @@ def candidates_from_event(event, strict=True):
             # Value at the best bookmaker price, only when a sharp price says what is fair.
             "best_edge": (round(sharp * best_odds - 1, 4)
                           if sharp is not None and best_odds else None),
+            "top_odds": top_odds,
+            "top_book": top_book,
+            "mean_odds": sum(g["prices"]) / len(g["prices"]),
             "books": len(g["probs"]),
             "result": "pending",
         })
     return out
 
 
-def best_offer(offers, average):
+def best_offer(offers, average, cap=1.10):
     """Highest price any (non-exchange) bookmaker offers, ignoring outliers.
 
     A price more than 10% above the average is usually a stale line or a palpable error that
     the bookmaker would void, so the best price is taken from the rest (as value-betting
     practitioners advise). Returns (odds, bookmaker key) or (None, "").
     """
-    usable = [(p, b) for p, b in offers if p <= average * 1.10]
+    usable = [(p, b) for p, b in offers if p <= average * cap]
     if not usable:
         return None, ""
     price, book = max(usable)
@@ -383,6 +393,7 @@ def pick_ticket(now):
                          oddsFormat="decimal", commenceTimeFrom=iso(start),
                          commenceTimeTo=iso(end))
         for event in events:
+            RAW_EVENTS.append(event)
             cands.extend(candidates_from_event(event))
     return cands
 
@@ -759,6 +770,7 @@ SHADOW_NAMES = {
     "edge_first": "Best expected return within the AI's verdicts",
     "value_ticket": "Value ticket at the best bookmaker price",
     "value_single": "Value singles at the best bookmaker price",
+    "kaunitz_single": "Kaunitz singles (best price far above the average)",
 }
 
 
@@ -801,7 +813,46 @@ def value_bets(cands):
     return sorted(best.values(), key=lambda c: c["best_edge"], reverse=True)
 
 
-def shadow_tickets(cands, short=None, ticket=None):
+def wide_candidates(events=None):
+    """Candidates from every fetched event with prices up to value_max_odds.
+
+    The ticket only looks at odds up to max_leg_odds (2.00), but the value bets Kaunitz and
+    others found averaged odds of about 2.30, so the value strategies get a wider list.
+    """
+    hi = CONFIG.get("value_max_odds", 4.0)
+    out = []
+    for event in RAW_EVENTS if events is None else events:
+        out.extend(candidates_from_event(event, max_odds=hi))
+    return out
+
+
+def kaunitz_bets(cands):
+    """Kaunitz, Zhong and Kreiner (2017), rule as published: bet when the best price beats
+    1 / (consensus chance - alpha), where consensus = 1 / average price and alpha = 0.05.
+
+    Needs no sharp book, so it also covers totals that Pinnacle does not price. Prices more
+    than 25% above the average are ignored as likely errors. One bet per match, best ratio
+    of best price to the threshold first.
+    """
+    alpha = CONFIG.get("kaunitz_alpha", 0.05)
+    hi = CONFIG.get("value_max_odds", 4.0)
+    best = {}
+    for c in cands:
+        top, mean = c.get("top_odds"), c.get("mean_odds")
+        if c.get("market") == "dc" or not top or not mean or top > hi:
+            continue
+        cons = 1 / mean
+        if cons - alpha <= 0:
+            continue
+        ratio = top * (cons - alpha)
+        if ratio <= 1:
+            continue
+        if c["event_id"] not in best or ratio > best[c["event_id"]][0]:
+            best[c["event_id"]] = (ratio, c)
+    return [c for _, c in sorted(best.values(), key=lambda x: x[0], reverse=True)]
+
+
+def shadow_tickets(cands, short=None, ticket=None, wide=None):
     """Today's shadow tickets as (strategy, legs); each leg has odds and the bookmaker.
 
     Only leagues on the AI's shortlist are used (when there is one), because their scores
@@ -819,7 +870,9 @@ def shadow_tickets(cands, short=None, ticket=None):
     for strategy, ids in (("ai_own", info.get("ids")), ("edge_first", info.get("edge_first_ids"))):
         if short and ids and all(i in short for i in ids):
             out.append((strategy, [dict(short[i], book="average") for i in ids]))
-    values = value_bets(pool)
+    # Value strategies use the wide list (longer prices too) when there is one.
+    wide_pool = [c for c in (wide or []) if not keys or c["sport_key"] in keys] or pool
+    values = value_bets(wide_pool)
     priced = [dict(c, odds=c["best_odds"], prob=c["sharp"], book=c["best_book"])
               for c in values[:15]]
     best, best_ev = None, 0
@@ -835,7 +888,38 @@ def shadow_tickets(cands, short=None, ticket=None):
         out.append(("value_ticket", best))
     for c in priced[:CONFIG.get("value_max_singles", 10)]:
         out.append(("value_single", [c]))
+    for c in kaunitz_bets(wide_pool)[:CONFIG.get("value_max_singles", 10)]:
+        out.append(("kaunitz_single", [dict(c, odds=c["top_odds"], book=c["top_book"])]))
     return out
+
+
+def save_odds_snapshot(today, now, events=None):
+    """Keep every price fetched today in data/odds/<date>.json.gz (compact).
+
+    Lets later reviews replay any selection rule on real prices offline, without spending
+    Odds API credits. Results come from the shadow, pick and score logs.
+    """
+    import gzip
+    events = RAW_EVENTS if events is None else events
+    if not events:
+        return None
+    compact = []
+    for e in events:
+        books = {}
+        for b in e.get("bookmakers", []):
+            books[b.get("key", "")] = {
+                m["key"]: [[o.get("name"), o.get("point"), o.get("price")]
+                           for o in m.get("outcomes", [])]
+                for m in b.get("markets", [])}
+        compact.append({"id": e["id"], "sport_key": e["sport_key"],
+                        "home": e["home_team"], "away": e["away_team"],
+                        "start": e["commence_time"], "books": books})
+    folder = STATE_PATH.parent / "odds"
+    folder.mkdir(exist_ok=True)
+    path = folder / f"{today}.json.gz"
+    with gzip.open(path, "wt") as fh:
+        json.dump({"fetched": iso(now), "events": compact}, fh, separators=(",", ":"))
+    return path
 
 
 def shadow_rows(today, tickets):
@@ -1351,6 +1435,7 @@ def run(now=None, force=False, resend=False, preview=False):
     state = json.loads(STATE_PATH.read_text())
     SCORES.clear()
     FETCHED_KEYS.clear()
+    RAW_EVENTS.clear()
 
     if not force and not resend and not preview:
         if local.hour < CONFIG["send_hour_local"]:
@@ -1412,11 +1497,15 @@ def run(now=None, force=False, resend=False, preview=False):
         shadows = []
         try:
             shadows = shadow_tickets(cands, LAST_SHORT[0] if result is not None and LAST_SHORT
-                                     else None, ticket)
+                                     else None, ticket, wide=wide_candidates())
         except Exception as exc:  # the experiment must never stop the daily ticket
             print(f"Shadow tickets failed: {exc}")
         SHADOW_TODAY[:] = shadows
         if not preview:
+            try:
+                save_odds_snapshot(today, now)
+            except Exception as exc:
+                print(f"Odds snapshot failed: {exc}")
             if shadows:
                 log_shadow(today, shadows)
             mode = "paper" if paper else "real"

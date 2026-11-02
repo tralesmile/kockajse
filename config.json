@@ -64,5 +64,6 @@
   "max_closing_credits_per_day": 16,
   "value_min_edge": 0.02,
   "value_max_odds": 4.0,
-  "value_max_singles": 10
+  "value_max_singles": 10,
+  "kaunitz_alpha": 0.05
 }
