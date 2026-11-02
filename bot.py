@@ -37,7 +37,7 @@ CLOSING_BUDGET_PATH = ROOT / "data" / "closing_budget.json"
 CLOSING_FIELDS = ["date", "event_id", "sport_key", "match", "market", "sel", "point", "pick",
                   "start", "on_ticket", "captured", "minutes_before", "open_odds",
                   "open_consensus", "open_sharp", "close_odds", "close_consensus",
-                  "close_sharp", "close_book", "clv", "move"]
+                  "close_sharp", "close_book", "clv", "move", "source"]
 LESSONS_PATH = ROOT / "prompts" / "lessons.md"
 LEDGER_FIELDS = ["ticket_no", "date", "picks", "total_odds", "stake", "result", "payout", "tax",
                  "net_profit", "bankroll_after", "mode"]
@@ -643,22 +643,30 @@ def read_closing():
         return list(csv.DictReader(fh))
 
 
-def closing_row(pick, cand, now):
+def closing_row(pick, cand, now, source="pick"):
     """One closing-line record: the logged bet next to the prices shortly before the start.
 
     clv: what the price we logged pays against the closing fair chance (sharp if priced,
     else consensus), as a share; above 0 means we got a better price than the close.
     move: how much the fair chance of our side rose between the pick and the close,
-    sharp to sharp when both exist, otherwise consensus to consensus.
+    sharp to sharp when both exist, otherwise consensus to consensus (blank when the
+    opening chance is unknown, as for shadow bets without a sharp price).
+    source: "pick" for the pick log, otherwise the shadow strategy (value_single ...), whose
+    open_odds is the best bookmaker price that strategy took.
     """
     minutes = round((parse_time(pick["start"]) - now).total_seconds() / 60)
+    if source == "pick":
+        open_cons = pick.get("consensus_chance") or pick["market_chance"]
+        open_sharp = pick.get("sharp_chance", "")
+    else:
+        open_cons = ""
+        open_sharp = pick.get("fair_chance", "") if source in SHARP_SHADOWS else ""
     row = {"date": pick["date"], "event_id": pick["event_id"], "sport_key": pick["sport_key"],
            "match": pick["match"], "market": pick["market"], "sel": pick["sel"],
            "point": pick["point"], "pick": pick["pick"], "start": pick["start"],
-           "on_ticket": pick["on_ticket"], "captured": iso(now), "minutes_before": minutes,
-           "open_odds": pick["odds"],
-           "open_consensus": pick.get("consensus_chance") or pick["market_chance"],
-           "open_sharp": pick.get("sharp_chance", "")}
+           "on_ticket": pick.get("on_ticket", "no"), "captured": iso(now),
+           "minutes_before": minutes, "open_odds": pick["odds"],
+           "open_consensus": open_cons, "open_sharp": open_sharp, "source": source}
     if cand is None:
         return row  # the line moved away (or the bet left the feed): nothing to compare
     close = cand["sharp"] if cand["sharp"] is not None else cand["consensus"]
@@ -668,27 +676,95 @@ def closing_row(pick, cand, now):
                clv=round(float(pick["odds"]) * close - 1, 4))
     if row["open_sharp"] and cand["sharp"] is not None:
         row["move"] = round(cand["sharp"] - float(row["open_sharp"]), 4)
-    else:
+    elif row["open_consensus"]:
         row["move"] = round(cand["consensus"] - float(row["open_consensus"]), 4)
     return row
 
 
-def capture_closing(now=None):
-    """Record the prices of logged picks shortly before they start (closing line value).
+# Shadow strategies whose closing price is recorded too, so their value can be checked
+# against the close; value singles need a sharp price, so their fair chance is sharp.
+SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket")
+SHARP_SHADOWS = ("value_single", "value_ticket")
 
-    Run every 30 minutes by .github/workflows/closing.yml. Picks starting within
-    closing_window_minutes are fetched once, one request per league, ticket legs first,
-    within a daily credit budget. Makes no request when nothing is about to start.
+
+NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
+
+
+def closing_captures():
+    """Captured bets: key -> smallest minutes_before recorded (one bet may be captured twice,
+    once early as a fallback and once near the start)."""
+    out = {}
+    for r in read_closing():
+        key = bet_key(r["event_id"], r["market"], r["sel"], r["point"]) + (r.get("source") or "pick",)
+        mins = int(float(r["minutes_before"] or 0))
+        out[key] = min(mins, out.get(key, mins))
+    return out
+
+
+def closing_todo(now, captures=None):
+    """Logged bets not started yet and without a near-start capture: (source, row, early)
+    where early says whether a fallback capture already exists. Picks first."""
+    captures = closing_captures() if captures is None else captures
+    out, seen = [], set()
+    rows = [("pick", r) for r in read_picks()]
+    rows += [(r["strategy"], r) for r in read_shadow() if r["strategy"] in SHADOW_CLV]
+    for source, r in rows:
+        key = bet_key(r["event_id"], r["market"], r["sel"], r["point"]) + (source,)
+        if r["result"] != "pending" or parse_time(r["start"]) <= now or key in seen:
+            continue
+        seen.add(key)
+        if key in captures and captures[key] <= NEAR_MINUTES:
+            continue
+        out.append((source, r, key in captures))
+    return out
+
+
+def closing_next_wait(now=None):
+    """Seconds until the next bet should be captured (its start minus closing_lead_minutes),
+    0 when one is due now, None when nothing is left to capture."""
+    now = now or datetime.now(timezone.utc)
+    lead = timedelta(minutes=CONFIG.get("closing_lead_minutes", 15))
+    starts = [parse_time(r["start"]) for _, r, _ in closing_todo(now)]
+    if not starts:
+        return None
+    return max(0, int((min(starts) - lead - now).total_seconds()))
+
+
+def late_value_bets(events, now):
+    """Value at the best price minutes before kick-off, when the sharp price is at its most
+    accurate (Pinnacle's closing line is the best known estimate of the true chance), so a
+    soft price above it there is as close to certain value as the feed can show. Logged as
+    shadow "late_value" singles, one per match, never twice for the same match."""
+    taken = {r["event_id"] for r in read_shadow() if r["strategy"] == "late_value"}
+    cands = []
+    for event in events or []:
+        if event["id"] in taken or parse_time(event["commence_time"]) <= now:
+            continue
+        cands.extend(candidates_from_event(event, max_odds=CONFIG.get("value_max_odds", 4.0)))
+    return [dict(c, odds=c["best_odds"], prob=c["sharp"], book=c["best_book"])
+            for c in value_bets(cands)]
+
+
+def capture_closing(now=None, window_minutes=None):
+    """Record the prices of logged bets shortly before they start (closing line value).
+
+    Run by .github/workflows/closing.yml, whose scheduled runs GitHub often delays by hours.
+    So each run captures every bet starting within closing_early_minutes once as a fallback,
+    and again once it is within NEAR_MINUTES of the start (the true closing price); the run
+    waits a few minutes when a start is close (see closing_next_wait). Each league is
+    fetched once for all its matches in the window (same cost as one match), ticket legs
+    first, then other picks, then shadow value bets, within a daily credit budget. The same
+    prices are scanned for late value bets. Makes no request when nothing is due.
     """
     now = now or datetime.now(timezone.utc)
-    window = timedelta(minutes=CONFIG.get("closing_window_minutes", 45))
-    done = {bet_key(r["event_id"], r["market"], r["sel"], r["point"]) for r in read_closing()}
-    due = [r for r in read_picks() if r["result"] == "pending"
-           and now < parse_time(r["start"]) <= now + window
-           and bet_key(r["event_id"], r["market"], r["sel"], r["point"]) not in done]
+    window = timedelta(minutes=window_minutes or CONFIG.get("closing_early_minutes", 180))
+    near = now + timedelta(minutes=NEAR_MINUTES)
+    due = [(s, r) for s, r, early in closing_todo(now)
+           if parse_time(r["start"]) <= (near if early else now + window)]
     if not due:
-        print("No logged pick starts soon; nothing to capture.")
+        print("No logged bet starts soon; nothing to capture.")
         return 0
+    window = max(window, timedelta(minutes=NEAR_MINUTES))
     today = now.date().isoformat()
     budget = {}
     if CLOSING_BUDGET_PATH.exists():
@@ -696,44 +772,63 @@ def capture_closing(now=None):
     used = budget.get(today, 0)
     limit = CONFIG.get("max_closing_credits_per_day", 16)
     leagues = {}
-    for r in due:
-        leagues.setdefault(r["sport_key"], []).append(r)
-    order = sorted(leagues, key=lambda k: (not any(r["on_ticket"] == "yes" for r in leagues[k]),
-                                           min(r["start"] for r in leagues[k])))
+    for s, r in due:
+        leagues.setdefault(r["sport_key"], []).append((s, r))
+
+    def rank(key):
+        items = leagues[key]
+        return (not any(s == "pick" and r.get("on_ticket") == "yes" for s, r in items),
+                not any(s == "pick" for s, _ in items), min(r["start"] for _, r in items))
+
     rows = read_closing()
-    added = 0
-    for key in order:
-        picks = leagues[key]
-        markets = sorted({"h2h" if r["market"] == "dc" else r["market"] for r in picks})
+    added, late = 0, []
+    for key in sorted(leagues, key=rank):
+        items = leagues[key]
+        markets = sorted({"h2h" if r["market"] == "dc" else r["market"] for _, r in items})
         if used + len(markets) > limit:
             print(f"Closing budget reached ({used}/{limit}); skipping {key}.")
             continue
-        ids = sorted({r["event_id"] for r in picks})
         events = api_get(f"/sports/{key}/odds", regions=CONFIG["region"],
                          markets=",".join(markets), oddsFormat="decimal",
-                         eventIds=",".join(ids), commenceTimeFrom=iso(now))
+                         commenceTimeFrom=iso(now), commenceTimeTo=iso(now + window))
         used += len(markets)
         cands = {}
         for event in events or []:
             for c in candidates_from_event(event, strict=False):
                 cands[bet_key(c["event_id"], c["market"], c["sel"], c["point"])] = c
-        for r in picks:
+        for s, r in items:
             rows.append(closing_row(r, cands.get(bet_key(r["event_id"], r["market"], r["sel"],
-                                                         r["point"])), now))
+                                                         r["point"])), now, s))
             added += 1
+        late.extend(late_value_bets(events, now))
     budget = {today: used}  # only today's count is needed
     CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
     with CLOSING_PATH.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, CLOSING_FIELDS, restval="")
         writer.writeheader()
         writer.writerows(rows)
-    print(f"Captured closing prices for {added} picks ({used}/{limit} credits today).")
+    if late:
+        shadow = read_shadow()
+        day = now.astimezone(TZ).date().isoformat()
+        count = sum(1 for r in shadow if r["strategy"] == "late_value" and r["date"] == day)
+        new = shadow_rows(day, [("late_value", [c]) for c in late])
+        for i, r in enumerate(new):  # ids continue after earlier late bets of the day
+            r["shadow_id"] = f"{day}-late_value-{count + i + 1}"
+        write_shadow(shadow + new)
+    print(f"Captured closing prices for {added} bets, {len(late)} late value bets "
+          f"({used}/{limit} credits today).")
     return added
 
 
 def clv_html():
     """Closing line value summary for the email: the earliest sign of a real edge."""
-    rows = [r for r in read_closing() if r.get("clv")]
+    latest = {}
+    for r in read_closing():
+        if r.get("clv"):
+            key = bet_key(r["event_id"], r["market"], r["sel"], r["point"]) + (r.get("source") or "pick",)
+            if key not in latest or float(r["minutes_before"]) < float(latest[key]["minutes_before"]):
+                latest[key] = r
+    rows = list(latest.values())
     if not rows:
         return ""
 
@@ -742,18 +837,22 @@ def clv_html():
             return ""
         n = len(group)
         clv = sum(float(r["clv"]) for r in group) / n
-        move = sum(float(r["move"]) for r in group) / n
-        beat = sum(float(r["move"]) > 0 for r in group) / n
-        return (f"<tr><td>{label}</td><td>{n}</td><td>{clv:+.1%}</td><td>{move * 100:+.1f}</td>"
-                f"<td>{beat:.0%}</td></tr>")
+        moved = [float(r["move"]) for r in group if r.get("move")]
+        move = f"{sum(moved) / len(moved) * 100:+.1f}" if moved else "-"
+        beat = f"{sum(m > 0 for m in moved) / len(moved):.0%}" if moved else "-"
+        return (f"<tr><td>{label}</td><td>{n}</td><td>{clv:+.1%}</td><td>{move}</td>"
+                f"<td>{beat}</td></tr>")
 
-    table = line("On the ticket", [r for r in rows if r["on_ticket"] == "yes"])
-    table += line("All logged picks", rows)
+    picks = [r for r in rows if (r.get("source") or "pick") == "pick"]
+    table = line("On the ticket", [r for r in picks if r["on_ticket"] == "yes"])
+    table += line("All logged picks", picks)
+    table += line("Value singles (best price)", [r for r in rows if r.get("source") == "value_single"])
+    table += line("Kaunitz singles (best price)", [r for r in rows if r.get("source") == "kaunitz_single"])
     return ("<h3>Closing line</h3><table border='1' cellpadding='5' cellspacing='0' "
-            "style='border-collapse:collapse;font-size:13px'><tr><th>Group</th><th>Picks</th>"
+            "style='border-collapse:collapse;font-size:13px'><tr><th>Group</th><th>Bets</th>"
             "<th>Price vs close</th><th>Chance moved (points)</th><th>Moved our way</th></tr>"
             + table + "</table><p><small>Prices are checked again shortly before each start. "
-            "Picks whose chance keeps rising before kick-off show a real edge long before "
+            "Bets whose price beats the closing fair price show a real edge long before "
             "win rates can.</small></p>")
 
 
@@ -771,6 +870,7 @@ SHADOW_NAMES = {
     "value_ticket": "Value ticket at the best bookmaker price",
     "value_single": "Value singles at the best bookmaker price",
     "kaunitz_single": "Kaunitz singles (best price far above the average)",
+    "late_value": "Late value singles (best price minutes before kick-off)",
 }
 
 
@@ -941,7 +1041,8 @@ def shadow_rows(today, tickets):
 
 
 def log_shadow(today, tickets):
-    rows = [r for r in read_shadow() if r["date"] != today]  # a forced re-run replaces today
+    # A forced re-run replaces today's morning shadows; late bets logged by the closing job stay.
+    rows = [r for r in read_shadow() if r["date"] != today or r["strategy"].startswith("late_")]
     write_shadow(rows + shadow_rows(today, tickets))
 
 
@@ -1629,8 +1730,15 @@ if __name__ == "__main__":
     if "--diagnose" in sys.argv:
         diagnose()
         sys.exit()
+    if "--closing-next" in sys.argv:
+        wait = closing_next_wait()
+        print("none" if wait is None else wait)
+        sys.exit()
     if "--closing" in sys.argv:
-        capture_closing()
+        window = None
+        if "--window" in sys.argv:
+            window = int(sys.argv[sys.argv.index("--window") + 1])
+        capture_closing(window_minutes=window)
         sys.exit()
     if "--notify-changes" in sys.argv:
         notify_changes()

@@ -1,8 +1,13 @@
 name: Closing prices
 
-# Every 30 minutes through the betting day, record the prices of logged picks that start
-# within the next 45 minutes (closing line value). Runs that find nothing about to start
-# make no Odds API request and commit nothing.
+# Records the prices of logged bets again before they start (closing line value) and scans
+# the same prices for late value bets.
+#
+# GitHub runs scheduled jobs hours late or skips them (only 8 of about 70 planned runs
+# happened from 31 Oct to 2 Nov), so each run that does happen captures every bet starting
+# in the next 3 hours as a fallback, and when a start is under about 30 minutes away it
+# waits (at most closing_max_wait_minutes per nap, 40 minutes in all) to capture it near
+# kick-off. Runs that find nothing due make no Odds API request and commit nothing.
 on:
   schedule:
     - cron: "11,41 10-23 * * *"
@@ -19,7 +24,7 @@ concurrency:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,13 +36,34 @@ jobs:
           ODDS_API_KEY_2: ${{ secrets.ODDS_API_KEY_2 }}
           ODDS_API_KEY_3: ${{ secrets.ODDS_API_KEY_3 }}
           ODDS_API_KEY_4: ${{ secrets.ODDS_API_KEY_4 }}
-        run: python bot.py --closing
-      - name: Save closing prices
         run: |
           git config user.name "betting-bot"
           git config user.email "betting-bot@users.noreply.github.com"
-          git add data/closing.csv data/closing_budget.json 2>/dev/null || true
-          git diff --cached --quiet && exit 0
-          git commit -m "Update closing prices"
-          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 10; done
-          exit 1
+          save() {
+            git add data/closing.csv data/closing_budget.json data/shadow.csv 2>/dev/null || true
+            git diff --cached --quiet && return 0
+            git commit -q -m "Update closing prices"
+            for i in 1 2 3; do git pull -q --rebase && git push -q && return 0; sleep 10; done
+            return 1
+          }
+          max_wait=$(python -c "import json; print(json.load(open('config.json')).get('closing_max_wait_minutes', 15) * 60)")
+          end=$((SECONDS + 40 * 60))
+          last=""
+          while :; do
+            python bot.py --closing
+            save
+            wait=$(python bot.py --closing-next)
+            left=$((end - SECONDS))
+            if [ "$wait" = "none" ] || [ "$wait" -gt "$max_wait" ] || [ "$wait" -ge "$left" ]; then
+              echo "Next capture: ${wait}s away; leaving it to a later run."
+              exit 0
+            fi
+            if [ "$wait" -lt 60 ] && [ -n "$last" ] && [ "$last" -lt 60 ]; then
+              echo "Still due after a capture (daily credit budget used up?); stopping."
+              exit 0
+            fi
+            last=$wait
+            echo "Next capture in ${wait}s; waiting."
+            sleep "$((wait + 5))"
+            git pull -q --rebase || true
+          done

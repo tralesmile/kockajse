@@ -6,6 +6,16 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Reliable closing capture + late value + CLV for value shadows (2 Nov evening, 5/4/2).
+  Found that GitHub ran only 8 of ~70 planned closing jobs from 31 Oct to 2 Nov, so 11 of 116
+  picks had a closing price and none of 2 Nov's. Each run now captures every bet starting in
+  the next 3 hours as a fallback and again within 60 minutes of the start (waiting up to 15
+  min when a start is close); value and Kaunitz singles are captured too (`source` column in
+  `closing.csv`). The same fetch (all league matches in the window, same credit cost) logs
+  shadow "late_value" singles at the best price vs the near-kick-off Pinnacle price.
+  Measuring: share of picks with a near capture (target 80%+), CLV of value singles vs
+  picks, late_value bets per day and their ROI, closing credits per day (cap 20).
+
 - Wide value scan + Kaunitz rule + odds archive (2 Nov morning, bold, 5/3/2). Value shadows
   now search every priced match in the shortlisted leagues at odds up to 4.00 (the ticket list
   stops at 2.00; Kaunitz's bets averaged 2.30). New "kaunitz_single" shadow uses the paper's
@@ -39,15 +49,31 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
-- Late value scan in the Kaunitz window (timing, 4/3/3): the paper's 9.9% came from bets 5h
-  to 1h before kick-off, and soft books are slowest then; our scan is at 08:00, often 12h
-  before. The closing job could re-scan events of the day (1 credit per league) and log
-  shadow value bets there. Check credit budget first (key 1 had 404 left on 2 Nov).
+- External scheduler for exact capture times (timing, 4/4/1 for the owner): GitHub's own
+  schedule is unreliable (see above). A free cron service (cron-job.org) calling the
+  workflow_dispatch API with a fine-grained token (Actions: write on this repo only) would
+  wake the closing job on time. Needs the owner to create the token; suggest in CHANGES.md
+  if near-capture coverage stays under 80%.
+- Actions minutes guard (reliability, 4/4/1): the repository is private, so GitHub's free
+  plan gives 2,000 minutes a month; the daily run takes up to 40 and each closing run at
+  least 1. Check the billing page usage; if close to the limit, thin the closing schedule.
+- Slow-book value (market microstructure, unconventional, 3/2/2): OddsPapi (Sep 2026)
+  measured 1xBet following Pinnacle moves in ~6-12 min but Bet365 in ~47-67 min (follows
+  only 59-73% of moves). Value at slow books is more likely real lag than an error; split
+  value-single results by bookmaker speed once ~100 exist.
+- Sequential testing (experiments, unconventional, from clinical trials, 3/4/2): a SPRT or
+  Bayesian A/B on shadow strategies' CLV, so a strategy can be declared better or dropped
+  as soon as the evidence is enough, instead of a fixed ~150 bets.
+- Gemini 3.8 flash with search on keys 3 and 4 (AI workflow, 3/3/1): keys 3/4 answer that
+  2.5-flash is "no longer available to new users, use gemini-3.8-flash". If 3.8-flash
+  allows Google Search grounding on the free tier, the research quota doubles. Needs a
+  diagnose run, which the review may not start; ask the owner or test in a preview.
+- AI weight 0 shadow (modelling, 2/3/1): Brier on 68 picks is market 0.2278 vs AI 0.2358;
+  a "market + 0% AI" ticket is the "market" shadow already, so read that comparison first.
+
 - Second odds region (data, 3/2/2): adding "uk" (Betfred, Coral, Paddy Power, Sky Bet ...)
   to the value scan widens the best-price search; costs 1 credit per league. Try only if the
   archive shows near-misses (best_edge between 0 and 2%) are common.
-- CLV for value shadows (measurement, 4/4/2): closing job captures prices only for judged
-  picks; adding value and Kaunitz singles gives an early read of whether they are real value.
 - Bookmaker dispersion as a signal (modelling, unconventional, from market microstructure,
   2/2/2): high spread between books on one outcome means stale prices or news; test on the
   odds archive whether high-dispersion favourites win more or less than their chance.

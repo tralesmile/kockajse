@@ -100,7 +100,8 @@ calls = []
 bot.api_get = lambda path, **params: calls.append(params) or [close_event("c1")]
 at = datetime(2026, 11, 1, 14, 30, tzinfo=timezone.utc)
 assert bot.capture_closing(at) == 2  # only the two c1 picks start within the window
-assert len(calls) == 1 and calls[0]["eventIds"] == "c1" and calls[0]["markets"] == "h2h,totals"
+assert len(calls) == 1 and calls[0]["markets"] == "h2h,totals" and "eventIds" not in calls[0]
+assert calls[0]["commenceTimeTo"] == "2026-11-01T17:30:00Z"  # the early window: 3 hours
 closing = {r["pick"]: r for r in bot.read_closing()}
 home = closing["Home to win"]
 fair = (1 / 1.7) / (1 / 1.7 + 1 / 5.0 + 1 / 4.0)

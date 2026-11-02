@@ -200,3 +200,40 @@ the scarce Gemini search quota).
 To measure next: value and Kaunitz singles per day and their sports/books; settle results
 over ~2 weeks; build the offline backtest script once 5+ archive days exist; check archive
 size per day.
+
+## 2026-11-02 (evening review): the closing job was missing most kick-offs
+
+Measured: nothing new settled since the morning (68 settled judged picks; ticket 25 open,
+both legs play tonight), so no new lost ticket pick to review. Odds bands of settled picks:
+1.00-1.35 6/7 (market 76%), 1.35-1.60 9/12 (64%), 1.60-1.80 12/20 (56%), 1.80-2.10 16/29
+(50%); all slightly above the market, well inside noise at this sample size.
+Closing line: only 11 captures in total, none for the 48 picks of 2 Nov. Cause: GitHub ran
+only 8 of the ~70 scheduled closing jobs from 31 Oct 23:39 to 2 Nov 20:16 (gaps of 3 to 11
+hours), and each run only looked 45 minutes ahead. So the earliest-edge metric (CLV) was
+starving. The repository is private (2,000 free Actions minutes a month on GitHub's free
+plan), so a job that stays awake all day is not an option.
+
+Researched: GitHub docs on GITHUB_TOKEN (workflow_dispatch always creates runs; other
+events do not); Runhooks on scheduled-run delays and silent drops, with external
+schedulers calling workflow_dispatch as the fix; OddsPapi "Soft book lag" (Sep 2026, 28
+fixtures, 1,234 Pinnacle moves): 1xBet follows Pinnacle moves in a median 6-12 minutes,
+Bet365 in 47-67 minutes and only 59-73% of the time; Pinnacle reprices 60-73 times in the
+last 24 hours; their advice is to grade against the closing line.
+
+Ideas considered (scored in IDEAS.md): reliable closing capture with an early fallback;
+late value scan at the near-kick-off sharp price; CLV for value shadows; an external
+scheduler; an Actions-minutes guard; slow-book value; sequential testing of strategies;
+Gemini 3.8 flash with search on keys 3/4; an AI-weight-0 comparison.
+
+Changed: every closing run now captures each bet starting in the next 3 hours once (a
+fallback) and again within 60 minutes of the start, waiting up to 15 minutes in the run when
+a start is close (40 minutes per run at most). Value and Kaunitz singles from the shadow
+log are captured too (`source` column). Each league request now covers all its matches in
+the window (same credit cost), and those prices log new shadow "late_value" singles: best
+soft price at least 2% above the Pinnacle fair chance shortly before kick-off. Closing budget
+16 -> 20 credits a day. The email's closing table shows each bet once (latest capture) and
+adds value- and Kaunitz-single rows. The real ticket is unchanged, so no preview run.
+
+To measure next: share of picks with a capture within 60 minutes (and within 180); CLV of
+value singles vs ordinary picks; late_value count per day and which books; closing credits
+used per day; whether the 3-hour fallback CLV agrees in sign with the near capture.

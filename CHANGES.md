@@ -2,6 +2,15 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-02: closing prices are now caught for most bets
+
+- The check of prices just before kick-off (the best early sign of a real edge) had caught only 11 of 116 bets: GitHub ran just 8 of about 70 planned checks over two days.
+- Each check that does run now records every bet starting in the next 3 hours, and again within the last hour before kick-off, waiting a few minutes when a start is close.
+- The "value" bets are now checked against the closing price too, so within a couple of weeks we can see whether they really beat the market.
+- New experiment: shortly before kick-off, when the sharp price is most accurate, the bot logs any bookmaker still paying at least 2% above it ("late value"). Paper only.
+- Your ticket is chosen exactly as before. Up to 20 Odds API credits a day for these checks (was 16), well inside the quota.
+- Worth a look: the repository is private, so GitHub's free plan allows 2,000 Actions minutes a month; you can see usage under Settings, Billing.
+
 ## 2026-11-02: a wider hunt for prices above fair, and every price is now kept
 
 - On today's bets no bookmaker paid more than the fair chance on anything, so the "value" bets added yesterday found nothing. They only looked at odds up to 2.00; the published method they copy found most of its value around 2.30.
