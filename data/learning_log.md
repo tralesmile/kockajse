@@ -290,3 +290,47 @@ preview was started, which also keeps key 2's search quota for tomorrow.
 
 To measure next: actual_best odds gain per day; single vs actual return; taxed_value bets
 per day; try power de-margining on the value shadows; per-league margins from the backtest.
+
+## 2026-11-03 (evening review): power de-margining, tested on 80,000 matches
+
+Measured: nothing new settled since the morning (115 settled judged picks; ticket 26 open:
+Anaitasuna v Alavés Under 4.5 and Kansas St -10.5). Picks by odds band still track the market
+(1.00-1.35 77% vs 75%, 1.35-1.60 71% vs 63%, 1.60-1.80 56% vs 56%, 1.80-2.10 51% vs 50%);
+Brier market 0.2278 vs AI 0.2323. The closing job did run near a kick-off today (17:44 UTC,
+5 captures for the Copa del Rey games), the first since the 2 Nov change. 3 Nov's slate was
+36 NCAAB picks of 41 (opening-week mismatches); the new shadows from the morning review
+start with tomorrow's run.
+
+Researched: Goto, Takeishi and Yairi (arXiv 2604.17194, 2026; 90,014 football matches,
+2012-2024, five books): power or their OO-EPC method has the lowest log loss, proportional
+the highest for all five books; fitted power constant 1.06-1.15 (favourite-longshot bias).
+`implied` R package docs (proportional "tends to be the least accurate"; additive can go
+negative). Edge Lab on 1,892 Polymarket sports markets (no bookmaker match, weak evidence:
+kept Polymarket as a low-priority idea).
+
+Tested (football-data mirror, Pinnacle closing 1X2, 80,832 matches 2012-2026): log loss
+proportional 0.99573, Shin 0.99554, power 0.99551. Logistic recalibration fitted on 2012-2019
+and tested on 2019-2026: proportional slope 1.047 (test log loss 0.61755 -> 0.61746 after
+recalibration), power slope 1.013 (0.61739, no change), so power is already calibrated.
+Single bets after the 15% tax: heavy favourites at the best price are the only zone near
+break-even (h2h 1.01-1.20 at best: 557 bets about +0.2%; at the average price -4%). Tax
+hurdle is about 15% x (1 - chance), so it is smallest on favourites.
+Backtest 2019-2026 (paired, same days): live ticket rule with power chances -11.8% vs
+-14.2% (close), -17.7% vs -19.7% (open), paired +2.5 ± 2.1 and +2.0 ± 2.1 points.
+Tax-proof singles at best price with power chance, odds 1.05-4.00: 802 bets +0.2% ± 2.5
+(close), 168 bets -3.4% ± 4.9 (open).
+
+Ideas considered (scored in IDEAS.md): power de-margining for value and ticket (built);
+heavy-favourite value from odds 1.05 (built, part of it); extremizing/recalibration (tested,
+dropped); Gemini decision circuit breaker; shortlist league cap; late power value; paired
+comparisons in the backtest; taxed Kelly ranking; Polymarket reference (kept, low).
+
+Changed: `power_devig()` in bot.py; every candidate carries `power_prob` and `sharp_power`.
+New shadows "power_value" (tax-proof singles at the best price with the power chance; the
+wide scan for it starts at odds 1.05, new config `value_min_odds`) and "power_ticket" (live
+rule with power chances); power_value gets closing captures compared power to power.
+backtest.py has `most_likely_power` and `value_taxed_power`; reports refreshed. New
+`tests/test_power.py`. The real ticket is unchanged, so no preview run.
+
+To measure next: power_value bets per day and CLV; power_ticket vs actual and market; if
+power_ticket holds up, switch the ticket's chance to power (backtest says about +2 points).

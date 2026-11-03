@@ -6,6 +6,21 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Power-method de-margining, shadows "power_value" and "power_ticket" (3 Nov evening,
+  modelling, 4/4/2). Every candidate now also carries a power-method chance (`power_prob`,
+  `sharp_power`). Evidence: on 80,832 Pinnacle closing 1X2 prices (2012-2026) a logistic
+  refit of the power chance has slope 1.013 (calibrated) vs 1.047 for proportional (which
+  understates favourites); Goto et al. 2026 (arXiv 2604.17194, 90,014 matches) find power
+  best or near best and proportional worst for all five books. Backtest 2019-2026: the live
+  ticket rule with power chances realised -11.8% vs -14.2% at closing prices and -17.7% vs
+  -19.7% at opening prices (paired difference +2.5 ± 2.1 and +2.0 ± 2.1 points; same ticket
+  on 69% of days). Tax-proof singles at the best price with the power chance (from odds 1.05,
+  where the tax costs least): 802 bets, +0.2% ± 2.5 realised after tax, hit 70.6% vs 70.9%
+  expected (proportional rule: 248 bets, -2.7% ± 6.0); at opening prices 168 bets, -3.4% ±
+  4.9. Replay of the 3 Nov odds archive: 0 bets (mostly even NCAAB lines). Measuring: count
+  per day, ROI and CLV of power_value; power_ticket vs actual/market on the same days. If
+  power_ticket keeps up with the market shadow for ~3 weeks, make power the ticket's chance.
+
 - Historical backtest on football-data.co.uk (3 Nov morning, bold, experiments, 5/4/3).
   `backtest.py` replays the bot's rules (same build_ticket, same config, 15% tax) on 41,971
   matches in 17 European leagues, 2019-20 to 2025-26, average price vs Pinnacle fair chance.
@@ -72,12 +87,24 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
-- Power or Shin de-margining instead of proportional (modelling, 3/4/1): on 26,791 Pinnacle
-  closing 1X2 prices, proportional normalisation understates favourites (predicted 74.5%,
-  won 78.4%; 64.5% -> 67.0%); power method 74.4% -> 77.4%, log loss 0.98851 vs 0.98899;
-  same small gain on over/under. Better fair chances for favourites (our legs) and fewer
-  false longshot "values". Next: add it as the fair chance for the value shadows first,
-  then for the ticket if the shadow agrees.
+- Gemini decision circuit breaker (AI workflow, 2/4/1): on 3 Nov the decision call failed 29
+  times (503 "high demand" and timeouts) before gemini-3.6-flash on key 3 answered. After
+  two 503s on a model, move to the next model instead of trying every key; add
+  gemini-2.5-flash-lite (no search needed) as the last plain fallback.
+- Shortlist league cap (selection, 2/3/1): on 3 Nov 36 of 41 logged picks were NCAAB
+  opening-week mismatches (spreads of 26-30 points) and the ticket took a Copa del Rey tie
+  with a fifth-tier side; cap any one league at about half the shortlist so the AI's research
+  covers markets it can inform.
+- Late power value (timing, 3/3/1): the backtest finds 5 times more tax-proof power value at
+  closing prices (802) than at opening prices (168); the late_value scan near kick-off could
+  use the power chance and the tax test too.
+- Paired comparison in backtest.py (experiments, 3/4/1): report the per-day paired
+  difference and its standard error between any two strategies (done by hand on 3 Nov;
+  far tighter than comparing two ROIs).
+- Taxed Kelly ranking (modelling, unconventional, from portfolio theory, 2/2/1): rank value
+  singles by the Kelly fraction after tax instead of raw value, so short-priced, high-chance
+  value comes first; informs a staking recommendation only.
+
 - League margin table (leagues, 3/3/2): the backtest can list the average-price margin per
   league and market; restrict the ticket to the cheapest ones (big leagues are usually
   2-3 points cheaper than second divisions).
@@ -160,5 +187,9 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Dropped
 
-(none yet. The old "raise the value-bet odds cap" idea was built on 2 Nov as part of the
-wide value scan above.)
+- Extremizing / logistic recalibration of Pinnacle chances (unconventional, from forecasting
+  tournaments, tested 3 Nov evening): fitted on 2012-2019, tested on 2019-2026; on top of the
+  power method the slope is 1.013 and the test log loss does not improve (0.61739 both). The
+  power method already removes the favourite-longshot bias; no extra tilt is justified.
+- (The old "raise the value-bet odds cap" idea was built on 2 Nov as part of the wide value
+  scan.)

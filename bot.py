@@ -211,7 +211,34 @@ def ai_scout(fixtures, today):
     return ids
 
 
-def candidates_from_event(event, strict=True, max_odds=None):
+def power_devig(prices):
+    """Margin-free chances by the power method: p_i = (1/o_i)^k with k chosen so they sum to 1.
+
+    Proportional normalisation (dividing by the overround) spreads the margin evenly, but
+    bookmakers put more of it on longshots (the favourite-longshot bias), so it understates
+    favourites. On 80,832 Pinnacle closing 1X2 prices (football-data.co.uk, 2012-2026) the
+    power method is calibrated (logistic refit slope 1.01 vs 1.05 for proportional) and has
+    lower log loss; Goto, Takeishi and Yairi (arXiv 2604.17194, 90,014 matches) also find
+    power at or near the best of five methods and proportional the worst for every book.
+    """
+    q = [1 / o for o in prices]
+    if sum(q) <= 1:
+        total = sum(q)
+        return [x / total for x in q]  # no margin (or a negative one): nothing to tilt
+    lo, hi = 1.0, 4.0
+    for _ in range(60):
+        k = (lo + hi) / 2
+        if sum(x ** k for x in q) > 1:
+            lo = k
+        else:
+            hi = k
+    k = (lo + hi) / 2
+    out = [x ** k for x in q]
+    total = sum(out)
+    return [x / total for x in out]
+
+
+def candidates_from_event(event, strict=True, max_odds=None, min_odds=None):
     """Turn one event into candidate bets with a fair chance for each.
 
     Covers match winner, double chance (derived from the win/draw/win prices), totals and,
@@ -222,7 +249,9 @@ def candidates_from_event(event, strict=True, max_odds=None):
     "edge" is how much the average price pays above that fair chance (prob x odds - 1).
     With strict=False the bookmaker-count and odds-range filters are skipped (used to read
     closing prices, where only matching an earlier bet matters). max_odds replaces the
-    max_leg_odds cap (the wide value scan looks at longer prices than the ticket uses).
+    max_leg_odds cap (the wide value scan looks at longer prices than the ticket uses);
+    min_odds replaces min_leg_odds (the tax-proof scan also looks at heavy favourites).
+    "power_prob"/"sharp_power" are the same chances de-margined by the power method.
     "top_odds" is the best price allowing outliers up to 25% above the average, as the
     Kaunitz rule bets exactly on such outliers.
     """
@@ -231,12 +260,15 @@ def candidates_from_event(event, strict=True, max_odds=None):
     unit = "goals" if sport in ("soccer", "handball") else "points"
     groups = {}
 
-    def add(market, sel, point, prob, price):
+    def add(market, sel, point, prob, price, ppow):
         g = groups.setdefault((market, sel, point),
-                              {"probs": [], "prices": [], "sharp": {}, "offers": []})
+                              {"probs": [], "pows": [], "prices": [], "sharp": {},
+                               "sharp_pow": {}, "offers": []})
         if bkey in SHARP_BOOKS:
             g["sharp"][bkey] = prob
+            g["sharp_pow"][bkey] = ppow
         g["probs"].append(prob)
+        g["pows"].append(ppow)
         g["prices"].append(price)
         if bkey not in EXCHANGES:
             g["offers"].append((price, bkey))
@@ -250,16 +282,17 @@ def candidates_from_event(event, strict=True, max_odds=None):
             total = sum(1 / o["price"] for o in outs)
             fair = {o["name"]: (1 / o["price"]) / total for o in outs}
             price = {o["name"]: o["price"] for o in outs}
+            pw = dict(zip([o["name"] for o in outs], power_devig([o["price"] for o in outs])))
             if market["key"] == "h2h":
                 for name in fair:
-                    add("h2h", name, None, fair[name], price[name])
+                    add("h2h", name, None, fair[name], price[name], pw[name])
                 if len(outs) == 3 and {home, away, "Draw"} <= set(fair):
                     # Double chance is not in the feed, so its price is worked out from the
                     # three match prices and cut by 3% to stay on the cautious side.
                     for sel, (x, y) in {"1X": (home, "Draw"), "X2": (away, "Draw"),
                                         "12": (home, away)}.items():
                         add("dc", sel, None, fair[x] + fair[y],
-                            0.97 / (1 / price[x] + 1 / price[y]))
+                            0.97 / (1 / price[x] + 1 / price[y]), pw[x] + pw[y])
             elif market["key"] == "totals" and len(outs) == 2 and sport != "tennis":
                 point = outs[0].get("point")
                 if point is None or point != outs[1].get("point"):
@@ -267,11 +300,12 @@ def candidates_from_event(event, strict=True, max_odds=None):
                 if sport == "soccer" and point % 1 != 0.5:
                     continue  # quarter and whole lines are not offered by local bookmakers
                 for o in outs:
-                    add("totals", o["name"], point, fair[o["name"]], o["price"])
+                    add("totals", o["name"], point, fair[o["name"]], o["price"], pw[o["name"]])
             elif market["key"] == "spreads" and len(outs) == 2 and sport == "basketball":
                 for o in outs:
                     if o.get("point") is not None:
-                        add("spreads", o["name"], o["point"], fair[o["name"]], o["price"])
+                        add("spreads", o["name"], o["point"], fair[o["name"]], o["price"],
+                            pw[o["name"]])
 
     labels = {"1X": f"{home} or draw (double chance)", "X2": f"{away} or draw (double chance)",
               "12": "No draw: either team wins (double chance)"}
@@ -282,7 +316,8 @@ def candidates_from_event(event, strict=True, max_odds=None):
             continue
         odds = round(sum(g["prices"]) / len(g["prices"]), 2)
         cap = max_odds if max_odds is not None else CONFIG["max_leg_odds"]
-        if strict and not CONFIG["min_leg_odds"] <= odds <= cap:
+        floor = min_odds if min_odds is not None else CONFIG["min_leg_odds"]
+        if strict and not floor <= odds <= cap:
             continue
         consensus = sum(g["probs"]) / len(g["probs"])
         sharp_book = next((b for b in SHARP_BOOKS if b in g["sharp"]), "")
@@ -290,6 +325,9 @@ def candidates_from_event(event, strict=True, max_odds=None):
         if sharp is not None and abs(sharp - consensus) > 0.10:
             sharp, sharp_book = None, ""  # far from every other book: likely a stale price
         prob = sharp if sharp is not None else consensus
+        sharp_power = g["sharp_pow"][sharp_book] if sharp_book else None
+        power_prob = (sharp_power if sharp_power is not None
+                      else sum(g["pows"]) / len(g["pows"]))
         best_odds, best_book = best_offer(g["offers"], odds) if market != "dc" else (None, "")
         top_odds, top_book = (best_offer(g["offers"], odds, 1.25) if market != "dc"
                               else (None, ""))
@@ -326,6 +364,8 @@ def candidates_from_event(event, strict=True, max_odds=None):
                           if sharp is not None and best_odds else None),
             "top_odds": top_odds,
             "top_book": top_book,
+            "power_prob": power_prob,
+            "sharp_power": sharp_power,
             "mean_odds": sum(g["prices"]) / len(g["prices"]),
             "books": len(g["probs"]),
             "result": "pending",
@@ -669,13 +709,16 @@ def closing_row(pick, cand, now, source="pick"):
            "open_consensus": open_cons, "open_sharp": open_sharp, "source": source}
     if cand is None:
         return row  # the line moved away (or the bet left the feed): nothing to compare
-    close = cand["sharp"] if cand["sharp"] is not None else cand["consensus"]
+    sharp = cand["sharp"]
+    if source == "power_value":  # its opening fair chance is power-de-margined: compare alike
+        sharp = cand.get("sharp_power")
+    close = sharp if sharp is not None else cand["consensus"]
     row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
-               close_sharp="" if cand["sharp"] is None else round(cand["sharp"], 4),
+               close_sharp="" if sharp is None else round(sharp, 4),
                close_book=cand["sharp_book"],
                clv=round(float(pick["odds"]) * close - 1, 4))
-    if row["open_sharp"] and cand["sharp"] is not None:
-        row["move"] = round(cand["sharp"] - float(row["open_sharp"]), 4)
+    if row["open_sharp"] and sharp is not None:
+        row["move"] = round(sharp - float(row["open_sharp"]), 4)
     elif row["open_consensus"]:
         row["move"] = round(cand["consensus"] - float(row["open_consensus"]), 4)
     return row
@@ -683,8 +726,8 @@ def closing_row(pick, cand, now, source="pick"):
 
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
-SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value")
-SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value")
+SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value")
+SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value")
 
 
 NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
@@ -849,6 +892,8 @@ def clv_html():
     table += line("Value singles (best price)", [r for r in rows if r.get("source") == "value_single"])
     table += line("Kaunitz singles (best price)", [r for r in rows if r.get("source") == "kaunitz_single"])
     table += line("Tax-proof value singles", [r for r in rows if r.get("source") == "taxed_value"])
+    table += line("Tax-proof value, power chance",
+                  [r for r in rows if r.get("source") == "power_value"])
     return ("<h3>Closing line</h3><table border='1' cellpadding='5' cellspacing='0' "
             "style='border-collapse:collapse;font-size:13px'><tr><th>Group</th><th>Bets</th>"
             "<th>Price vs close</th><th>Chance moved (points)</th><th>Moved our way</th></tr>"
@@ -875,6 +920,8 @@ SHADOW_NAMES = {
     "actual_best": "The real ticket at the best bookmaker price (price shopping)",
     "single": "One single a day (best value pick the AI allows)",
     "taxed_value": "Value singles that still pay after the 15% tax",
+    "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
+    "power_ticket": "Most likely ticket using power-method chances",
 }
 
 
@@ -924,9 +971,10 @@ def wide_candidates(events=None):
     others found averaged odds of about 2.30, so the value strategies get a wider list.
     """
     hi = CONFIG.get("value_max_odds", 4.0)
+    lo = min(CONFIG.get("value_min_odds", 1.05), CONFIG["min_leg_odds"])
     out = []
     for event in RAW_EVENTS if events is None else events:
-        out.extend(candidates_from_event(event, max_odds=hi))
+        out.extend(candidates_from_event(event, max_odds=hi, min_odds=lo))
     return out
 
 
@@ -961,19 +1009,21 @@ def taxed_ev(prob, odds):
     return prob * (odds - 1) * (1 - CONFIG["tax_rate"]) - (1 - prob)
 
 
-def taxed_value_bets(cands):
+def taxed_value_bets(cands, key="sharp"):
     """Singles whose best (outlier-capped) price beats the sharp chance by enough to pay the
     tax too. The 15% tax on winnings needs about +4% value at odds 1.40 and +10% at 2.70,
     so ordinary 2% value bets lose money here. In the 2019-2026 backtest (backtest.py) this
-    rule found about 35 bets a season in 17 leagues, expected +2% after tax (unproven)."""
+    rule found about 35 bets a season in 17 leagues, expected +2% after tax (unproven).
+    key="sharp_power" uses the power-de-margined sharp chance instead (power_value shadow).
+    The wide list starts at odds 1.05 (value_min_odds): the tax costs least on favourites."""
     hi = CONFIG.get("value_max_odds", 4.0)
     best = {}
     for c in cands:
-        if c.get("sharp") is None or not c.get("best_odds") or c["market"] == "dc":
+        if c.get(key) is None or not c.get("best_odds") or c["market"] == "dc":
             continue
         if c["best_odds"] > hi:
             continue
-        ev = taxed_ev(c["sharp"], c["best_odds"])
+        ev = taxed_ev(c[key], c["best_odds"])
         if ev <= 0:
             continue
         if c["event_id"] not in best or ev > best[c["event_id"]][0]:
@@ -1013,8 +1063,10 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     if allowed:
         top = max(allowed, key=lambda c: (c["prob"] * c["odds"], c["prob"]))
         out.append(("single", [dict(top, book="average")]))
-    # Value strategies use the wide list (longer prices too) when there is one.
-    wide_pool = [c for c in (wide or []) if not keys or c["sport_key"] in keys] or pool
+    # Value strategies use the wide list (longer prices too) when there is one. Only
+    # power_value looks below min_leg_odds, so the older shadows stay comparable over time.
+    wide_all = [c for c in (wide or []) if not keys or c["sport_key"] in keys] or pool
+    wide_pool = [c for c in wide_all if c["odds"] >= CONFIG["min_leg_odds"]]
     values = value_bets(wide_pool)
     priced = [dict(c, odds=c["best_odds"], prob=c["sharp"], book=c["best_book"])
               for c in values[:15]]
@@ -1036,6 +1088,18 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     for c in taxed_value_bets(wide_pool)[:CONFIG.get("value_max_singles", 10)]:
         out.append(("taxed_value", [dict(c, odds=c["best_odds"], prob=c["sharp"],
                                          book=c["best_book"])]))
+    # Same rule with power-de-margined sharp chances (fair_chance is then the power chance).
+    # Backtest 2012-2026, 80,832 matches: 1X2 tax-proof singles at the best price, power
+    # chance: 600 bets, about +1.5% after tax realised; proportional: 145 bets, about -7%.
+    for c in taxed_value_bets(wide_all, "sharp_power")[:CONFIG.get("value_max_singles", 10)]:
+        out.append(("power_value", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                                         sharp=c["sharp_power"], book=c["best_book"])]))
+    # The live ticket rule (most likely ticket) with power chances instead of proportional.
+    power_pool = [dict(c, prob=c["power_prob"]) for c in pool if c.get("power_prob")]
+    power = build_ticket(power_pool)
+    if power:
+        out.append(("power_ticket", [dict(l, book="average", sharp=l.get("sharp_power"))
+                                     for l in power["legs"]]))
     return out
 
 

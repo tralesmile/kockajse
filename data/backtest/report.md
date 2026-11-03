@@ -16,6 +16,8 @@ Price = market average; fair chance = Pinnacle without margin; tickets taxed 15%
 | most_likely_best | 1534 | 37.2% | 36.3% | 2.73 | -8.0% | 3.0% | -10.3% | +1.7% |
 | best_single_best | 1683 | 57.2% | 57.9% | 1.79 | -5.9% | 2.0% | -4.6% | +0.7% |
 | value_taxed | 248 | 55.6% | 58.9% | 2.03 | -2.7% | 6.0% | +2.0% | +4.7% |
+| most_likely_power | 1534 | 38.3% | 37.3% | 2.54 | -11.8% | 2.9% | -14.0% | -2.9% |
+| value_taxed_power | 802 | 70.6% | 70.9% | 1.60 | +0.2% | 2.5% | +1.5% | +5.5% |
 | value_single_4 | 6035 | 40.8% | 42.0% | 2.70 | -7.1% | 1.5% | -4.0% | +2.1% |
 
 ROI after tax by season:
@@ -33,6 +35,8 @@ ROI after tax by season:
 | most_likely_best | -1% | -9% | -13% | -8% | -0% | -9% | -21% |
 | best_single_best | -7% | -3% | -12% | -5% | -11% | +5% | -11% |
 | value_taxed | -2% | +20% | -16% | -10% | -19% | +43% | +2% |
+| most_likely_power | -5% | -23% | -15% | -7% | -3% | -18% | -8% |
+| value_taxed_power | +1% | +5% | -2% | +2% | -2% | +5% | -4% |
 | value_single_4 | -10% | -12% | -11% | -4% | -2% | +1% | -8% |
 
 Strategies:
@@ -48,6 +52,8 @@ Strategies:
 - most_likely_best: the live rule's ticket, each leg at the best price (price shopping)
 - best_single_best: best_single at the best price
 - value_taxed: singles at the best price with positive expected profit after tax
+- most_likely_power: live rule with power-method chances (power_ticket shadow)
+- value_taxed_power: tax-proof singles at the best price, power-method chance (power_value shadow)
 - value_single_4: same with 4%+ value
 
 ## Single legs at the average price (no tax)

@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-03: a more accurate way to read the fair chance from prices
+
+- Bookmakers hide more of their margin in the prices of outsiders than of favourites. The bot removed the margin evenly, which slightly understates how often favourites win. A better method (the "power" method) was checked on 80,000 past matches and in a 2026 study of 90,000; it matches real results more closely.
+- In the seven-season history, your ticket rule using the new chances would have lost about 2 points less per ticket (-12% instead of -14% after tax). That is promising but not yet proven, so it starts as a side-by-side experiment.
+- Two new paper experiments in the email table: the ticket picked with the new chances, and singles that pay even after the 15% tax using the new chances, now also looking at heavy favourites from odds 1.05 (the tax costs least there). In history these singles roughly broke even after tax (+0.2% over 802 bets), the best of anything tested, but they are rare.
+- Your daily ticket is chosen exactly as before. No extra Odds API or Gemini use.
+- If the new ticket keeps up over the next few weeks, a later review will switch your ticket to the new chances.
+
 ## 2026-11-03: seven seasons of history tested, and what it says about the tax
 
 - New: the bot's ticket rules were replayed on 42,000 past European league matches (2019-2026). Picking the most likely ticket at average prices would have lost about 14-16% of every stake after the 15% tax, almost exactly what the market's own chances predict. Nothing in the picking beat that.

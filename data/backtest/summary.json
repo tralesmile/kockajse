@@ -246,6 +246,48 @@
    "se": 0.0602,
    "exp_roi": 0.02
   },
+  "most_likely_power": {
+   "desc": "live rule with power-method chances (power_ticket shadow)",
+   "bets": 1534,
+   "wins": 587,
+   "hit": 0.3827,
+   "exp_hit": 0.3729,
+   "avg_odds": 2.54,
+   "roi": -0.1176,
+   "roi_pre_tax": -0.0294,
+   "by_season": {
+    "1920": -0.0481,
+    "2021": -0.2267,
+    "2122": -0.1489,
+    "2223": -0.0659,
+    "2324": -0.0294,
+    "2425": -0.1849,
+    "2526": -0.081
+   },
+   "se": 0.0286,
+   "exp_roi": -0.14
+  },
+  "value_taxed_power": {
+   "desc": "tax-proof singles at the best price, power-method chance (power_value shadow)",
+   "bets": 802,
+   "wins": 566,
+   "hit": 0.7057,
+   "exp_hit": 0.7094,
+   "avg_odds": 1.6,
+   "roi": 0.0024,
+   "roi_pre_tax": 0.0547,
+   "by_season": {
+    "1920": 0.009,
+    "2021": 0.0518,
+    "2122": -0.0156,
+    "2223": 0.0231,
+    "2324": -0.0199,
+    "2425": 0.048,
+    "2526": -0.0423
+   },
+   "se": 0.025,
+   "exp_roi": 0.0148
+  },
   "value_single_4": {
    "desc": "same with 4%+ value",
    "bets": 6035,

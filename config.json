@@ -67,6 +67,7 @@
   "closing_max_wait_minutes": 15,
   "value_min_edge": 0.02,
   "value_max_odds": 4.0,
+  "value_min_odds": 1.05,
   "value_max_singles": 10,
   "kaunitz_alpha": 0.05
 }

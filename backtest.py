@@ -118,6 +118,12 @@ def devig(prices):
     return [(1 / p) / total for p in prices]
 
 
+def devig_power(prices):
+    if not all(prices):
+        return None
+    return bot.power_devig(prices)
+
+
 def match_candidates(row, idx, timing="close"):
     """Candidate bets of one match, in the bot's candidate format (plus 'won' and 'best')."""
     c = "C" if timing == "close" else ""
@@ -126,13 +132,14 @@ def match_candidates(row, idx, timing="close"):
     start = f"{row['_date']}T{row.get('Time') or '15:00'}:00Z"
     out = []
 
-    def add(market, sel, point, prob, odds, best, won):
+    def add(market, sel, point, prob, odds, best, won, ppow=None):
         if prob is None or odds is None:
             return
         if best and best > odds * BEST_CAP:
             best = None
         out.append({"event_id": eid, "start": start, "market": market, "sel": sel,
                     "point": point, "odds": round(odds, 2), "prob": prob,
+                    "prob_power": ppow if ppow is not None else prob,
                     "best": round(best, 2) if best else None, "won": won,
                     "league": row.get("Div", row["_src"]),
                     "match": f"{row['HomeTeam']} v {row['AwayTeam']}"})
@@ -140,20 +147,24 @@ def match_candidates(row, idx, timing="close"):
     avg = [num(row, f"Avg{c}{s}") for s in "HDA"]
     mx = [num(row, f"Max{c}{s}") for s in "HDA"]
     fair = devig([num(row, f"PS{c}{s}") for s in "HDA"])
+    fpow = devig_power([num(row, f"PS{c}{s}") for s in "HDA"])
     if fair and all(avg):
         res = "H" if hg > ag else "A" if ag > hg else "D"
         for i, s in enumerate("HDA"):
-            add("h2h", s, None, fair[i], avg[i], mx[i], res == s)
+            add("h2h", s, None, fair[i], avg[i], mx[i], res == s, fpow[i])
         wins = {"1X": "HD", "X2": "AD", "12": "HA"}
         for sel, (x, y) in {"1X": (0, 1), "X2": (2, 1), "12": (0, 2)}.items():
             add("dc", sel, None, fair[x] + fair[y], 0.97 / (1 / avg[x] + 1 / avg[y]), None,
-                res in wins[sel])
+                res in wins[sel], fpow[x] + fpow[y])
     over, under = num(row, f"Avg{c}>2.5"), num(row, f"Avg{c}<2.5")
     pfair = devig([num(row, f"P{c}>2.5"), num(row, f"P{c}<2.5")])
+    ppow = devig_power([num(row, f"P{c}>2.5"), num(row, f"P{c}<2.5")])
     if pfair and over and under:
         goals = hg + ag
-        add("totals", "Over", 2.5, pfair[0], over, num(row, f"Max{c}>2.5"), goals > 2.5)
-        add("totals", "Under", 2.5, pfair[1], under, num(row, f"Max{c}<2.5"), goals < 2.5)
+        add("totals", "Over", 2.5, pfair[0], over, num(row, f"Max{c}>2.5"), goals > 2.5,
+            ppow[0])
+        add("totals", "Under", 2.5, pfair[1], under, num(row, f"Max{c}<2.5"), goals < 2.5,
+            ppow[1])
     return out
 
 
@@ -202,6 +213,11 @@ def most_likely(cands):
     return t["legs"] if t else None
 
 
+def as_power(cands):
+    """Same candidates with the power-method chance as "prob" (power_value/power_ticket)."""
+    return [dict(c, prob=c["prob_power"]) for c in cands]
+
+
 STRATEGIES = {
     # name: (description, function(slate) -> list of tickets, each a list of legs with odds)
     "most_likely": ("live rule: most likely allowed ticket (code, no AI)",
@@ -237,6 +253,13 @@ STRATEGIES = {
                     lambda s: [[dict(c, odds=c["best"])] for c in s
                                if c["best"] and c["best"] <= 4.0 and c["market"] != "dc"
                                and taxed_ev(c, c["best"]) > 0]),
+    "most_likely_power": ("live rule with power-method chances (power_ticket shadow)",
+                          lambda s: [most_likely(as_power([c for c in s if in_band(c)]))]),
+    "value_taxed_power": ("tax-proof singles at the best price, power-method chance "
+                          "(power_value shadow)",
+                          lambda s: [[dict(c, odds=c["best"])] for c in as_power(s)
+                                     if c["best"] and c["best"] <= 4.0 and c["market"] != "dc"
+                                     and c["best"] >= 1.05 and taxed_ev(c, c["best"]) > 0]),
     "value_single_4": ("same with 4%+ value",
                        lambda s: [[dict(c, odds=c["best"])] for c in s
                                   if c["best"] and c["best"] <= 4.0
