@@ -683,8 +683,8 @@ def closing_row(pick, cand, now, source="pick"):
 
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
-SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket")
-SHARP_SHADOWS = ("value_single", "value_ticket")
+SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value")
+SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value")
 
 
 NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
@@ -848,6 +848,7 @@ def clv_html():
     table += line("All logged picks", picks)
     table += line("Value singles (best price)", [r for r in rows if r.get("source") == "value_single"])
     table += line("Kaunitz singles (best price)", [r for r in rows if r.get("source") == "kaunitz_single"])
+    table += line("Tax-proof value singles", [r for r in rows if r.get("source") == "taxed_value"])
     return ("<h3>Closing line</h3><table border='1' cellpadding='5' cellspacing='0' "
             "style='border-collapse:collapse;font-size:13px'><tr><th>Group</th><th>Bets</th>"
             "<th>Price vs close</th><th>Chance moved (points)</th><th>Moved our way</th></tr>"
@@ -871,6 +872,9 @@ SHADOW_NAMES = {
     "value_single": "Value singles at the best bookmaker price",
     "kaunitz_single": "Kaunitz singles (best price far above the average)",
     "late_value": "Late value singles (best price minutes before kick-off)",
+    "actual_best": "The real ticket at the best bookmaker price (price shopping)",
+    "single": "One single a day (best value pick the AI allows)",
+    "taxed_value": "Value singles that still pay after the 15% tax",
 }
 
 
@@ -952,6 +956,31 @@ def kaunitz_bets(cands):
     return [c for _, c in sorted(best.values(), key=lambda x: x[0], reverse=True)]
 
 
+def taxed_ev(prob, odds):
+    """Expected profit per unit staked on a single after the tax on winnings."""
+    return prob * (odds - 1) * (1 - CONFIG["tax_rate"]) - (1 - prob)
+
+
+def taxed_value_bets(cands):
+    """Singles whose best (outlier-capped) price beats the sharp chance by enough to pay the
+    tax too. The 15% tax on winnings needs about +4% value at odds 1.40 and +10% at 2.70,
+    so ordinary 2% value bets lose money here. In the 2019-2026 backtest (backtest.py) this
+    rule found about 35 bets a season in 17 leagues, expected +2% after tax (unproven)."""
+    hi = CONFIG.get("value_max_odds", 4.0)
+    best = {}
+    for c in cands:
+        if c.get("sharp") is None or not c.get("best_odds") or c["market"] == "dc":
+            continue
+        if c["best_odds"] > hi:
+            continue
+        ev = taxed_ev(c["sharp"], c["best_odds"])
+        if ev <= 0:
+            continue
+        if c["event_id"] not in best or ev > best[c["event_id"]][0]:
+            best[c["event_id"]] = (ev, c)
+    return [c for _, c in sorted(best.values(), key=lambda x: x[0], reverse=True)]
+
+
 def shadow_tickets(cands, short=None, ticket=None, wide=None):
     """Today's shadow tickets as (strategy, legs); each leg has odds and the bookmaker.
 
@@ -961,6 +990,13 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     out = []
     if ticket:
         out.append(("actual", [dict(l, book="average") for l in ticket["legs"]]))
+        # Same legs at the best price any listed bookmaker pays (backtest: about +6 points
+        # of return per ticket). Shows what opening a second or third account would be worth.
+        best_legs = [dict(l, odds=l["best_odds"], book=l["best_book"])
+                     if l.get("best_odds") and l["best_odds"] > l["odds"]
+                     else dict(l, book="average") for l in ticket["legs"]]
+        if any(l["book"] != "average" for l in best_legs):
+            out.append(("actual_best", best_legs))
     keys = {c["sport_key"] for c in (short or {}).values()}
     pool = [c for c in cands if not keys or c["sport_key"] in keys]
     market = build_ticket(pool)
@@ -970,6 +1006,13 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     for strategy, ids in (("ai_own", info.get("ids")), ("edge_first", info.get("edge_first_ids"))):
         if short and ids and all(i in short for i in ids):
             out.append((strategy, [dict(short[i], book="average") for i in ids]))
+    # One single a day: the allowed pick (not AVOID) with the best chance x odds. The
+    # backtest found singles lose about half as much as 2.50-3.50 tickets once the tax is
+    # paid (-8% vs -16% expected), because the tax grows with the total odds.
+    allowed = [c for c in (short or {}).values() if c.get("verdict", "RISKY") != "AVOID"]
+    if allowed:
+        top = max(allowed, key=lambda c: (c["prob"] * c["odds"], c["prob"]))
+        out.append(("single", [dict(top, book="average")]))
     # Value strategies use the wide list (longer prices too) when there is one.
     wide_pool = [c for c in (wide or []) if not keys or c["sport_key"] in keys] or pool
     values = value_bets(wide_pool)
@@ -990,6 +1033,9 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
         out.append(("value_single", [c]))
     for c in kaunitz_bets(wide_pool)[:CONFIG.get("value_max_singles", 10)]:
         out.append(("kaunitz_single", [dict(c, odds=c["top_odds"], book=c["top_book"])]))
+    for c in taxed_value_bets(wide_pool)[:CONFIG.get("value_max_singles", 10)]:
+        out.append(("taxed_value", [dict(c, odds=c["best_odds"], prob=c["sharp"],
+                                         book=c["best_book"])]))
     return out
 
 

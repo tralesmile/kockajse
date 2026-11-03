@@ -6,6 +6,29 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Historical backtest on football-data.co.uk (3 Nov morning, bold, experiments, 5/4/3).
+  `backtest.py` replays the bot's rules (same build_ticket, same config, 15% tax) on 41,971
+  matches in 17 European leagues, 2019-20 to 2025-26, average price vs Pinnacle fair chance.
+  Report in `data/backtest/report.md` (closing prices) and `report_open.md`; monthly workflow
+  refreshes it. Results (closing, Pinnacle-expected ROI after tax, which has far less noise
+  than the realised one): live rule -16.4% (realised -14.2% over 1,534 days); at most 2 legs
+  -16.1%; no double chance -15.7%; edge_first -14.4%; same ticket at the best price -10.3%;
+  one single a day -8.2%; one single at the best price -4.6%; tax-proof value singles +2.0%
+  expected but -2.7% realised (248 bets, se 6%). Nothing reachable beats the tax reliably.
+  Without the 10% outlier cap on the best price, value rules look like +16% after tax:
+  that is stale prices, not edge. Use the backtest before building any new selection idea.
+- Price shopping shadow "actual_best" (3 Nov, selection, 4/4/1): the real ticket's legs at the
+  best listed price. Measuring: average total-odds gain per day; backtest says about +6
+  points of return (0.19 more total odds per ticket).
+- One single a day, shadow "single" (3 Nov, bet types, 4/4/1): the allowed pick with the best
+  chance x odds. The tax grows with total odds (about 15% x (1 - chance) of the stake at fair
+  prices: 9.6% for a 36% ticket, 3.8% for a 75% single). Measuring: return vs "actual".
+  If it keeps losing about half as much, recommend singles to the owner (his decision).
+- Tax-proof value singles, shadow "taxed_value" (3 Nov, modelling, 3/2/1): best capped price
+  with positive expected profit after the 15% tax (needs +4% value at 1.40, +10% at 2.70).
+  Replaces the idea that 2% value is enough: after tax, the 2% value singles were -6.9% in
+  the backtest. Measuring: count per day, ROI, CLV.
+
 - Reliable closing capture + late value + CLV for value shadows (2 Nov evening, 5/4/2).
   Found that GitHub ran only 8 of ~70 planned closing jobs from 31 Oct to 2 Nov, so 11 of 116
   picks had a closing price and none of 2 Nov's. Each run now captures every bet starting in
@@ -49,6 +72,27 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- Power or Shin de-margining instead of proportional (modelling, 3/4/1): on 26,791 Pinnacle
+  closing 1X2 prices, proportional normalisation understates favourites (predicted 74.5%,
+  won 78.4%; 64.5% -> 67.0%); power method 74.4% -> 77.4%, log loss 0.98851 vs 0.98899;
+  same small gain on over/under. Better fair chances for favourites (our legs) and fewer
+  false longshot "values". Next: add it as the fair chance for the value shadows first,
+  then for the ticket if the shadow agrees.
+- League margin table (leagues, 3/3/2): the backtest can list the average-price margin per
+  league and market; restrict the ticket to the cheapest ones (big leagues are usually
+  2-3 points cheaper than second divisions).
+- Self-chaining closing job (timing, 4/3/2): since the 2 Nov evening change GitHub started
+  only 2 closing runs (02:37 and 06:40 UTC) and none was near a kick-off, so 0 captures. A
+  run could dispatch the next one (workflow_dispatch from GITHUB_TOKEN does start runs) at
+  the right moment, but waiting costs Actions minutes on a private repository. The external
+  scheduler (below) is cheaper; recommend again.
+- Portfolio staking (unconventional, from quantitative finance, 3/2/2): several small
+  uncorrelated singles instead of one ticket give the same expected loss per unit with much
+  lower variance, and far less tax. Only as a recommendation; stake rules are the owner's.
+- AI forecasting tournament on past matches (unconventional, prompts, 2/1/3): score Gemini on
+  backtest matches. Rejected for now: the model may know the results (leakage), so scores
+  would be inflated.
+
 - External scheduler for exact capture times (timing, 4/4/1 for the owner): GitHub's own
   schedule is unreliable (see above). A free cron service (cron-job.org) calling the
   workflow_dispatch API with a fine-grained token (Actions: write on this repo only) would
@@ -81,14 +125,16 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   search calls at the start of the run and keys 3 and 4 cannot use gemini-2.5-flash; plan the
   research calls to fit one key's 20 and skip re-tries that burn quota on 503s.
 - Offline backtest harness over `data/odds/` (experiments, 4/4/3): once a week of archives
-  exists, a script that replays any rule against settled scores, so ideas are judged in
-  minutes instead of weeks of shadow logging.
+  exists, a script that replays any rule against settled scores. Partly done on 3 Nov with
+  football-data history (`backtest.py`); the archive replay is still useful for basketball,
+  tennis and our real bookmaker list.
 - Megawin prices (new data, 4/2/3): the owner's real odds are unknown; every figure assumes
   the European average. Find whether Megawin publishes odds in a readable form (site JSON or
   an aggregator such as OddsPortal listing it) and log them, so value and tax maths use real
   prices. Check terms of use first.
 - Singles instead of accumulators (bet types, 4/4/2): every extra leg multiplies the margin
-  (Whelan on parlays). Once the value singles have ~100 settled bets, compare their return
+  (Whelan on parlays). Backtest 3 Nov supports it (-8% vs -16% after tax); now live as the
+  "single" shadow (above). Once the value singles have ~100 settled bets, compare their return
   with the ticket strategies and recommend to the owner if singles win clearly (stake rules
   stay the owner's).
 - Steam following / latency (timing, unconventional, from syndicate practice, 4/2/3): when
@@ -100,7 +146,10 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 - Poisson / Dixon-Coles totals model from free xG (modelling, 3/2/4): the totals with no sharp
   price average −8.6% edge; a model could give an independent fair chance there.
 - Drop double chance (selection, 2/3/1): derived price is cut 3% and averages −10.7% edge;
-  check its record in the shadows before dropping.
+  check its record in the shadows before dropping. Backtest (3 Nov): double chance legs cost
+  8-9% at the bot's derived price vs 4-5% for match winners at the same odds, but removing
+  them improves the ticket's expected return only 0.7 points (-15.7% vs -16.4%); realised
+  +4.5 points is mostly luck. Low priority.
 - Self-consistency: run the decision prompt twice and keep only verdicts both runs agree on
   (prompts, 2/2/2).
 - Second-pass critic prompt that argues against each pick before the decision (2/2/2).

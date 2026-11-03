@@ -2,6 +2,15 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-03: seven seasons of history tested, and what it says about the tax
+
+- New: the bot's ticket rules were replayed on 42,000 past European league matches (2019-2026). Picking the most likely ticket at average prices would have lost about 14-16% of every stake after the 15% tax, almost exactly what the market's own chances predict. Nothing in the picking beat that.
+- The biggest costs are the ticket format and the tax, not the choice of matches. One single a day lost about half as much (about -8%) because the tax grows with the total odds, and taking each bet at the best bookmaker price instead of the average saved another 4-6 points.
+- Three new side-by-side experiments (paper only): your real ticket at the best listed price, one single a day, and "value" singles strong enough to pay the tax too. The email table will show how they compare with your ticket.
+- Your daily ticket is chosen as before. The AI gets two short lessons: trust the market's chances unless there is concrete news, and short-priced favourites win slightly more often than their price suggests.
+- Recommendations (your decision; nothing changed): consider singles (or tickets with lower total odds; 2 legs instead of 3 at the same total odds did not help), and having two or three bookmaker accounts to take the best price. Also, the price check before kick-off still misses almost every match because GitHub runs it only every few hours; a free cron-job.org timer with a GitHub token would fix it.
+- The history check reruns monthly by itself, with no Odds API or Gemini use.
+
 ## 2026-11-02: closing prices are now caught for most bets
 
 - The check of prices just before kick-off (the best early sign of a real edge) had caught only 11 of 116 bets: GitHub ran just 8 of about 70 planned checks over two days.

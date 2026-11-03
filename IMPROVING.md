@@ -38,6 +38,12 @@ tweak. Every review:
    against the market's chance by verdict, bet type, sport, league, odds band, number of
    picks, day of week. For each lost ticket pick, read that day's research
    (`data/research/<date>.json`) and decide whether the loss was foreseeable.
+   For questions the live logs are too small to answer, use the historical backtest
+   (`backtest.py`, report in `data/backtest/report.md`): it replays the selection rules on
+   seven seasons of European football. football-data.co.uk is blocked from the review's
+   sandbox; clone the public mirror `https://github.com/huhao930422-debug/football-odds-mirror`
+   (shallow) and run `python backtest.py --dir <clone>/data --seasons 1920,...,2526`, or
+   start the "Historical backtest" workflow, which downloads the originals.
 2. **Research.** Search the web for better methods and data and bring back what applies.
    Rotate topics so each review looks at something new; record what you looked at in
    `data/learning_log.md`. Starting ideas, not limits:
@@ -57,7 +63,7 @@ tweak. Every review:
    evidence or research supports them. Keep each change focused enough that its effect can
    be measured, and note in `prompts/lessons.md` any lesson the AI should apply daily.
 4. **Check.** Add or update tests for new code. Run `python tests/test_markets.py`,
-   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py` and `python tests/simulate.py`;
+   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py` and `python tests/simulate.py`;
    all must pass. After a
    change to how picks are chosen, you may start one preview run to see it work live:
    `gh api -X POST repos/tralesmile/kockajse/actions/workflows/daily.yml/dispatches -f ref=main -F 'inputs[preview]=true'`

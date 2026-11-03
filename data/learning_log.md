@@ -237,3 +237,56 @@ adds value- and Kaunitz-single rows. The real ticket is unchanged, so no preview
 To measure next: share of picks with a capture within 60 minutes (and within 180); CLV of
 value singles vs ordinary picks; late_value count per day and which books; closing credits
 used per day; whether the 3-hour fallback CLV agrees in sign with the near capture.
+
+## 2026-11-03 (morning review): seven seasons of history say the tax, not the picks, decides
+
+Measured (`picks.csv`, 115 settled judged picks): AGREE 12/20 (60%, market 60%), RISKY
+40/68 (59%, 57%), AVOID 18/27 (67%, 60%); h2h 71% vs 67%, totals 58% vs 54%, spreads 47% vs
+50%, dc 68% vs 66%. Edge at the average price: 124 picks, mean −6.6%, none positive; best
+price positive on none of 29 with a sharp price. Paper tickets: 23, 24, 25 all lost on one
+leg. Ticket 25's lost leg (Osasuna or draw @1.64, 56%, RISKY) had research marked THIN with
+"no current data" on every point: a coin flip the research could not inform, not
+foreseeable. Shadows settled: market ticket won 2 Nov (+128), actual and edge_first lost.
+Effect of the 2 Nov evening closing change: GitHub started only 2 closing runs since (02:37
+and 06:40 UTC), none near a kick-off, so still 11 captures in total. The fix needs an
+external scheduler (owner).
+Daily run 3 Nov: key 1 hit the 20 search limit after 5 calls, key 2 did the rest; the
+decision call failed 29 times on 503s/timeouts before gemini-3.6-flash on key 3 answered.
+
+Built and ran a historical backtest (`backtest.py`) on football-data.co.uk (via a public
+GitHub mirror, the site is blocked here): 41,971 matches, 17 leagues, 2019-20 to 2025-26,
+1,812 match days; bot's own build_ticket and config, average price, Pinnacle fair chance,
+15% tax. Pinnacle-expected ROI after tax (closing prices): live rule −16.4% (realised
+−14.2% ± 2.8), 2 legs −16.1%, no double chance −15.7%, h2h only −16.1%, totals only
+−16.4%, edge_first −14.4%, ticket at best price −10.3% (realised −8.0%), one single a day
+−8.2% (−9.7%), single at best price −4.6% (−5.9%), 2% value singles −5.5% (−6.9%, +2.1%
+before tax), tax-proof value +2.0% (−2.7% ± 6.0, 248 bets). Opening prices are 1-3 points
+worse. Without the 10% outlier cap on the best price, tax-proof value shows +16% after
+tax in every season: stale or wrong maximum prices, not edge (Kaunitz's accounts were also
+limited on such prices). Single legs at the average price: h2h 1.20-1.40 realised +1.1%
+(Pinnacle said −4.1%), dc −8% to −10%, totals −3.5% to −5.8%.
+De-margining check (26,791 Pinnacle closing 1X2): proportional (what the bot uses)
+understates favourites (bucket 70-80%: 74.5% predicted, 78.4% won); power and additive
+methods are better (74.4% → 77.4%, log loss 0.98851 vs 0.98899).
+
+Researched: Whelan, "The Parlay Puzzle" (2026): expected return r^N − 1, parlays hold 17-19%
+for books vs 3-5% for singles in New Jersey, at most 2 legs is optimal even with an edge
+unless legs are above ~53%; Moshrefi (arXiv 2607.14430): parlay prices on Kalshi add about
+3% per leg; Hegarty and Whelan on loss rates: longshots carry more margin than the overround
+implies. Data Golf (favourite-longshot bias at sharp books). football-data.co.uk notes on
+Max/Avg columns.
+
+Ideas considered (scored in IDEAS.md): historical backtest; price-shopping shadow; one
+single a day; tax-proof value; power/Shin de-margining; league margin table; self-chaining
+closing job; portfolio staking; AI forecasting tournament on past matches (rejected,
+leakage); dropping double chance (updated with backtest evidence).
+
+Changed: new `backtest.py` + `tests/test_backtest.py` + monthly "Historical backtest"
+workflow (downloads the originals, commits `data/backtest/`). New shadows: actual_best,
+single, taxed_value (closing prices for taxed_value too). Two lessons in
+`prompts/lessons.md` (market accuracy; favourites slightly underpriced). The real ticket is
+chosen exactly as before (the lessons only touch the AI's wording of verdicts), so no
+preview was started, which also keeps key 2's search quota for tomorrow.
+
+To measure next: actual_best odds gain per day; single vs actual return; taxed_value bets
+per day; try power de-margining on the value shadows; per-league margins from the backtest.

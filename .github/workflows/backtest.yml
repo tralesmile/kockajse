@@ -1,0 +1,37 @@
+name: Historical backtest
+
+# Replays the bot's selection rules on several seasons of European football prices from
+# football-data.co.uk (free CSV files, updated twice a week) and commits the report to
+# data/backtest/. Runs once a month; the review task can also read the committed report.
+# No Odds API or Gemini use.
+on:
+  schedule:
+    - cron: "17 4 3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run the backtest
+        run: |
+          seasons=1920,2021,2122,2223,2324,2425,2526
+          python backtest.py --fetch --seasons $seasons > /dev/null
+          python backtest.py --fetch --seasons $seasons --timing open > /dev/null
+      - name: Commit the report
+        run: |
+          git config user.name "betting-bot"
+          git config user.email "betting-bot@users.noreply.github.com"
+          git add data/backtest
+          git diff --cached --quiet && exit 0
+          git commit -q -m "Update historical backtest"
+          for i in 1 2 3; do git pull -q --rebase && git push -q && exit 0; sleep 10; done
+          exit 1

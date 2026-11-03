@@ -62,7 +62,8 @@ bot.RESEARCH["ai_ticket"] = {"ids": [1, 3], "edge_first_ids": [1, 3]}
 ticket = bot.build_ticket(pool)
 tickets = bot.shadow_tickets(pool, short, ticket)
 names = [s for s, _ in tickets]
-assert names[:4] == ["actual", "market", "ai_own", "edge_first"], names
+core = [n for n in names if n not in ("actual_best", "single")]
+assert core[:4] == ["actual", "market", "ai_own", "edge_first"], names
 assert "value_ticket" in names and names.count("value_single") == 2, names
 vt = dict(tickets)["value_ticket"]
 total = 1.0
@@ -154,3 +155,40 @@ assert snap["events"][0]["books"]["onexbet"]["h2h"][1] == ["Knicks", None, 2.78]
 assert bot.save_odds_snapshot("2026-11-04", datetime.now(timezone.utc), []) is None
 print("wide value checks passed")
 print("all shadow checks passed")
+
+# --- price shopping, one single a day and tax-proof value (3 Nov) ------------
+# After the 15% tax a single needs prob * (odds - 1) * 0.85 > 1 - prob.
+assert abs(bot.taxed_ev(0.5, 2.0) - (0.5 * 0.85 - 0.5)) < 1e-12
+assert bot.taxed_ev(0.5, 2.0) < 0 < bot.taxed_ev(0.5, 2.40)
+# Celtics: sharp 61%, best 1.70 -> +3.7% before tax but -4.3% after: not tax-proof.
+assert not bot.taxed_value_bets(pool)
+big = event("e7", "Bulls", "Pistons", sharp=(1.60, 2.50), soft=(1.52, 2.45), best=(1.66, 2.62))
+fair_p = (1 / 2.50) / (1 / 1.60 + 1 / 2.50)
+assert bot.taxed_ev(fair_p, 2.62) < 0  # 2.62 vs fair 2.56 is still not enough
+huge = event("e8", "Hawks", "Magic", sharp=(1.30, 4.00), soft=(1.25, 3.60), best=(1.42, 3.40))
+tv = bot.taxed_value_bets(bot.wide_candidates([big, huge]))
+assert [c["event_id"] for c in tv] == ["e8"], [(c["event_id"], c["sel"], c["best_odds"]) for c in tv]
+
+bot.RESEARCH["ai_ticket"] = {"ids": [1, 3], "edge_first_ids": [1, 3]}
+short2 = dict(short)
+short2[1] = dict(short2[1], verdict="AVOID")
+tk = bot.shadow_tickets(pool, short2, ticket, wide=pool + bot.wide_candidates([huge]))
+d = {}
+for name, legs in tk:
+    d.setdefault(name, legs)
+assert "actual_best" in d, [n for n, _ in tk]
+for real, shop in zip(ticket["legs"], d["actual_best"]):
+    assert shop["odds"] >= real["odds"]
+assert any(l["book"] == "onexbet" for l in d["actual_best"])
+single = d["single"]
+assert len(single) == 1 and single[0]["verdict"] != "AVOID"
+best_allowed = max((c for c in short2.values() if c["verdict"] != "AVOID"),
+                   key=lambda c: c["prob"] * c["odds"])
+assert single[0]["pick"] == best_allowed["pick"]
+assert d["taxed_value"][0]["event_id"] == "e8" and d["taxed_value"][0]["odds"] == 1.42
+rows = bot.shadow_rows("2026-11-04", tk)
+assert {"actual_best", "single", "taxed_value"} <= {r["strategy"] for r in rows}
+assert all(n in bot.SHADOW_NAMES for n, _ in tk)
+# No real ticket: no actual and no actual_best.
+assert "actual_best" not in [n for n, _ in bot.shadow_tickets(pool, short2, None)]
+print("price shopping, single and tax-proof value checks passed")
