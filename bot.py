@@ -10,6 +10,7 @@ Every morning (Skopje time) it:
 Only the Python standard library is used.
 """
 import csv
+import random
 import re
 import html as html_lib
 import itertools
@@ -778,14 +779,38 @@ def late_value_bets(events, now):
     accurate (Pinnacle's closing line is the best known estimate of the true chance), so a
     soft price above it there is as close to certain value as the feed can show. Logged as
     shadow "late_value" singles, one per match, never twice for the same match."""
-    taken = {r["event_id"] for r in read_shadow() if r["strategy"] == "late_value"}
+    return [c for s, c in late_shadow_bets(events, now) if s == "late_value"]
+
+
+def late_shadow_bets(events, now):
+    """Both near-kick-off shadows from one feed, as (strategy, bet):
+
+    - "late_value": best price at least value_min_edge above the proportional sharp chance.
+    - "late_power": tax-proof singles (taxed_ev > 0) at the best price with the power-method
+      sharp chance, odds value_min_odds to value_max_odds, no double chance. Backtest
+      2019-2026 (football-data closing vs opening prices): this rule found 802 bets at
+      closing prices (+0.2% +- 2.5 after tax; odds 1.05-1.30: 238 bets, +5.1% +- 2.2) but
+      only 168 at opening prices (-3.4% +- 4.9), so the moment of the bet matters more
+      than the rule. The morning "power_value" shadow is the opening-time twin.
+    Each strategy takes a match at most once."""
+    shadow = read_shadow()
+    taken = {s: {r["event_id"] for r in shadow if r["strategy"] == s}
+             for s in ("late_value", "late_power")}
     cands = []
     for event in events or []:
-        if event["id"] in taken or parse_time(event["commence_time"]) <= now:
+        if parse_time(event["commence_time"]) <= now:
             continue
-        cands.extend(candidates_from_event(event, max_odds=CONFIG.get("value_max_odds", 4.0)))
-    return [dict(c, odds=c["best_odds"], prob=c["sharp"], book=c["best_book"])
-            for c in value_bets(cands)]
+        cands.extend(candidates_from_event(event, max_odds=CONFIG.get("value_max_odds", 4.0),
+                                           min_odds=CONFIG.get("value_min_odds", 1.05)))
+    lo = CONFIG["min_leg_odds"]
+    out = [("late_value", dict(c, odds=c["best_odds"], prob=c["sharp"], book=c["best_book"]))
+           for c in value_bets([c for c in cands if c["odds"] >= lo])
+           if c["event_id"] not in taken["late_value"]]
+    out += [("late_power", dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                                book=c["best_book"]))
+            for c in taxed_value_bets(cands, "sharp_power")
+            if c["event_id"] not in taken["late_power"]]
+    return out
 
 
 def capture_closing(now=None, window_minutes=None):
@@ -843,7 +868,7 @@ def capture_closing(now=None, window_minutes=None):
             rows.append(closing_row(r, cands.get(bet_key(r["event_id"], r["market"], r["sel"],
                                                          r["point"])), now, s))
             added += 1
-        late.extend(late_value_bets(events, now))
+        late.extend(late_shadow_bets(events, now))
     budget = {today: used}  # only today's count is needed
     CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
     with CLOSING_PATH.open("w", newline="") as fh:
@@ -853,10 +878,14 @@ def capture_closing(now=None, window_minutes=None):
     if late:
         shadow = read_shadow()
         day = now.astimezone(TZ).date().isoformat()
-        count = sum(1 for r in shadow if r["strategy"] == "late_value" and r["date"] == day)
-        new = shadow_rows(day, [("late_value", [c]) for c in late])
-        for i, r in enumerate(new):  # ids continue after earlier late bets of the day
-            r["shadow_id"] = f"{day}-late_value-{count + i + 1}"
+        new = []
+        for strategy in ("late_value", "late_power"):
+            bets = [c for s, c in late if s == strategy]
+            count = sum(1 for r in shadow if r["strategy"] == strategy and r["date"] == day)
+            rows_ = shadow_rows(day, [(strategy, [c]) for c in bets])
+            for i, r in enumerate(rows_):  # ids continue after earlier late bets of the day
+                r["shadow_id"] = f"{day}-{strategy}-{count + i + 1}"
+            new += rows_
         write_shadow(shadow + new)
     print(f"Captured closing prices for {added} bets, {len(late)} late value bets "
           f"({used}/{limit} credits today).")
@@ -917,6 +946,7 @@ SHADOW_NAMES = {
     "value_single": "Value singles at the best bookmaker price",
     "kaunitz_single": "Kaunitz singles (best price far above the average)",
     "late_value": "Late value singles (best price minutes before kick-off)",
+    "late_power": "Late tax-proof singles, power chance (best price minutes before kick-off)",
     "actual_best": "The real ticket at the best bookmaker price (price shopping)",
     "single": "One single a day (best value pick the AI allows)",
     "taxed_value": "Value singles that still pay after the 15% tax",
@@ -1405,42 +1435,82 @@ def gemini(prompt, search=False, schema=None):
         payload["generationConfig"].update(responseMimeType="application/json",
                                            responseSchema=schema)
     kind = "research" if search else "decision"
-    # Preferred model on every key first, then the fallback model on every key.
+    # Models in order of preference; on each model every key. A 503 "high demand" or a
+    # timeout is a capacity problem of the model, not of the key (Google tracks capacity
+    # per model), so after BUSY_LIMIT such failures in a round the rest of that model's
+    # keys are skipped and the next model is tried; a second round comes back to the busy
+    # ones. On 3 and 4 Nov the old loop (4 attempts on every key of a busy model) spent
+    # 29 and 33 failed calls and 10+ minutes before another model answered.
     # Web search is only free on some models, so search calls and plain calls use
     # separate model lists and do not eat into each other's daily quota.
     models = CONFIG["gemini_search_models"] if search else CONFIG["gemini_plain_models"]
-    for model, (number, key) in itertools.product(models, enumerate(keys, 1)):
-        if (number, model) in MODELS_OUT:
-            continue
-        label = f"{model}, key {number}"
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        for attempt in range(4):
-            started = time.time()
-            try:
-                req = urllib.request.Request(
-                    url, data=json.dumps(payload).encode(), method="POST",
-                    headers={"x-goog-api-key": key, "Content-Type": "application/json"})
-                with urllib.request.urlopen(req, timeout=180) as resp:
-                    data = json.loads(resp.read().decode())
-                parts = data["candidates"][0]["content"]["parts"]
-                text = "".join(p.get("text", "") for p in parts).strip()
+    rounds = GEMINI_ROUNDS if len(models) > 1 else GEMINI_ROUNDS + 1  # nowhere else to go
+    for rnd in range(rounds):
+        for model in models:
+            busy = 0
+            for number, key in enumerate(keys, 1):
+                if (number, model) in MODELS_OUT or busy >= BUSY_LIMIT:
+                    continue
+                text, busy = _gemini_try(model, number, key, payload, kind, busy)
                 if text:
-                    AI_LOG.append(f"{kind} ({label}): ok on attempt {attempt + 1}, "
-                                  f"{time.time() - started:.0f}s, {len(text)} chars")
                     return text
-                AI_LOG.append(f"{kind} ({label}) attempt {attempt + 1}: empty reply")
-            except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
-                code = getattr(err, "code", None)
-                detail = err.read().decode()[:1500] if code else ""
-                AI_LOG.append(f"{kind} ({label}) attempt {attempt + 1} failed: {err} {detail}")
-                print(AI_LOG[-1])
-                quota_gone = code == 429 and ("PerDay" in detail or attempt >= 1)
-                if code in (400, 401, 403, 404) or quota_gone:
-                    # Bad key, unknown model or used-up quota: waiting will not help.
-                    MODELS_OUT.add((number, model))
-                    break
-            time.sleep(8 + 12 * attempt)
+        if rnd + 1 < rounds:
+            GEMINI_SLEEP(30)
     return ""
+
+
+GEMINI_ROUNDS = 2      # passes over the model list
+BUSY_LIMIT = 3         # 503s or timeouts on one model in a round before moving on
+GEMINI_SLEEP = time.sleep
+
+
+def _gemini_post(url, payload, key):
+    req = urllib.request.Request(
+        url, data=json.dumps(payload).encode(), method="POST",
+        headers={"x-goog-api-key": key, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=180) as resp:
+        return json.loads(resp.read().decode())
+
+
+def _gemini_try(model, number, key, payload, kind, busy):
+    """Up to two attempts of one model on one key. Returns (text or "", busy count)."""
+    label = f"{model}, key {number}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    for attempt in range(2):
+        started = time.time()
+        try:
+            data = _gemini_post(url, payload, key)
+            parts = data["candidates"][0]["content"]["parts"]
+            text = "".join(p.get("text", "") for p in parts).strip()
+            if text:
+                AI_LOG.append(f"{kind} ({label}): ok on attempt {attempt + 1}, "
+                              f"{time.time() - started:.0f}s, {len(text)} chars")
+                return text, busy
+            AI_LOG.append(f"{kind} ({label}) attempt {attempt + 1}: empty reply")
+        except (urllib.error.URLError, KeyError, IndexError, TimeoutError, ValueError) as err:
+            code = getattr(err, "code", None)
+            detail = ""
+            if code and hasattr(err, "read"):
+                try:
+                    detail = err.read().decode()[:1500]
+                except Exception:  # noqa: BLE001 - the detail is only for the log
+                    detail = ""
+            AI_LOG.append(f"{kind} ({label}) attempt {attempt + 1} failed: {err} {detail}")
+            print(AI_LOG[-1])
+            quota_gone = code == 429 and ("PerDay" in detail or "per day" in detail.lower()
+                                          or attempt >= 1)
+            if code in (400, 401, 403, 404) or quota_gone:
+                # Bad key, unknown model or used-up quota: waiting will not help.
+                MODELS_OUT.add((number, model))
+                return "", busy
+            if code in (500, 503) or "timed out" in str(err).lower() or code is None and \
+                    isinstance(err, (TimeoutError, urllib.error.URLError)):
+                busy += 1
+                if busy >= BUSY_LIMIT:
+                    AI_LOG.append(f"{kind} ({model}): busy {busy} times, trying the next model")
+                    return "", busy
+        GEMINI_SLEEP(5 + 10 * attempt + random.random() * 3)
+    return "", busy
 
 
 DECISION_SCHEMA = {

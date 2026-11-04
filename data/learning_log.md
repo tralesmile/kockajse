@@ -334,3 +334,51 @@ backtest.py has `most_likely_power` and `value_taxed_power`; reports refreshed. 
 
 To measure next: power_value bets per day and CLV; power_ticket vs actual and market; if
 power_ticket holds up, switch the ticket's chance to power (backtest says about +2 points).
+
+## 2026-11-04 (morning review): late tax-proof singles and a faster Gemini fallback
+
+Measured: 149 settled judged picks, 58.4% won vs 56.4% market chance. By verdict (won minus
+market): AGREE +2.3 points (38), RISKY +0.3 (80), AVOID +6.0 (31), so the AI's verdicts
+still do not sort winners from losers. Brier market 0.2330 vs AI 0.2359. In 42 complementary
+pairs (both sides of one line) the AI said AGREE to both 4 times; its adjusted chances for a
+pair sum to 0.94-1.01. Paper tickets 23-26 all lost (-400); ticket 26's lost leg, Kansas St
+-10.5 at 52% (NCAAB season opener), had research quoting a 71-69 projection against it and the
+AI still said AGREE (and AGREE to the other side, +11.5): a coin flip, not foreseeable, but a
+sign of incoherent verdicts. Unsettled: 3 Nov Copa del Rey picks (incl. the ticket's Under 4.5)
+and a 2 Nov tennis pick; the scores feed may not cover them. Closing captures: 36 on 3 Nov,
+46-106 minutes before the start; CLV vs closing fair -6.5% on average (the margin). Shadows:
+nothing new settled (2 Nov: market won, actual lost; 3 Nov actual = market, lost). Daily run 4
+Nov: decision call failed 33 times (503 and timeouts on gemini-3.8-flash, all 4 keys x 4
+attempts, then 3.6-flash key 1) before 3.6-flash key 2 answered; key 1 hit its search quota.
+
+Tax rule checked (Zlatna Kopacka rules, art. 21): 15% of the real winnings (payout minus stake),
+per winning ticket, no tax-free amount. The bot's model is right. (The state lottery's 5,000
+MKD threshold applies to lotto only.)
+
+Backtest (football-data mirror, 2019-2026), tax-proof power singles at the best price:
+closing 802 bets +0.2% ± 2.5 (expected +1.5%); by odds 1.05-1.30: 238 bets +5.1% ± 2.2,
+1.30-1.60 -0.6% ± 3.8, 1.60-2.20 -3.6% ± 5.6; h2h +1.4% ± 2.7, totals -3.1% ± 5.6; by taxed EV
+0-1% -2.1%, 1-2% +4.6%, 2-5% -0.5% (no threshold effect). Opening prices: 168 bets -3.4% ± 4.9.
+All h2h favourites, no value filter, after tax: best price 1.05-1.20 -0.2% ± 1.5, 1.20-1.30
+-1.8%, 1.30-1.45 -1.5%; average price -3.9%, -4.5%, -3.2%. Power chances are calibrated there
+(hit 88.8% vs 88.3% expected). So: price shopping and timing are the levers; the edge rule
+matters less.
+
+Researched: Gemini 503 handling (InventiveHQ, dev.to "503 reality check", Google AI forum):
+capacity is per model; retry with backoff and jitter, and fall back to another model.
+OddsPapi soft-book lag (Sep 2026): 1xBet follows Pinnacle moves in 6-13 minutes, Bet365 in
+47-67 and only 59-73% of them, so near-kick-off gaps at slow books can be real.
+
+Ideas considered (scored in IDEAS.md): late tax-proof power singles (built); Gemini model
+rotation (built); fallback score source (ESPN, blocked here); verdict coherence check;
+heavy-favourite best-price shadow; late ticket email; online AI weight; arbitrage after tax
+(dropped by arithmetic: a 2.10/2.10 arb loses 3.3% after tax).
+
+Changed: new shadow "late_power" logged by the closing job (`late_shadow_bets`), the opening-
+time twin of power_value. `gemini()` now rotates: 2 attempts per key, after 3 busy failures
+(503/500/timeouts) on a model the next model, 2 rounds (3 for search); "per day" 429 drops a
+key at once; jittered backoff. New `tests/test_late_gemini.py`. The real ticket is chosen as
+before, so no preview run (also keeps search quota).
+
+To measure next: late_power bets per day vs power_value; failed Gemini calls per run (target
+under 8); whether Copa del Rey/tennis legs settle; first shadow ROI comparisons.

@@ -6,6 +6,22 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Late tax-proof power singles, shadow "late_power", and Gemini model rotation (both built
+  4 Nov morning):
+  - "late_power" (timing, 4/3/1): the closing job, minutes before kick-off, logs every
+    single whose best (outlier-capped) price pays after the 15% tax with the power-method
+    Pinnacle chance, odds 1.05-4.00, no double chance, one per match. Backtest: the same
+    rule found 802 bets at closing prices (+0.2% ± 2.5 realised, +1.5% expected) but only
+    168 at opening prices (-3.4% ± 4.9); at closing prices odds 1.05-1.30 gave 238 bets,
+    +5.1% ± 2.2 (expected +1.1%). The morning "power_value" shadow is its opening-time
+    twin, so the pair measures the timing effect live. Measuring: bets per day, ROI after
+    ~150 bets, and whether it beats power_value.
+  - Gemini rotation: on 3 and 4 Nov the decision call failed 29 and 33 times (503 "high
+    demand", timeouts) because every key of a busy model was tried 4 times. Now at most
+    2 attempts per key and 3 busy failures per model per round, then the next model; two
+    rounds (three for search, which has one model); a "per day" 429 drops that key at once.
+    Measuring: failed calls per run in `last_run.json` (target under 8).
+
 - Power-method de-margining, shadows "power_value" and "power_ticket" (3 Nov evening,
   modelling, 4/4/2). Every candidate now also carries a power-method chance (`power_prob`,
   `sharp_power`). Evidence: on 80,832 Pinnacle closing 1X2 prices (2012-2026) a logistic
@@ -87,17 +103,30 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
-- Gemini decision circuit breaker (AI workflow, 2/4/1): on 3 Nov the decision call failed 29
-  times (503 "high demand" and timeouts) before gemini-3.6-flash on key 3 answered. After
-  two 503s on a model, move to the next model instead of trying every key; add
-  gemini-2.5-flash-lite (no search needed) as the last plain fallback.
+- Fallback score source (data, 3/3/2): Copa del Rey picks of 3 Nov (incl. the ticket's
+  Anaitasuna v Alavés leg) and a 2 Nov tennis pick were still unsettled on 4 Nov; The Odds
+  API scores feed seems not to cover every league. After 3 days such legs count as void,
+  which flatters a lost ticket into a smaller one. ESPN's free scoreboard JSON covers cups,
+  NCAAB and tennis, but is blocked from the review sandbox, so it needs a preview to test.
+- Verdict coherence check (prompts, 2/3/1): in 4 of 42 complementary pairs (same line,
+  both sides) the AI said AGREE to both, e.g. Kansas St -10.5 and South Dakota St +11.5 on
+  3 Nov. Downgrade the weaker side to RISKY in code, and tell the prompt.
+- Heavy-favourite best-price singles (bet types, 3/3/1): at closing best prices all h2h
+  favourites 1.05-1.20 return -0.2% ± 1.5 after tax (average price: -3.9%); the tax-proof
+  subset 1.05-1.30 +5.1% ± 2.2. A "favourite at best price" shadow would measure it live;
+  late_power covers the tax-proof part first.
+- Late ticket email (timing, unconventional, 3/2/3): the backtest says the same rule at
+  closing prices loses 2-6 points less than at opening prices. A second, short email an
+  hour before the first leg with re-priced legs (or a late ticket) would let the owner bet
+  later. Wait for late_power vs power_value to show the timing effect live first.
+- Online AI weight (modelling, unconventional, from forecast aggregation, 2/3/2): set
+  ai_weight by the running Brier of AI vs market (now 0.2359 vs 0.2330 on 149 picks),
+  shrinking to 0 while the AI is worse. Read the market-vs-actual shadow first.
+
 - Shortlist league cap (selection, 2/3/1): on 3 Nov 36 of 41 logged picks were NCAAB
   opening-week mismatches (spreads of 26-30 points) and the ticket took a Copa del Rey tie
   with a fifth-tier side; cap any one league at about half the shortlist so the AI's research
   covers markets it can inform.
-- Late power value (timing, 3/3/1): the backtest finds 5 times more tax-proof power value at
-  closing prices (802) than at opening prices (168); the late_value scan near kick-off could
-  use the power chance and the tax test too.
 - Paired comparison in backtest.py (experiments, 3/4/1): report the per-day paired
   difference and its standard error between any two strategies (done by hand on 3 Nov;
   far tighter than comparing two ROIs).
@@ -186,6 +215,12 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   compare with the market (2/3/3).
 
 ## Dropped
+
+- Arbitrage across bookmakers (unconventional, from arbitrage trading, checked 4 Nov by
+  arithmetic): the 15% tax on the winning side's profit turns odds o into 1 + 0.85(o - 1),
+  so a two-way 2.10/2.10 "sure bet" pays 1.935 either way and loses 3.3%; a tax-proof arb
+  needs about 2.18/2.18 (an 8% gross arb), which the 10% outlier cap all but rules out, and
+  it needs several accounts. Not worth a shadow.
 
 - Extremizing / logistic recalibration of Pinnacle chances (unconventional, from forecasting
   tournaments, tested 3 Nov evening): fitted on 2012-2019, tested on 2019-2026; on top of the

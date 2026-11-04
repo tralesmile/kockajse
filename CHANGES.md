@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-04: late tax-proof singles, and less waiting on a busy AI
+
+- New paper experiment: a few minutes before kick-off, when prices are most accurate, the bot now logs any single whose best bookmaker price still pays after the 15% tax. In seven seasons of history this rule roughly broke even after tax at kick-off prices (802 bets), and did best on strong favourites (odds 1.05-1.30: +5% over 238 bets), while the same rule in the morning lost about 3%. It runs next to the morning version, so we will see live whether betting later is better.
+- The AI's decision step wasted 10+ minutes on 3 and 4 November retrying an overloaded Gemini model 30 times. It now moves to the next model after three busy replies, so the email should arrive sooner and the run is less likely to time out.
+- Checked: the 15% tax is on net winnings per ticket with no tax-free amount, exactly as the bot counts it.
+- Your daily ticket is chosen exactly as before. No extra Odds API or Gemini use.
+
 ## 2026-11-03: a more accurate way to read the fair chance from prices
 
 - Bookmakers hide more of their margin in the prices of outsiders than of favourites. The bot removed the margin evenly, which slightly understates how often favourites win. A better method (the "power" method) was checked on 80,000 past matches and in a 2026 study of 90,000; it matches real results more closely.
