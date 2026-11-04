@@ -418,7 +418,8 @@ starts the chain after saving the ledger (not for preview, diagnose or resend). 
 `actions: write`. Config: closing_chain, closing_chain_max_runs 60, closing_chain_idle_hours
 14, closing_run_minutes 36, closing_chain_window_minutes 60. New `tests/test_chain.py`; the
 workflow loop was also dry-run with stubbed python/gh/sleep. Ticket selection unchanged, so
-no preview run.
+no preview run. Smoke test: a manual closing run with chain=1 at 20:26 UTC parsed the input,
+found nothing due and ended the chain as designed; the first self-dispatch happens on 5 Nov.
 
 To measure next: did the 5 Nov daily run start the chain, and did it run unbroken until
 the last bet (Actions list for closing.yml, event workflow_dispatch); share of picks with a
