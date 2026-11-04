@@ -382,3 +382,44 @@ before, so no preview run (also keeps search quota).
 
 To measure next: late_power bets per day vs power_value; failed Gemini calls per run (target
 under 8); whether Copa del Rey/tennis legs settle; first shadow ROI comparisons.
+
+## 2026-11-04 (evening review): a closing watcher that keeps itself alive
+
+Measured: no pick, ticket or shadow settled since the morning review (149 settled judged
+picks, 58.4% won vs 56.4% market; tickets 23-26 lost; ticket 27 and all 35 picks of 4 Nov
+pending; the 3 Nov Copa del Rey picks and a 2 Nov tennis pick still unsettled), so no new
+lost legs to judge. Closing captures: 74 rows; picks' CLV vs closing fair -6.6% (54 non-
+ticket, 2 ticket legs: the margin). First two value singles with a close: RB Leipzig v Man
+City Over 3.5 at onexbet 1.92 closed 1.71 (CLV +6.3%), Viking v Sabah Over 3.5 at 1.97
+closed 1.81 (+5.8%): the outlier book moved toward the market, which is what real value
+looks like; far too few to conclude. The only closing run of 4 Nov (17:56 UTC) captured
+the 20:00 matches 123 minutes early and none near kick-off, and no late_power or
+late_value bet was logged.
+
+Root cause, measured with the Actions API: 15 closing runs from 31 Oct to 4 Nov against
+about 160 scheduled (36 a day); on 4 Nov the 06:17-09:53 UTC daily crons ran at 14:52,
+15:26, 15:47, 16:23 and 17:36 UTC. Usage API: billable 0 ms for both daily and closing runs.
+
+Researched: GitHub docs (trigger a workflow): events made with GITHUB_TOKEN start no new
+run "with the exception of workflow_dispatch and repository_dispatch", which "always create
+workflow runs". Community discussions #210625 (a daily cron created 4h22m late) and
+#210925 (slots missing, runs appearing hours later; no staff answer; advice: external
+scheduler or workflow_dispatch). So self-dispatch is the free, owner-free fix.
+
+Ideas considered (scored in IDEAS.md): self-continuing closing watcher (built); late ticket
+email (now feasible, raised to 4/3/3); late ticket shadow; slow-book move follower; exchange
+back-lay spread as confidence; ice hockey; fallback score source (ESPN and TheSportsDB both
+blocked from this sandbox, still needs a preview to test); verdict coherence check.
+
+Changed: `closing_chain_ok()` and `--closing-chain` in bot.py; closing.yml takes a `chain`
+input, naps as long as the run lasts (36 minutes) when chaining is on, captures only bets
+within 60 minutes inside the chain, and dispatches the next link before ending; daily.yml
+starts the chain after saving the ledger (not for preview, diagnose or resend). Both get
+`actions: write`. Config: closing_chain, closing_chain_max_runs 60, closing_chain_idle_hours
+14, closing_run_minutes 36, closing_chain_window_minutes 60. New `tests/test_chain.py`; the
+workflow loop was also dry-run with stubbed python/gh/sleep. Ticket selection unchanged, so
+no preview run.
+
+To measure next: did the 5 Nov daily run start the chain, and did it run unbroken until
+the last bet (Actions list for closing.yml, event workflow_dispatch); share of picks with a
+capture within 60 minutes; late_power and late_value bets per day; closing credits per day.

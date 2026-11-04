@@ -8,14 +8,26 @@ name: Closing prices
 # in the next 3 hours as a fallback, and when a start is under about 30 minutes away it
 # waits (at most closing_max_wait_minutes per nap, 40 minutes in all) to capture it near
 # kick-off. Runs that find nothing due make no Odds API request and commit nothing.
+#
+# Watcher chain (4 Nov): a run that still has bets to capture starts the next run itself
+# (workflow_dispatch with the job's token, which GitHub starts within seconds), so one
+# watcher stays alive from the morning ticket until the last logged bet has started and
+# every bet is captured 15 to 60 minutes before its start. The daily run starts the chain;
+# the schedule below is only a backup. Set "closing_chain": false in config.json to stop it.
 on:
   schedule:
     - cron: "11,41 10-23 * * *"
     - cron: "11,41 0-3 * * *"
   workflow_dispatch:
+    inputs:
+      chain:
+        description: "Link number in the watcher chain (0 = not started by the chain)"
+        type: number
+        default: 0
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: closing-prices
@@ -36,6 +48,8 @@ jobs:
           ODDS_API_KEY_2: ${{ secrets.ODDS_API_KEY_2 }}
           ODDS_API_KEY_3: ${{ secrets.ODDS_API_KEY_3 }}
           ODDS_API_KEY_4: ${{ secrets.ODDS_API_KEY_4 }}
+          GH_TOKEN: ${{ github.token }}
+          CHAIN: ${{ inputs.chain || 0 }}
         run: |
           git config user.name "betting-bot"
           git config user.email "betting-bot@users.noreply.github.com"
@@ -46,24 +60,45 @@ jobs:
             for i in 1 2 3; do git pull -q --rebase && git push -q && return 0; sleep 10; done
             return 1
           }
-          max_wait=$(python -c "import json; print(json.load(open('config.json')).get('closing_max_wait_minutes', 15) * 60)")
-          end=$((SECONDS + 40 * 60))
+          cfg() { python -c "import json; print(json.load(open('config.json')).get('$1', $2))"; }
+          max_wait=$(( $(cfg closing_max_wait_minutes 15) * 60 ))
+          window=""
+          if [ "$(cfg closing_chain False)" = "True" ]; then
+            # A run that can hand over to a successor may nap as long as it lasts.
+            max_wait=100000
+          fi
+          if [ "$CHAIN" -gt 0 ]; then
+            # Inside the chain a watcher is always alive, so no early fallback capture.
+            window="--window $(cfg closing_chain_window_minutes 60)"
+          fi
+          end=$((SECONDS + $(cfg closing_run_minutes 36) * 60))
           last=""
+          stuck=""
           while :; do
-            python bot.py --closing
+            python bot.py --closing $window
             save
             wait=$(python bot.py --closing-next)
             left=$((end - SECONDS))
             if [ "$wait" = "none" ] || [ "$wait" -gt "$max_wait" ] || [ "$wait" -ge "$left" ]; then
-              echo "Next capture: ${wait}s away; leaving it to a later run."
-              exit 0
+              echo "Next capture: ${wait}s away; not in this run."
+              break
             fi
             if [ "$wait" -lt 60 ] && [ -n "$last" ] && [ "$last" -lt 60 ]; then
               echo "Still due after a capture (daily credit budget used up?); stopping."
-              exit 0
+              stuck=1
+              break
             fi
             last=$wait
             echo "Next capture in ${wait}s; waiting."
             sleep "$((wait + 5))"
             git pull -q --rebase || true
           done
+          if [ -z "$stuck" ] && [ "$(python bot.py --closing-chain --link "$CHAIN")" = "yes" ]; then
+            left=$((end - SECONDS))
+            if [ "$left" -gt 0 ]; then echo "Watching ${left}s more before handing over."; sleep "$left"; fi
+            gh workflow run closing.yml --ref "${GITHUB_REF_NAME}" -f chain=$((CHAIN + 1)) \
+              && echo "Started chain link $((CHAIN + 1))." \
+              || echo "Could not start the next watcher; the schedule remains as backup."
+          else
+            echo "Watcher chain ends here."
+          fi

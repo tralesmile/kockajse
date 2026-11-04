@@ -32,6 +32,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: daily-ticket
@@ -72,3 +73,16 @@ jobs:
           git diff --cached --quiet || git commit -m "Update ledger"
           git pull --rebase
           git push
+      - name: Start the closing-price watcher
+        # Starts the self-continuing closing watcher (closing.yml) once today's bets are
+        # logged. GitHub's own schedule for it runs only a few times a day.
+        if: ${{ !inputs.preview && !inputs.diagnose && !inputs.resend }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(python bot.py --closing-chain)" = "yes" ]; then
+            gh workflow run closing.yml --ref "${GITHUB_REF_NAME}" -f chain=1 \
+              && echo "Closing watcher started." || echo "Could not start the closing watcher."
+          else
+            echo "Nothing to watch."
+          fi

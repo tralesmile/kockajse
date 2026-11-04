@@ -6,6 +6,22 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Self-continuing closing watcher (timing/infrastructure, bold, 5/4/2, built 4 Nov evening).
+  GitHub ran only 15 of about 160 planned closing runs from 31 Oct to 4 Nov, and on 4 Nov
+  the 06:17-09:53 UTC daily crons ran at 14:52-17:36 (community threads #210625 and
+  #210925 report the same: 4+ hour delays, missing slots, no staff answer). The GitHub docs
+  say workflow_dispatch made with the job's own token always creates a run, so each
+  closing run that still has bets to capture now starts its successor before ending (runs
+  of up to `closing_run_minutes` = 36), and the daily run starts the chain after logging
+  picks. Inside the chain every bet is captured 15-60 minutes before its start, with no
+  3-hour fallback capture (saves credits). Stops when nothing is left, the next capture is
+  over 14 hours away, the 20 closing credits are used, or after 60 links. Actions usage
+  API shows billable 0 ms for these runs (IMPROVING.md: run time is free). Measuring: share
+  of picks and value singles with a capture within 60 minutes (was about 30%, target 90%+),
+  late_power bets per day (needs near-kick-off feeds, so it was nearly blind), credits per
+  day, chain breaks. This replaces the "self-chaining closing job" and "external scheduler"
+  ideas; the external scheduler stays a fallback if the chain breaks.
+
 - Late tax-proof power singles, shadow "late_power", and Gemini model rotation (both built
   4 Nov morning):
   - "late_power" (timing, 4/3/1): the closing job, minutes before kick-off, logs every
@@ -103,6 +119,29 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- Late ticket email (timing, unconventional, 4/3/3, raised from 3/2/3): the watcher now
+  sees every logged bet 15-60 minutes before its start, so it can re-price the morning
+  ticket and send a short "bet now" email with the late prices (or swap a leg whose price
+  fell). Backtest: the same rule at closing prices loses 2-6 points less. Build once the
+  chain has run cleanly for a few days and late_power vs power_value shows the gap live.
+- Late ticket shadow "late_ticket" (selection/timing, 4/3/2): run build_ticket on the
+  watcher's near-kick-off feed (best capped prices, power chances) for the ticket legs'
+  leagues and settle it beside "actual"; the cheapest live test of betting later.
+- Slow-book move follower (market microstructure, unconventional, 3/2/2): both value
+  singles captured on 4 Nov opened at onexbet 1.92 and 1.97 and closed at 1.71 and 1.81
+  (CLV +6.3% and +5.8%), i.e. the outlier book's price was the one that moved. If this
+  holds over ~30 captures, the value scan is finding real lag, not errors; split CLV by
+  book and by minutes since the sharp price last moved.
+- Exchange spread as a confidence signal (market microstructure, unconventional, 2/2/2):
+  The Odds API's betfair_ex_eu gives back and lay prices; a wide back-lay spread means a
+  thin market where the sharp fair chance is less reliable. Down-weight or skip value
+  bets there.
+- Ice hockey (leagues, 2/2/1): NHL h2h with Pinnacle prices; adds evening-US favourites
+  at 1.20-1.50 where the tax costs least, and diversifies away from NCAAB mismatches.
+- Actions usage check (reliability, measured 4 Nov evening): the usage API reports
+  billable 0 ms for daily and closing runs of this private repository, so the watcher's
+  idle waiting is not charged. Re-check weekly while the chain runs.
+
 - Fallback score source (data, 3/3/2): Copa del Rey picks of 3 Nov (incl. the ticket's
   Anaitasuna v Alavés leg) and a 2 Nov tennis pick were still unsettled on 4 Nov; The Odds
   API scores feed seems not to cover every league. After 3 days such legs count as void,
@@ -137,11 +176,6 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 - League margin table (leagues, 3/3/2): the backtest can list the average-price margin per
   league and market; restrict the ticket to the cheapest ones (big leagues are usually
   2-3 points cheaper than second divisions).
-- Self-chaining closing job (timing, 4/3/2): since the 2 Nov evening change GitHub started
-  only 2 closing runs (02:37 and 06:40 UTC) and none was near a kick-off, so 0 captures. A
-  run could dispatch the next one (workflow_dispatch from GITHUB_TOKEN does start runs) at
-  the right moment, but waiting costs Actions minutes on a private repository. The external
-  scheduler (below) is cheaper; recommend again.
 - Portfolio staking (unconventional, from quantitative finance, 3/2/2): several small
   uncorrelated singles instead of one ticket give the same expected loss per unit with much
   lower variance, and far less tax. Only as a recommendation; stake rules are the owner's.
@@ -149,14 +183,6 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   backtest matches. Rejected for now: the model may know the results (leakage), so scores
   would be inflated.
 
-- External scheduler for exact capture times (timing, 4/4/1 for the owner): GitHub's own
-  schedule is unreliable (see above). A free cron service (cron-job.org) calling the
-  workflow_dispatch API with a fine-grained token (Actions: write on this repo only) would
-  wake the closing job on time. Needs the owner to create the token; suggest in CHANGES.md
-  if near-capture coverage stays under 80%.
-- Actions minutes guard (reliability, 4/4/1): the repository is private, so GitHub's free
-  plan gives 2,000 minutes a month; the daily run takes up to 40 and each closing run at
-  least 1. Check the billing page usage; if close to the limit, thin the closing schedule.
 - Slow-book value (market microstructure, unconventional, 3/2/2): OddsPapi (Sep 2026)
   measured 1xBet following Pinnacle moves in ~6-12 min but Bet365 in ~47-67 min (follows
   only 59-73% of moves). Value at slow books is more likely real lag than an error; split

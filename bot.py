@@ -774,6 +774,32 @@ def closing_next_wait(now=None):
     return max(0, int((min(starts) - lead - now).total_seconds()))
 
 
+def closing_chain_ok(now=None, chain=0):
+    """Whether a closing run should start the next run of the watcher chain before it ends.
+
+    GitHub runs scheduled jobs hours late or not at all: from 31 Oct to 4 Nov only 15 of
+    about 160 planned closing runs happened, and on 4 Nov the 06:17-09:53 UTC daily crons
+    ran at 14:52-17:36. A workflow_dispatch made with the job's own token starts within
+    seconds, so each closing run that still has bets to capture starts its successor
+    (closing.yml), keeping one watcher alive from the morning ticket until the last logged
+    bet has started. The chain stops when nothing is left to capture, when the next capture
+    is more than closing_chain_idle_hours away, when today's closing credits are used up,
+    or after closing_chain_max_runs links (a guard against a runaway loop)."""
+    if not CONFIG.get("closing_chain", False):
+        return False
+    if chain >= CONFIG.get("closing_chain_max_runs", 60):
+        return False
+    now = now or datetime.now(timezone.utc)
+    wait = closing_next_wait(now)
+    if wait is None or wait > CONFIG.get("closing_chain_idle_hours", 14) * 3600:
+        return False
+    today = now.date().isoformat()
+    used = 0
+    if CLOSING_BUDGET_PATH.exists():
+        used = json.loads(CLOSING_BUDGET_PATH.read_text()).get(today, 0)
+    return used < CONFIG.get("max_closing_credits_per_day", 16)
+
+
 def late_value_bets(events, now):
     """Value at the best price minutes before kick-off, when the sharp price is at its most
     accurate (Pinnacle's closing line is the best known estimate of the true chance), so a
@@ -1913,6 +1939,12 @@ if __name__ == "__main__":
     if "--closing-next" in sys.argv:
         wait = closing_next_wait()
         print("none" if wait is None else wait)
+        sys.exit()
+    if "--closing-chain" in sys.argv:
+        link = 0
+        if "--link" in sys.argv:
+            link = int(sys.argv[sys.argv.index("--link") + 1] or 0)
+        print("yes" if closing_chain_ok(chain=link) else "no")
         sys.exit()
     if "--closing" in sys.argv:
         window = None

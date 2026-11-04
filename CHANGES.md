@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-04: the price check before kick-off now keeps itself running
+
+- The bot is meant to re-check prices shortly before each match starts (the best early sign of a real edge, and the basis of the most promising experiment, betting late). It almost never could: GitHub ran only 15 of about 160 planned checks in five days, and some jobs started 8 hours late.
+- Now the morning run starts a "watcher" that, before it finishes, starts the next one itself. GitHub starts these within seconds, so one watcher stays on duty from the morning ticket until the last bet of the day has started, and stops by itself after that.
+- Expect almost every bet to get a price 15-60 minutes before the start, and the late experiments to start logging bets. The Odds API use stays within the same 20 credits a day.
+- GitHub reports these runs as free for your repository (0 billable minutes). To switch the watcher off, set "closing_chain" to false in config.json.
+- Your daily ticket is chosen exactly as before. No extra Gemini use.
+
 ## 2026-11-04: late tax-proof singles, and less waiting on a busy AI
 
 - New paper experiment: a few minutes before kick-off, when prices are most accurate, the bot now logs any single whose best bookmaker price still pays after the 15% tax. In seven seasons of history this rule roughly broke even after tax at kick-off prices (802 bets), and did best on strong favourites (odds 1.05-1.30: +5% over 238 bets), while the same rule in the morning lost about 3%. It runs next to the morning version, so we will see live whether betting later is better.
