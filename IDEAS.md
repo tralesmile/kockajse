@@ -6,6 +6,24 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Closing-price scoreboard with an always-valid sequential test (experiments, bold,
+  unconventional from online A/B testing and clinical trials, 5/4/2, built 5 Nov evening).
+  `scoreboard.py` scores every shadow bet, and every logged pick by verdict, the moment
+  its closing price is captured: expected return after the 15% tax if the margin-free
+  closing chance (power method where recorded) is true. Per strategy: mean, se, P(beats
+  the tax), mSPRT always-valid p (Johari, Pekelis, Walsh 2015; normal mixture tau 0.05,
+  burn-in 10 bets: 2.5% false alarms in null simulations at alpha 5%, 17% without the
+  burn-in), verdict after 20 bets, and a same-day paired difference against the real
+  ticket. Written to `data/scoreboard.md` each daily run and shown in the email. Legs of
+  the market, power, edge_first, single, ai_own and actual_best tickets are now captured
+  near kick-off too (3 of 8 market legs and 2 of 5 power legs were not in the pick log),
+  and captures record `close_power`. Fixed: late_power logged the proportional chance as
+  its fair chance; it now logs the power chance it used. First reading (5 Nov, few
+  captures): value singles CLV +6.6% before tax but -3.1% ± 2.2 after tax (6 bets);
+  picks at average prices -11.5% to -12.5% after tax whatever the verdict. Measuring:
+  first verdicts (~2-3 weeks), whether xROI tracks realised returns live; this is the
+  input the Thompson-sampling chooser needs.
+
 - Second results source with two-answer agreement (data/measurement, bold, 5/4/2, built
   5 Nov morning). The Odds API scores feed left the ATP Paris Masters (2 and 4 Nov) and the
   Copa del Rey (3 Nov) unsettled: 10 picks and 14 shadow legs, and 2 of the 3 legs of
@@ -133,6 +151,21 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   settles the AI's own choice next to it.
 
 ## New
+
+- Tax break-even curve in the email (selection/bet types, 3/4/1): value singles beat the
+  close by +6.6% before tax but lose about 3% after it, because at odds O the tax costs
+  about 15% x (O - 1) x chance. Show the owner the CLV needed at each odds band
+  (about +7% at 2.0, +3% at 1.3) and restrict value shadows to bets above it.
+- Thompson-sampling chooser (selection, unconventional, raised to 3/3/2): the scoreboard's
+  "chance it beats the tax" is the posterior weight a bandit needs; once 3+ strategies
+  have 20+ scored bets, a shadow "bandit" ticket can follow the best posterior.
+- Totals drift test in European cups (timing, 2/2/2): on 5 Nov all three Over 3.5 value
+  singles in UEFA games closed 6-14% shorter, and logged Overs drifted +1.1 ± 0.7 points
+  (9 captures). Domestic leagues show no such drift (see Dropped); re-test on cup games
+  once the archive has ~100 captured totals.
+- Closing-price weighting of the AI (modelling, 2/3/2): replace the fixed ai_weight 0.2
+  by how much the AI's verdict groups out-close each other in the scoreboard (AGREE vs
+  AVOID xROI difference), which needs a fraction of the bets the Brier comparison does.
 
 - ESPN scoreboard as a third results source (data, 3/2/2): free JSON
   (site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates=YYYYMMDD,
@@ -275,6 +308,12 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   compare with the market (2/3/3).
 
 ## Dropped
+
+- Morning Over 2.5 drift (timing, unconventional, from momentum in finance, tested 5 Nov
+  evening on 38,245 football-data matches 2019-2026, Pinnacle opening vs closing): the
+  Over chance drifts -0.14 ± 0.02 points on average (league means -0.55 to +0.21), and
+  Over/Under at the opening best price (capped) closes -2.2% / -1.5% before tax. No
+  exploitable drift in domestic leagues.
 
 - Arbitrage across bookmakers (unconventional, from arbitrage trading, checked 4 Nov by
   arithmetic): the 15% tax on the winning side's profit turns odds o into 1 + 0.85(o - 1),

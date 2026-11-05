@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-05: every strategy is now scored at the kick-off price
+
+- Win/loss results need hundreds of bets before one strategy can be called better than another. The price just before kick-off is a far quicker judge: it is the most accurate estimate of each bet's real chance.
+- The email now has a "Scoreboard at closing prices": for your ticket, each experiment and the AI's AGREE / RISKY / AVOID picks, what they would return on average after the 15% tax if the kick-off price is right. A verdict ("beats the tax" or "loses after tax") appears only once the evidence is strong, using a test that is safe to read every day.
+- First reading, still very small: the "value" singles do get better prices than the kick-off price (about +7%), but the 15% tax eats all of that and more (about -3% after tax). Picks at the average price lose about 12% after tax whatever the AI's verdict.
+- The price watcher now also checks the legs of the experimental tickets, within the same 20 Odds API credits a day. A recording mistake in the "late tax-proof singles" experiment is fixed.
+- Your daily ticket is chosen exactly as before. No extra Gemini use.
+
 ## 2026-11-05: results for matches the scores feed misses
 
 - The results feed skipped some competitions: the Paris Masters tennis and the Copa del Rey. Two of the three legs of ticket 27 (Paul and de Minaur) and 24 other tracked bets were still waiting for a result.

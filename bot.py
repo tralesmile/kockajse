@@ -38,7 +38,7 @@ CLOSING_BUDGET_PATH = ROOT / "data" / "closing_budget.json"
 CLOSING_FIELDS = ["date", "event_id", "sport_key", "match", "market", "sel", "point", "pick",
                   "start", "on_ticket", "captured", "minutes_before", "open_odds",
                   "open_consensus", "open_sharp", "close_odds", "close_consensus",
-                  "close_sharp", "close_book", "clv", "move", "source"]
+                  "close_sharp", "close_book", "clv", "move", "source", "close_power"]
 LESSONS_PATH = ROOT / "prompts" / "lessons.md"
 LEDGER_FIELDS = ["ticket_no", "date", "picks", "total_odds", "stake", "result", "payout", "tax",
                  "net_profit", "bankroll_after", "mode"]
@@ -849,6 +849,7 @@ def closing_row(pick, cand, now, source="pick"):
     row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
                close_sharp="" if sharp is None else round(sharp, 4),
                close_book=cand["sharp_book"],
+               close_power="" if cand.get("sharp_power") is None else round(cand["sharp_power"], 4),
                clv=round(float(pick["odds"]) * close - 1, 4))
     if row["open_sharp"] and sharp is not None:
         row["move"] = round(sharp - float(row["open_sharp"]), 4)
@@ -860,6 +861,12 @@ def closing_row(pick, cand, now, source="pick"):
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
 SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value")
+# Ticket shadows whose legs are not always in the pick log (the market and power tickets
+# choose from every candidate): their legs are captured too, so the closing-price
+# scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
+# not captured twice; its pick capture is used.
+SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
+                   "actual")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value")
 
 
@@ -883,7 +890,14 @@ def closing_todo(now, captures=None):
     captures = closing_captures() if captures is None else captures
     out, seen = [], set()
     rows = [("pick", r) for r in read_picks()]
-    rows += [(r["strategy"], r) for r in read_shadow() if r["strategy"] in SHADOW_CLV]
+    shadow = read_shadow()
+    rows += [(r["strategy"], r) for r in shadow if r["strategy"] in SHADOW_CLV]
+    picked = {bet_key(r["event_id"], r["market"], r["sel"], r["point"]) for _, r in rows}
+    for r in shadow:
+        k = bet_key(r["event_id"], r["market"], r["sel"], r["point"])
+        if r["strategy"] in SHADOW_LEGS_CLV and k not in picked:
+            picked.add(k)
+            rows.append((r["strategy"], r))
     for source, r in rows:
         key = bet_key(r["event_id"], r["market"], r["sel"], r["point"]) + (source,)
         if r["result"] != "pending" or parse_time(r["start"]) <= now or key in seen:
@@ -965,6 +979,7 @@ def late_shadow_bets(events, now):
            for c in value_bets([c for c in cands if c["odds"] >= lo])
            if c["event_id"] not in taken["late_value"]]
     out += [("late_power", dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                                sharp=c["sharp_power"], sharp_prop=c["sharp"],
                                 book=c["best_book"]))
             for c in taxed_value_bets(cands, "sharp_power")
             if c["event_id"] not in taken["late_power"]]
@@ -1424,6 +1439,18 @@ def shadow_html():
             "available at Megawin.</small></p>")
 
 
+def scoreboard_html():
+    """Every strategy scored at closing prices (scoreboard.py); also writes
+    data/scoreboard.md for the reviews. Never stops the email if it fails."""
+    try:
+        import scoreboard
+        return scoreboard.write(STATE_PATH.parent, CONFIG["tax_rate"], SHADOW_NAMES,
+                                picks_path=PICKS_PATH, closing_path=CLOSING_PATH)[2]
+    except Exception as exc:  # noqa: BLE001 - a report must not break the daily run
+        print(f"Scoreboard failed: {exc}")
+        return ""
+
+
 # --------------------------------------------------------------- email ----
 def money(value):
     return f"{value:,.2f} {CONFIG['currency']}"
@@ -1519,6 +1546,7 @@ def build_email(state, finished, ticket, note, today):
     parts.append(scorecard_html())
     parts.append(clv_html())
     parts.append(shadow_html())
+    parts.append(scoreboard_html())
     if credits_left is not None:
         total = len(odds_keys())
         which = f" on key {key_index + 1} of {total}" if total > 1 else ""

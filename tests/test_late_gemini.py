@@ -41,7 +41,8 @@ c = bets[0][1]
 assert c["odds"] == 1.12 and c["book"] == "onexbet" and c["prob"] == c["sharp_power"]
 assert bot.taxed_ev(c["prob"], c["odds"]) > 0
 # Proportional chance would not clear the tax: the rule really needs the power chance.
-assert bot.taxed_ev(c["sharp"], c["odds"]) < 0
+assert bot.taxed_ev(c["sharp_prop"], c["odds"]) < 0
+assert c["sharp"] == c["sharp_power"]  # logged fair chance is the power chance it used
 # Started matches are skipped.
 assert bot.late_shadow_bets([fav], datetime(2026, 11, 3, 18, 1, tzinfo=timezone.utc)) == []
 

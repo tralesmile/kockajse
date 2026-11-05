@@ -38,6 +38,9 @@ tweak. Every review:
    against the market's chance by verdict, bet type, sport, league, odds band, number of
    picks, day of week. For each lost ticket pick, read that day's research
    (`data/research/<date>.json`) and decide whether the loss was foreseeable.
+   Read `data/scoreboard.md` first: every strategy and every verdict group scored at
+   closing prices (expected return after tax), with an always-valid sequential test, so a
+   strategy can be judged after a few dozen bets instead of hundreds.
    For questions the live logs are too small to answer, use the historical backtest
    (`backtest.py`, report in `data/backtest/report.md`): it replays the selection rules on
    seven seasons of European football. football-data.co.uk is blocked from the review's
@@ -63,7 +66,7 @@ tweak. Every review:
    evidence or research supports them. Keep each change focused enough that its effect can
    be measured, and note in `prompts/lessons.md` any lesson the AI should apply daily.
 4. **Check.** Add or update tests for new code. Run `python tests/test_markets.py`,
-   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py` and `python tests/simulate.py`;
+   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py` and `python tests/simulate.py`;
    all must pass. After a
    change to how picks are chosen, you may start one preview run to see it work live:
    `gh api -X POST repos/tralesmile/kockajse/actions/workflows/daily.yml/dispatches -f ref=main -F 'inputs[preview]=true'`

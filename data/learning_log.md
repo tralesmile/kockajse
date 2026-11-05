@@ -469,3 +469,46 @@ fallback_scores, fallback_after_hours 6, fallback_max_events 12. New
 To measure next: fallback_scores.csv on 6 Nov (did ticket 27's tennis legs and the Copa
 del Rey picks settle, did the two answers agree); search calls per run stay under 40;
 closing captures within 60 minutes for 5 Nov; late_power bets per day.
+
+## 2026-11-05 (evening review): every strategy scored at closing prices
+
+Measured: no ticket settled since the morning (settlement runs with the daily job), so no
+new lost leg to judge; ticket 27 still waits on the Paris Masters legs (the new fallback
+first runs on 6 Nov). The closing watcher worked all day: 5 Nov captures at 51, 30, 48 and
+42 minutes before kick-off, 16 of 30 picks captured within 60 minutes so far (the NBA
+picks start after midnight UTC), 11 of 20 closing credits used. First late shadows logged:
+5 late_value and 2 late_power bets. CLV within 60 minutes: picks -5.7% (33, average
+price vs closing fair), value singles +6.6% (6, 5 positive), power_value +3.1% (2). But
+after the 15% tax the closing-price expected return of the value singles is -3.1% ± 2.2,
+and picks at average prices -11.5% to -12.5% for every verdict (AGREE 8, RISKY 20, AVOID
+5 captured). Found a logging bug: late_power recorded the proportional sharp chance as its
+fair chance instead of the power chance it selected on (edge looked -2% on a +EV bet).
+
+Researched: Johari, Pekelis and Walsh, "Always Valid Inference" (arXiv 1512.04922): the
+mixture SPRT, stop when the mixture likelihood ratio reaches 1/alpha, always-valid
+p-values that may be checked after every observation. Simulated our use (plug-in
+variance): 17% false alarms when testing from bet 2, 2.5% with a 10-bet burn-in (alpha
+5%), power about 12% for a +3% edge at sd 0.3 over 150 bets, 100% at sd 0.03 (singles at
+short odds are far easier to judge than tickets). Practitioner CLV write-ups agree that
+closing value is the low-noise early signal of an edge (search results were mostly thin
+blogs; the Pinnacle article could not be fetched). Offline test of a totals drift idea on
+the football-odds mirror (38,245 matches, 2019-2026, Pinnacle open vs close): Over 2.5
+chance drifts -0.14 ± 0.02 points; nothing to exploit (dropped).
+
+Ideas considered (scored in IDEAS.md): closing-price scoreboard with mSPRT (built); tax
+break-even curve; Thompson-sampling chooser (raised); totals drift in cups (new) and in
+domestic leagues (dropped); closing-price AI weighting; late ticket shadow and email
+(kept); Megawin prices; ice hockey.
+
+Changed: new `scoreboard.py` (xROI after tax at the close per bet, per-strategy mean, se,
+P(beats tax), mSPRT p, verdict after 20 bets, paired difference vs the real ticket;
+picks grouped by verdict as singles) writing `data/scoreboard.md`, called from the email.
+`closing_todo` also captures ticket-shadow legs not in the pick log (once per bet);
+closing rows record `close_power`; late_power logs its power chance. New
+`tests/test_scoreboard.py`; `test_late_gemini.py` updated for the late_power fix. Ticket
+selection unchanged, so no preview run.
+
+To measure next: scoreboard coverage (share of ticket-shadow bets scored, target 80%+),
+closing credits per day with the extra legs (cap 20), first verdicts in 2-3 weeks,
+whether value singles' after-tax xROI stays negative (then restrict them to the tax
+break-even curve), fallback_scores.csv on 6 Nov.
