@@ -1,6 +1,6 @@
 {
   "bankroll": 214.72,
-  "next_ticket_no": 28,
+  "next_ticket_no": 29,
   "open_tickets": [
     {
       "no": 27,
@@ -97,9 +97,10 @@
           "sharp_power": 0.5632884796211347,
           "mean_odds": 1.7289999999999999,
           "books": 10,
-          "result": "pending",
+          "result": "won",
           "verdict": "RISKY",
-          "summary": "Data quality is NONE; no scoring statistics or recent results are available for either team."
+          "summary": "Data quality is NONE; no scoring statistics or recent results are available for either team.",
+          "score": "2:3"
         }
       ],
       "total_odds": 2.55,
@@ -107,9 +108,84 @@
       "picked_by": "AI verdicts, ticket built by the rules",
       "analysis": "<p>The AI went through 64 matches on offer today and chose 10 as the safest candidates.</p><p><b>Why this ticket:</b> Combining Alex de Minaur (ID 32, 82% chance), Tommy Paul (ID 33, 79% chance), and Rennes vs Olympiakos Over 2.5 Goals (ID 18, 54% chance) produces total odds of 2.61. This three-pick ticket contains only supported AGREE selections with fair prices and yields the highest combined win probability (34.98%) within the 2.50 to 3.50 odds range.</p><p><br><b>AEK Athens v Real Madrid</b> (UEFA Champions League)<br>Real Madrid to win @ 1.22: <b>RISKY</b> (market 78%, AI 78%). Data quality is NONE; no recent form, squad, or availability information is available for November 2026.<br><b>ON TICKET</b> Over 3.5 goals @ 1.73: <b>RISKY</b> (market 56%, AI 56%). Data quality is NONE; no scoring statistics or recent results are available for either team.<br><br><b>Slavia Praha v Arsenal</b> (UEFA Champions League)<br>Arsenal to win @ 1.25: <b>AGREE</b> (market 76%, AI 76%). Arsenal lead the Premier League, are unbeaten in nine UCL away matches, and face a Slavia Praha side winless in 22 UCL proper games with significant squad absences.<br>Over 2.5 goals @ 1.63: <b>AGREE</b> (market 58%, AI 58%). Slavia Praha average 3.08 total goals domestically and have conceded seven goals in three UCL matches, while Arsenal average two goals per match in Europe.<br><br><b>Porto v Napoli</b> (UEFA Champions League)<br>Porto or draw (double chance) @ 1.22: <b>RISKY</b> (market 76%, AI 76%). Porto have lost all three Champions League matches this term, but Napoli suffer from an extensive injury list and are winless in seven UCL away fixtures.<br>No draw: either team wins (double chance) @ 1.24: <b>RISKY</b> (market 75%, AI 75%). Porto have lost all three UCL fixtures while Napoli suffer heavy injuries and poor away form, making a draw possible.<br>Over 2.5 goals @ 1.71: <b>RISKY</b> (market 55%, AI 55%). Porto have failed to score in both home UCL matches this season, despite averaging high total goal figures domestically.<br>Porto to win @ 1.91: <b>RISKY</b> (market 50%, AI 50%). Porto remain on zero points in the Champions League after three consecutive losses, despite dominating their domestic league.<br>Napoli or draw (double chance) @ 1.83: <b>RISKY</b> (market 50%, AI 50%). Napoli are winless in seven straight UCL away fixtures and carry an extensive injury list including De Bruyne, Lobotka, and Di Lorenzo.<br><br><b>RC Lens v Como</b> (UEFA Champions League)<br>No draw: either team wins (double chance) @ 1.22: <b>RISKY</b> (market 75%, AI 75%). Lens have a solid European home record, but Como are in form; a tight draw remains plausible.<br>Como or draw (double chance) @ 1.27: <b>RISKY</b> (market 73%, AI 73%). Como have won five consecutive competitive matches, but Lens have won 16 of their last 22 European home fixtures.<br>Under 3.5 goals @ 1.60: <b>AVOID</b> (market 59%, AI 59%). All three of Como&#x27;s Champions League fixtures have produced at least five goals, contradicting an under 3.5 selection.<br>RC Lens or draw (double chance) @ 1.78: <b>RISKY</b> (market 51%, AI 51%). Como are on a five-match winning streak including a 4-1 Champions League victory over Manchester United.<br>Como to win @ 1.97: <b>RISKY</b> (market 49%, AI 49%). Lens are strong at home in Europe, winning 16 of their past 22 European home encounters.<br><br><b>Rennes v Olympiakos Piraeus</b> (UEFA Europa League)<br>No draw: either team wins (double chance) @ 1.25: <b>RISKY</b> (market 73%, AI 73%). Rennes are unbeaten in the UEL with two draws in three matches, indicating high draw potential against 100% Olympiakos.<br>Rennes or draw (double chance) @ 1.32: <b>RISKY</b> (market 70%, AI 70%). Olympiakos carry a nine-match winning streak in all competitions and a perfect 100% record in the Europa League.<br>Olympiakos Piraeus or draw (double chance) @ 1.59: <b>RISKY</b> (market 57%, AI 57%). Rennes are unbeaten at home since March with five wins in their last six home UEL fixtures.<br>Over 2.5 goals @ 1.77: <b>AGREE</b> (market 54%, AI 54%). 80% of Rennes&#x27; recent matches finished over 2.5 goals, with 12 combined goals across both teams&#x27; three UEL fixtures.<br><br><b>Bristol City v Wolverhampton Wanderers</b> (Championship)<br>Wolverhampton Wanderers or draw (double chance) @ 1.25: <b>RISKY</b> (market 73%, AI 73%). Wolves are 3rd in the Championship, but Bristol City won their last outing and face Wolves at home.<br>No draw: either team wins (double chance) @ 1.24: <b>RISKY</b> (market 72%, AI 72%). Bristol City recently registered a goalless draw against Stoke, leaving a draw well within possibility.<br>Bristol City or draw (double chance) @ 1.62: <b>RISKY</b> (market 55%, AI 55%). Wolves have won their last three head-to-head encounters against Bristol City and lost only two away league games.<br>Under 2.5 goals @ 1.89: <b>RISKY</b> (market 51%, AI 51%). 79% of the past 14 head-to-head meetings between Bristol City and Wolves finished over 2.5 goals.<br>Over 2.5 goals @ 1.86: <b>RISKY</b> (market 49%, AI 49%). Bristol City have scored only three goals across six home encounters this season, conflicting with an over 2.5 pick.<br><br><b>Cardiff City v West Ham United</b> (Championship)<br>West Ham United or draw (double chance) @ 1.27: <b>RISKY</b> (market 71%, AI 71%). Data quality is THIN regarding player availability, recent context, and detailed previews for both Championship sides.<br>Cardiff City or draw (double chance) @ 1.73: <b>RISKY</b> (market 52%, AI 52%). Data quality is THIN; West Ham sit 3rd in the Championship and have five away wins.<br>Under 3.5 goals @ 1.81: <b>RISKY</b> (market 51%, AI 51%). Data quality is THIN without detailed recent totals data or match availability.<br>Over 3.5 goals @ 1.93: <b>RISKY</b> (market 49%, AI 49%). Data quality is THIN with no recent high-scoring metrics available.<br>West Ham United to win @ 1.94: <b>RISKY</b> (market 48%, AI 48%). Data quality is THIN; Cardiff have won four home fixtures this season.<br><br><b>Viking FK v Sabah FK</b> (UEFA Champions League)<br>Viking FK to win @ 1.40: <b>AGREE</b> (market 68%, AI 68%). Viking FK are unbeaten in six European home fixtures and won 12 of 12 home matches in 2026, while Sabah lost their last three continental away games.<br>Over 3.5 goals @ 1.88: <b>RISKY</b> (market 52%, AI 52%). Sabah have scored only three goals across three UCL matches, with only 3 of their 11 overall fixtures exceeding 3.5 goals.<br>Under 3.5 goals @ 1.92: <b>RISKY</b> (market 48%, AI 48%). Viking FK&#x27;s last nine home games have all exceeded 2.5 goals with an average of 2.6 goals scored domestically.<br><br><b>Tomas Martin Etcheverry v Alex de Minaur</b> (ATP Paris Masters)<br><b>ON TICKET</b> Alex de Minaur to win @ 1.20: <b>AGREE</b> (market 82%, AI 82%). Alex de Minaur is ranked World No. 10 and leads the head-to-head 2-0 against 30th-ranked Etcheverry.<br><br><b>Tommy Paul v Daniel Merida Aguilar</b> (ATP Paris Masters)<br><b>ON TICKET</b> Tommy Paul to win @ 1.23: <b>AGREE</b> (market 79%, AI 79%). Tommy Paul is ranked 14th compared to Merida Aguilar&#x27;s 42nd and won his first-round match in straight sets in under 85 minutes.<br><br><b>Novak Djokovic v Rinky Hijikata</b> (ATP Paris Masters)<br>Novak Djokovic to win @ 1.24: <b>AVOID</b> (market 78%, AI 78%). Novak Djokovic needed a medical timeout for a shoulder issue in his opening match and spent over 2.5 hours on court.<br><br><b>Alex Molcan v Taylor Fritz</b> (ATP Paris Masters)<br>Taylor Fritz to win @ 1.23: <b>AVOID</b> (market 78%, AI 78%). Taylor Fritz took a medical timeout for an elbow issue during his first-round match on November 3.</p>",
       "paper": true
+    },
+    {
+      "no": 28,
+      "date": "2026-11-05",
+      "created": "2026-11-05T07:05:32Z",
+      "stake": 100,
+      "legs": [
+        {
+          "event_id": "e1c3625feeebcd65317e17a4e9a38c4f",
+          "sport_key": "soccer_uefa_europa_league",
+          "sport": "Football",
+          "league": "UEFA Europa League",
+          "home": "Bayer Leverkusen",
+          "away": "Marseille",
+          "start": "2026-11-05T20:00:00Z",
+          "market": "h2h",
+          "sel": "Bayer Leverkusen",
+          "point": null,
+          "pick": "Bayer Leverkusen to win",
+          "odds": 1.31,
+          "prob": 0.7313959299660073,
+          "consensus": 0.7209807533767001,
+          "sharp": 0.7313959299660073,
+          "sharp_book": "pinnacle",
+          "edge": -0.0419,
+          "best_odds": 1.35,
+          "best_book": "unibet_se",
+          "best_edge": -0.0126,
+          "top_odds": 1.35,
+          "top_book": "unibet_se",
+          "power_prob": 0.7473088026459193,
+          "sharp_power": 0.7473088026459193,
+          "mean_odds": 1.3075,
+          "books": 20,
+          "result": "pending",
+          "verdict": "AGREE",
+          "summary": "Leverkusen is 3-0-0 in UEL play and strong at home, whereas Marseille is 0-0-3 in Europe and has lost 10 of their last 15 away matches."
+        },
+        {
+          "event_id": "e99c31a25021bfcde3aa4d446d42f37a",
+          "sport_key": "basketball_ncaab",
+          "sport": "Basketball",
+          "league": "NCAAB",
+          "home": "Illinois Fighting Illini",
+          "away": "Pennsylvania Quakers",
+          "start": "2026-11-06T01:30:00Z",
+          "market": "spreads",
+          "sel": "Pennsylvania Quakers",
+          "point": 30.5,
+          "pick": "Pennsylvania Quakers +30.5 (handicap)",
+          "odds": 1.92,
+          "prob": 0.5155440414507771,
+          "consensus": 0.49327337384951747,
+          "sharp": 0.5155440414507771,
+          "sharp_book": "pinnacle",
+          "edge": -0.0102,
+          "best_odds": 2.0,
+          "best_book": "onexbet",
+          "best_edge": 0.0311,
+          "top_odds": 2.0,
+          "top_book": "onexbet",
+          "power_prob": 0.5164104828207733,
+          "sharp_power": 0.5164104828207733,
+          "mean_odds": 1.91625,
+          "books": 8,
+          "result": "pending",
+          "verdict": "AGREE",
+          "summary": "KenPom projects a 23-point win for Illinois (92-69), well inside the 30.5 spread, as Illinois copes with injuries to Jake Davis and Mirkovic."
+        }
+      ],
+      "total_odds": 2.52,
+      "win_prob": 0.3771,
+      "picked_by": "AI",
+      "analysis": "<p>The AI went through 99 matches on offer today and chose 14 as the safest candidates.</p><p><b>Why this ticket:</b> Selected a 2-pick ticket combining Bayer Leverkusen to win (1.31) with Pennsylvania +30.5 (1.92). Total odds equal 2.52, perfectly hitting the 2.5\u20133.5 range. Leverkusen is 3-0-0 in Europe facing winless Marseille, while Penn is supported by KenPom projections and Illinois frontcourt injuries.</p><p><br><b>Palmeiras v Remo</b> (Brazil S\u00e9rie A)<br>Palmeiras to win @ 1.21: <b>RISKY</b> (market 79%, AI 79%). Match details could not be verified in the 2026 S\u00e9rie A calendar, making any pick on this fixture inherently unreliable.<br>Under 3.5 goals @ 1.56: <b>AVOID</b> (market 60%, AI 60%). No current season scoring statistics are available in the notes for either team, requiring an automatic avoid on totals.<br><br><b>Bayer Leverkusen v Marseille</b> (UEFA Europa League)<br><b>ON TICKET</b> Bayer Leverkusen to win @ 1.31: <b>AGREE</b> (market 73%, AI 73%). Leverkusen is 3-0-0 in UEL play and strong at home, whereas Marseille is 0-0-3 in Europe and has lost 10 of their last 15 away matches.<br>Under 3.5 goals @ 1.83: <b>RISKY</b> (market 51%, AI 51%). Leverkusen averages 2.29 scored and 1.71 conceded domestically, with high-scoring recent games like 2-4 and 5-2.<br>Over 3.5 goals @ 1.96: <b>RISKY</b> (market 49%, AI 49%). Leverkusen has kept 3 clean sheets in UEL while Marseille has scored only once in European play, making Over 3.5 risky.<br><br><b>Benfica v Lech Pozna\u0144</b> (UEFA Europa League)<br>Over 3.5 goals @ 1.73: <b>RISKY</b> (market 54%, AI 54%). Benfica has already qualified for the knockout stage and may rotate squad members, potentially reducing attacking intensity.<br><br><b>Pallacanestro Olimpia Milano v Valencia Basket</b> (Basketball Euroleague)<br>Valencia Basket to win @ 1.77: <b>RISKY</b> (market 54%, AI 52%). Valencia faces its third consecutive road game and is missing key rotation pieces including Mirotic, Reuvers, and Gueye.<br>Over 178.5 points @ 1.86: <b>RISKY</b> (market 51%, AI 50%). Milano scores just 82.0 points per game in EuroLeague, which pulls the expected game total below 178.5.<br>Valencia Basket -1.5 (handicap) @ 1.89: <b>RISKY</b> (market 50%, AI 49%). Valencia&#x27;s significant injury list and road fatigue create uncertainty around covering a handicap.<br>Pallacanestro Olimpia Milano +1.5 (handicap) @ 1.90: <b>RISKY</b> (market 50%, AI 49%). Milano is in poor form with a 1-8 EuroLeague record and a 7-game losing streak.<br>Under 178.5 points @ 1.90: <b>RISKY</b> (market 49%, AI 49%). Valencia averages 97.1 points per game offensively, and the price is 7% below fair value.<br>Pallacanestro Olimpia Milano to win @ 2.00: <b>RISKY</b> (market 46%, AI 44%). Milano sits 19th with a 1-8 record, lost seven straight, and offers poor value at 8% below fair price.<br><br><b>Fenerbahce SK v Saski Baskonia</b> (Basketball Euroleague)<br>Saski Baskonia +14.5 (handicap) @ 1.83: <b>RISKY</b> (market 52%, AI 50%). Baskonia is 0-4 away with a -11.0 point average differential and on a 6-game EuroLeague losing streak.<br>Under 169.5 points @ 1.86: <b>RISKY</b> (market 51%, AI 50%). Baskonia plays at the second-fastest pace in the league and their last two games totaled 173 and 190 points.<br>Over 169.5 points @ 1.89: <b>RISKY</b> (market 49%, AI 47%). Fenerbahce&#x27;s games average only 156.5 total points, and the price is 8% below fair value.<br>Fenerbahce SK -14.5 (handicap) @ 1.96: <b>RISKY</b> (market 48%, AI 48%). Fenerbahce is coming off consecutive EuroLeague defeats, creating risk around covering a 14.5 margin.<br><br><b>Illinois Fighting Illini v Pennsylvania Quakers</b> (NCAAB)<br><b>ON TICKET</b> Pennsylvania Quakers +30.5 (handicap) @ 1.92: <b>AGREE</b> (market 52%, AI 54%). KenPom projects a 23-point win for Illinois (92-69), well inside the 30.5 spread, as Illinois copes with injuries to Jake Davis and Mirkovic.<br>Illinois Fighting Illini -30.5 (handicap) @ 1.87: <b>AVOID</b> (market 48%, AI 48%). Illinois suffers from key frontcourt injuries, KenPom projects only a 23-point margin, and odds are 9% below fair value.<br><br><b>Arizona Wildcats v Cal Poly Mustangs</b> (NCAAB)<br>Arizona Wildcats -30.5 (handicap) @ 1.88: <b>AVOID</b> (market 51%, AI 51%). No current season statistics exist in the notes for this matchup, requiring an automatic avoid for handicaps.<br>Cal Poly Mustangs +30.5 (handicap) @ 1.90: <b>AVOID</b> (market 49%, AI 49%). Lacks current season data in the notes to evaluate handicap viability.<br><br><b>Florida Gators v Jacksonville Dolphins</b> (NCAAB)<br>Over 152.5 points @ 1.86: <b>AVOID</b> (market 50%, AI 50%). No current season scoring statistics provided in research notes.<br>Under 152.5 points @ 1.89: <b>AVOID</b> (market 50%, AI 50%). No current season scoring data available to evaluate totals.<br><br><b>Duke Blue Devils v Coastal Carolina Chanticleers</b> (NCAAB)<br>Coastal Carolina Chanticleers +40.5 (handicap) @ 1.86: <b>AGREE</b> (market 50%, AI 52%). Duke&#x27;s offense was clunky in their 34-point opener victory; a 40.5 line gives Coastal Carolina ample room to cover against an unpolished offense.<br>Duke Blue Devils -40.5 (handicap) @ 1.89: <b>RISKY</b> (market 50%, AI 47%). Covering 40.5 points requires elite offensive execution, but Duke played timidly in their opener against Army.<br><br><b>Michigan St Spartans v Toledo Rockets</b> (NCAAB)<br>Toledo Rockets +26.5 (handicap) @ 1.88: <b>RISKY</b> (market 50%, AI 49%). Michigan State won its opener by 37 points (96-59) shooting 58.1%, showing capability to blow past large spreads.<br>Michigan St Spartans -26.5 (handicap) @ 1.90: <b>AGREE</b> (market 50%, AI 52%). Michigan State dominated Quinnipiac 96-59 in their opener, demonstrating heavy scoring power to cover against Toledo.<br><br><b>Seton Hall Pirates v LIU Sharks</b> (NCAAB)<br>Seton Hall Pirates -17.5 (handicap) @ 1.84: <b>AVOID</b> (market 50%, AI 50%). No current season scoring or game statistics available in the notes.<br>LIU Sharks +17.5 (handicap) @ 1.85: <b>AVOID</b> (market 50%, AI 50%). Lacks scoring data in research notes for the current season.<br><br><b>Atalanta BC v FC Kairat</b> (UEFA Europa Conference League)<br>Over 3.5 goals @ 1.95: <b>RISKY</b> (market 50%, AI 50%). Four of Kairat&#x27;s five European away matches went Under 2.5 goals, conflicting with Atalanta&#x27;s high-scoring home trend.<br>Under 3.5 goals @ 1.85: <b>AVOID</b> (market 50%, AI 50%). Atalanta&#x27;s last four European home games produced Over 3.5 goals, and the price is 8% below fair value.</p>",
+      "paper": true
     }
   ],
-  "last_run_date": "2026-11-04",
+  "last_run_date": "2026-11-05",
   "stopped": false,
   "paper_profit": -400
 }
