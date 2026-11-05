@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-05: results for matches the scores feed misses
+
+- The results feed skipped some competitions: the Paris Masters tennis and the Copa del Rey. Two of the three legs of ticket 27 (Paul and de Minaur) and 24 other tracked bets were still waiting for a result.
+- After three days such bets are counted as void, which would have booked ticket 27 as a win at odds 1.73 whatever happened in the tennis. That makes the record look better than it is.
+- Now, when a match finished hours ago and the feed has no score, the bot looks the result up with Google Search through the AI, twice, and uses it only if both answers give the same score. Otherwise the bet keeps waiting as before. Every lookup is saved so it can be checked.
+- Costs at most two extra AI searches a day, and none when the feed has everything. Your daily ticket is chosen exactly as before.
+
 ## 2026-11-04: the price check before kick-off now keeps itself running
 
 - The bot is meant to re-check prices shortly before each match starts (the best early sign of a real edge, and the basis of the most promising experiment, betting late). It almost never could: GitHub ran only 15 of about 160 planned checks in five days, and some jobs started 8 hours late.

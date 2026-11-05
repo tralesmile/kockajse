@@ -74,5 +74,8 @@
   "value_max_odds": 4.0,
   "value_min_odds": 1.05,
   "value_max_singles": 10,
-  "kaunitz_alpha": 0.05
+  "kaunitz_alpha": 0.05,
+  "fallback_scores": true,
+  "fallback_after_hours": 6,
+  "fallback_max_events": 12
 }

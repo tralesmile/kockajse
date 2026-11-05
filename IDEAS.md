@@ -6,6 +6,21 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Second results source with two-answer agreement (data/measurement, bold, 5/4/2, built
+  5 Nov morning). The Odds API scores feed left the ATP Paris Masters (2 and 4 Nov) and the
+  Copa del Rey (3 Nov) unsettled: 10 picks and 14 shadow legs, and 2 of the 3 legs of
+  ticket 27, were still pending on 5 Nov. After 3 days such legs count as void, so ticket
+  27 would have been booked as a win at 1.73 whatever the tennis did (survivorship bias in
+  our own ledger). Now, before settling, every bet that started 6+ hours ago without a
+  feed score is checked with Google-Search Gemini; two separate calls (second with the
+  list reversed) must give the same final score, and the score must be plausible for the
+  sport (tennis: sets 2-0/2-1/3-x), or it stays pending. Borrowed from blockchain oracles
+  (UMA, Chainlink), which only accept a reported result when independent reporters agree.
+  Football is the score after regular time, tennis is h2h only. Audit trail in
+  `data/fallback_scores.csv`. Cost: 0-2 search calls a day. Measuring: share of overdue
+  events settled (target 90%+), disagreements between the two answers, and any case
+  where the feed later shows a different score (should be 0).
+
 - Self-continuing closing watcher (timing/infrastructure, bold, 5/4/2, built 4 Nov evening).
   GitHub ran only 15 of about 160 planned closing runs from 31 Oct to 4 Nov, and on 4 Nov
   the 06:17-09:53 UTC daily crons ran at 14:52-17:36 (community threads #210625 and
@@ -118,6 +133,25 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   settles the AI's own choice next to it.
 
 ## New
+
+- ESPN scoreboard as a third results source (data, 3/2/2): free JSON
+  (site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates=YYYYMMDD,
+  sportsapis.dev, Nov 2026); blocked from the review sandbox and the tennis layout is
+  unverified, so add it once fallback_scores.csv shows how often Gemini cannot answer.
+- Void-bias audit (measurement, unconventional, from survivorship bias in fund returns,
+  3/4/1): count how many settled tickets and shadows had a void leg and recompute their
+  result without it; report the gap in the review so voids never flatter the record.
+- Tennis retirement rule (bet types, 2/3/1): bookmakers differ (void vs. result stands
+  after one set). The fallback leaves retirements pending, so they void; check Megawin's
+  rule and settle accordingly.
+- Thompson-sampling strategy chooser (selection, unconventional, from multi-armed bandits,
+  3/2/2): once shadows have ~60 settled days each, let the real ticket follow the shadow
+  with the best posterior taxed return, with a floor of exploration. Premature now (most
+  shadows have 0-2 settled tickets).
+- Tennis fatigue signal (new data, 2/2/3): minutes on court in the last 3 days from the
+  research step as a feature; Paris Masters picks were 2 of the 3 legs of ticket 27.
+- Settlement-aware shortlist (selection, 2/4/1): skip leagues whose scores the feed and
+  the fallback both fail to settle; superseded unless the fallback misses often.
 
 - Late ticket email (timing, unconventional, 4/3/3, raised from 3/2/3): the watcher now
   sees every logged bet 15-60 minutes before its start, so it can re-price the morning

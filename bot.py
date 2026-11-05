@@ -495,6 +495,138 @@ def fetch_scores(keys):
 
 
 FETCHED_KEYS = set()
+FALLBACK_PATH = ROOT / "data" / "fallback_scores.csv"
+FALLBACK_FIELDS = ["checked", "event_id", "sport_key", "match", "start", "home_score",
+                   "away_score", "extra_time", "source_1", "source_2", "used"]
+
+
+def overdue_events(state, now, hours=None):
+    """Pending bets whose match started long ago but which the scores feed did not settle.
+
+    The Odds API scores feed has missed whole competitions (Copa del Rey on 3 Nov, ATP Paris
+    Masters on 2 and 4 Nov); after void_after_days such legs count as void, which turns a
+    lost ticket into a smaller win. Returns {event_id: (sport_key, home, away, start)}.
+    """
+    hours = CONFIG.get("fallback_after_hours", 6) if hours is None else hours
+    found = {}
+
+    def consider(eid, key, home, away, start, market):
+        if not eid or not start or (eid in SCORES and SCORES[eid].get("completed")):
+            return
+        age = now - parse_time(start)
+        # Still-pending rows are about to be voided, so even old ones are worth a check.
+        if age < timedelta(hours=hours) or age.days > 7:
+            return
+        # Tennis is settled from sets won, which only answers match-winner bets.
+        if key.startswith("tennis_") and market != "h2h":
+            return
+        found.setdefault(eid, (key, home, away, start))
+
+    for ticket in state.get("open_tickets", []):
+        for leg in ticket["legs"]:
+            if leg["result"] == "pending":
+                consider(leg["event_id"], leg["sport_key"], leg["home"], leg["away"],
+                         leg["start"], leg.get("market", "h2h"))
+    for row in read_picks() + read_shadow():
+        if row["result"] == "pending" and " v " in row["match"]:
+            home, away = row["match"].split(" v ", 1)
+            consider(row["event_id"], row["sport_key"], home, away, row["start"], row["market"])
+    return found
+
+
+def _parse_fallback(text):
+    """The JSON list from a fallback answer, keyed by id; {} when unreadable."""
+    start, end = text.find("["), text.rfind("]")
+    if start < 0 or end <= start:
+        return {}
+    try:
+        items = json.loads(text[start:end + 1])
+    except ValueError:
+        return {}
+    out = {}
+    for item in items if isinstance(items, list) else []:
+        try:
+            if item.get("status") != "final":
+                continue
+            hs, as_ = float(item["home_score"]), float(item["away_score"])
+        except (AttributeError, KeyError, TypeError, ValueError):
+            continue
+        if hs < 0 or as_ < 0:
+            continue
+        out[str(item.get("id"))] = (hs, as_, bool(item.get("extra_time")),
+                                    str(item.get("source", ""))[:80])
+    return out
+
+
+def _plausible(key, hs, as_):
+    if key.startswith("tennis_"):
+        # Sets won: best of 3 (or 5), exactly one winner.
+        return hs != as_ and max(hs, as_) in (2, 3) and min(hs, as_) < max(hs, as_)
+    if key.startswith("soccer_"):
+        return hs <= 15 and as_ <= 15
+    if key.startswith("basketball_"):
+        return 20 <= hs <= 200 and 20 <= as_ <= 200 and hs != as_
+    return hs <= 80 and as_ <= 80
+
+
+def fill_missing_scores(state, now):
+    """Second results source for matches the Odds API feed does not cover.
+
+    Two separate Gemini calls with Google Search must report the same final score before a
+    result is used (self-consistency against made-up answers); anything else stays pending.
+    Every answer is kept in data/fallback_scores.csv for the review. Costs at most two
+    search calls a day, and none on days the feed covers everything.
+    """
+    if not CONFIG.get("fallback_scores", True) or not gemini_keys():
+        return {}
+    pending_keys = {leg["sport_key"] for t in state.get("open_tickets", [])
+                    for leg in t["legs"] if leg["result"] == "pending"}
+    pending_keys |= {r["sport_key"] for r in read_picks() + read_shadow()
+                     if r["result"] == "pending"}
+    if pending_keys:
+        fetch_scores(pending_keys)
+    todo = overdue_events(state, now)
+    if not todo:
+        return {}
+    ids = list(todo)[:CONFIG.get("fallback_max_events", 12)]
+    template = (ROOT / "prompts" / "settle.txt").read_text()
+
+    def ask(order):
+        lines = "\n".join(f"{eid} | {SPORT_NAMES.get(sport_of(todo[eid][0]), todo[eid][0])} | "
+                          f"{todo[eid][1]} v {todo[eid][2]} | {todo[eid][3]}" for eid in order)
+        return _parse_fallback(gemini(template.format(today=f"{now:%A %d %B %Y, %H:%M}",
+                                                      matches=lines), search=True))
+
+    first = ask(ids)
+    second = ask(list(reversed([i for i in ids if i in first]))) if first else {}
+    used = {}
+    rows = []
+    for eid in ids:
+        key, home, away, start = todo[eid]
+        a, b = first.get(eid), second.get(eid)
+        ok = bool(a and b and a[:2] == b[:2] and _plausible(key, *a[:2]))
+        if a or b:
+            hs, as_ = (a or b)[:2]
+            rows.append({"checked": iso(now), "event_id": eid, "sport_key": key,
+                         "match": f"{home} v {away}", "start": start, "home_score": f"{hs:g}",
+                         "away_score": f"{as_:g}", "extra_time": (a or b)[2],
+                         "source_1": a[3] if a else "", "source_2": b[3] if b else "",
+                         "used": "yes" if ok else "no"})
+        if ok:
+            used[eid] = SCORES[eid] = {
+                "id": eid, "completed": True, "home_team": home, "away_team": away,
+                "source": "fallback",
+                "scores": [{"name": home, "score": f"{a[0]:g}"},
+                           {"name": away, "score": f"{a[1]:g}"}]}
+    if rows:
+        new = not FALLBACK_PATH.exists()
+        with FALLBACK_PATH.open("a", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=FALLBACK_FIELDS)
+            if new:
+                writer.writeheader()
+            writer.writerows(rows)
+    print(f"Fallback scores: {len(todo)} overdue, {len(first)} answered, {len(used)} used.")
+    return used
 
 
 def settle(state, now):
@@ -1762,6 +1894,11 @@ def run(now=None, force=False, resend=False, preview=False):
         return True
 
     # A preview picks and emails a ticket but saves nothing and settles nothing.
+    if not preview:
+        try:
+            fill_missing_scores(state, now)
+        except Exception as exc:  # a second results source must never stop the run
+            print(f"Fallback scores failed: {exc}")
     finished = [] if preview else settle(state, now)
     if not preview:
         settle_picks(now)

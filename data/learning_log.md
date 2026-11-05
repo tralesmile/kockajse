@@ -424,3 +424,48 @@ found nothing due and ended the chain as designed; the first self-dispatch happe
 To measure next: did the 5 Nov daily run start the chain, and did it run unbroken until
 the last bet (Actions list for closing.yml, event workflow_dispatch); share of picks with a
 capture within 60 minutes; late_power and late_value bets per day; closing credits per day.
+
+## 2026-11-05 (morning review): a second results source, checked twice
+
+Measured: 182 settled judged picks, 59.9% won vs 57.0% market chance; Brier market 0.2266
+vs AI 0.2290. By verdict (won minus market): AGREE +1.8 points (43), RISKY +2.9 (107),
+AVOID +3.9 (32): verdicts still do not sort winners. By market: h2h +7.1 (30), dc +3.7
+(36), totals +2.9 (77), spreads -1.4 (39). Ticket legs 5/9 won vs 60% expected. Ticket 27
+(4 Nov): AEK v Real Madrid Over 3.5 won; both Paris Masters legs (Paul, de Minaur) still
+pending. No new lost ticket leg to judge. Shadows settled so far are tiny: market 2/2 won
+(+2.6 units), value_single 2/2 (+1.6), actual/ai_own 0/1, edge_first 0/2, kaunitz 0/1.
+
+Found: 10 picks and 14 shadow legs from 2-4 Nov were still pending on 5 Nov, all ATP Paris
+Masters (2 and 4 Nov) or Copa del Rey (3 Nov); October tennis legs had settled, so the
+Odds API scores feed covers these competitions only patchily. After 3 days they are voided,
+so ticket 27 would have counted as a win at 1.73 regardless of the tennis results, and
+power_ticket, single, actual_best and ai_own for 4 Nov hinge on the same legs.
+
+Chain check: the 5 Nov daily run (07:05 UTC, on time) started the closing watcher; links
+ran 07:14, 07:50, 08:26, 09:02 (36 minutes each) as designed. A second, owner-started daily
+run at 07:35 ("already ran") also started a link; the concurrency group cancelled it at
+07:50, so the two chains merged into one. Captures for 5 Nov come this evening.
+
+Researched: The Odds API tennis page (covers ATP 1000 incl. Paris Masters for odds; says
+nothing about scores); ESPN hidden API (sportsapis.dev, Nov 2026: scoreboard per
+league with ?dates=YYYYMMDD, but ESPN, TheSportsDB and Sofascore are all blocked from this
+sandbox, so a parser could not be tested); Gemini grounding accuracy reports (grounded
+answers are far better than ungrounded but still err); blockchain oracle design (UMA,
+Chainlink: accept a result only when independent reporters agree) as the model for a
+two-answer agreement rule.
+
+Ideas considered (scored in IDEAS.md): second results source with agreement (built); ESPN
+as a third source; void-bias audit; tennis retirement rule; Thompson-sampling strategy
+chooser; tennis fatigue signal; settlement-aware shortlist; late ticket shadow (kept).
+
+Changed: `fill_missing_scores()` runs before settling (not in previews): it finds bets that
+started 6+ hours ago with no feed score (ticket legs, picks, shadows; tennis only h2h), asks
+Gemini with search twice (second call with the list reversed), and uses a score only when
+both answers match and it is plausible for the sport; football is the regular-time score.
+New prompt `prompts/settle.txt`, audit log `data/fallback_scores.csv`, config
+fallback_scores, fallback_after_hours 6, fallback_max_events 12. New
+`tests/test_fallback.py`. Ticket selection unchanged, so no preview run.
+
+To measure next: fallback_scores.csv on 6 Nov (did ticket 27's tennis legs and the Copa
+del Rey picks settle, did the two answers agree); search calls per run stay under 40;
+closing captures within 60 minutes for 5 Nov; late_power bets per day.
