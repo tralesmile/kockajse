@@ -6,6 +6,23 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- GitHub Actions minutes guard (infrastructure, 5/5/2, built 6 Nov evening). Found that
+  GitHub stopped every job from 15:57 UTC on 6 Nov ("recent account payments have failed
+  or your spending limit needs to be increased"): the private repository's ~2,000 free
+  minutes (USD 12 a cycle) were used by 6 Nov, 1,994 of 2,243 by the closing watcher
+  (1,199 on 5 Nov alone), and the 7 Nov daily ticket cannot run. The 4 Nov check that
+  billing was 0 ms read the per-run "billable" field, which does not measure this. Late
+  daily backup crons (14:19-15:24 UTC) each restarted the watcher too. Now
+  `actions_budget.py` counts this cycle's minutes from the runs list
+  (`data/actions_usage.json`), keeps 45 minutes a day for the ticket run, and gives the
+  watcher only an even share of the rest (private: about 9 minutes a day in a fresh month,
+  so no 36-minute links; public: no limit); the daily job starts the watcher only after a
+  run that made the ticket; closing backup crons hourly; the email shows minutes used and
+  warns at 75%. Ticket legs are looked up by the score fallback up to 40 days late, so an
+  outage does not void them. Measuring: minutes per day, that the cycle never runs out,
+  share of picks still captured near kick-off in private mode. Recommended to the owner:
+  make the repository public (standard runners free), or the watcher must stay thin.
+
 - Tax-aware ticket objective, live rule (selection/modelling, bold, 5/4/2, built 6 Nov
   morning). The real ticket no longer maximises the chance of winning; it maximises the
   expected return after the 15% tax, chance x (1 + 0.85 x (total odds - 1)) - 1, using
@@ -167,6 +184,30 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- Make the repository public (infrastructure, owner's decision, 5/5/1): standard GitHub
+  runners are free in public repositories, which ends the minutes limit at once and lets
+  the full closing watcher run. Secrets stay hidden; picks, research and the paper record
+  become readable. Recommended in CHANGES.md on 6 Nov evening.
+- External timer for closing captures (timing, 4/4/2): cron-job.org (free) calling
+  workflow_dispatch with a fine-grained token at the exact capture times, one-pass runs of
+  ~1 minute each, instead of a runner napping between bets. Cuts a private-mode day of
+  captures to ~10-15 minutes. Needs the owner to create the token and the cron-job.org jobs.
+- Cloudflare Worker as the closing watcher (infrastructure, unconventional, from
+  serverless edge computing, 4/3/4): free cron triggers and 100k requests a day; the Worker
+  fetches the Odds API at capture times and commits closing rows through the GitHub
+  contents API, so GitHub Actions only runs the daily ticket. Bigger build, owner setup.
+- Capture triage (timing, unconventional, from hospital triage, 3/3/2): with few minutes,
+  capture only bets that move a decision (ticket legs, tax-proof and value singles) and
+  group starts within 30 minutes into one pass; skip AVOID picks' captures.
+- Hedged Gemini requests (AI workflow, unconventional, from Dean and Barroso "The Tail at
+  Scale", 3/3/2): on 6 Nov 24 research calls failed with 503s; send the same research call
+  to the second key after ~20 seconds and take the first answer, within the 20-a-day
+  search quota per key (costs quota on days both answer).
+- Batched research (AI workflow, 3/3/2): two or three matches per search call so the 12
+  shortlisted matches fit in about 6 search calls and survive 503 storms.
+- Outage-aware voiding (measurement, 2/4/1): count how many picks and shadow bets were
+  voided only because no run happened, and report them apart from real voids.
+
 - Tax break-even shortlist (selection, 2/3/1): give the AI only picks whose average price
   is within ~5% of the sharp fair price, since the taxed objective rarely uses the rest;
   frees research quota for matches that can matter.
@@ -230,9 +271,9 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   bets there.
 - Ice hockey (leagues, 2/2/1): NHL h2h with Pinnacle prices; adds evening-US favourites
   at 1.20-1.50 where the tax costs least, and diversifies away from NCAAB mismatches.
-- Actions usage check (reliability, measured 4 Nov evening): the usage API reports
-  billable 0 ms for daily and closing runs of this private repository, so the watcher's
-  idle waiting is not charged. Re-check weekly while the chain runs.
+- Actions usage check (reliability, measured 4 Nov evening): WRONG. The per-run usage API
+  reported billable 0 ms, but the minutes were counted: the account ran out on 6 Nov. See
+  the minutes guard above.
 
 - Fallback score source (data, 3/3/2): Copa del Rey picks of 3 Nov (incl. the ticket's
   Anaitasuna v Alavés leg) and a 2 Nov tennis pick were still unsettled on 4 Nov; The Odds

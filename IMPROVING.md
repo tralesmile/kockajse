@@ -66,7 +66,7 @@ tweak. Every review:
    evidence or research supports them. Keep each change focused enough that its effect can
    be measured, and note in `prompts/lessons.md` any lesson the AI should apply daily.
 4. **Check.** Add or update tests for new code. Run `python tests/test_markets.py`,
-   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py`, `python tests/test_taxed.py` and `python tests/simulate.py`;
+   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py`, `python tests/test_taxed.py`, `python tests/test_actions_budget.py` and `python tests/simulate.py`;
    all must pass. After a
    change to how picks are chosen, you may start one preview run to see it work live:
    `gh api -X POST repos/tralesmile/kockajse/actions/workflows/daily.yml/dispatches -f ref=main -F 'inputs[preview]=true'`
@@ -102,4 +102,12 @@ These protect the owner's money and the honesty of the results, not the scope of
   requests a day each. A daily run uses about 14. Requests without search work on all four
   keys with newer models. Quota resets at 02:00 Skopje time.
 - The Odds API: 500 requests a month per key, 4 keys. A daily run uses about 30.
-- GitHub Actions run time is free for this repository; a run may take up to 40 minutes.
+- GitHub Actions: the repository is private, so GitHub Free includes only about 2,000
+  Linux minutes a month (USD 12, reset each billing cycle, apparently the 1st), shared
+  with the owner's other private repositories; when they run out GitHub starts no job at
+  all, not even the daily ticket (this happened on 6 Nov 2026 at 15:57 UTC after the
+  closing watcher ran all day). The per-run "billable" figure of the usage API reads 0 and
+  is not a measure of this. `actions_budget.py` measures the cycle's minutes from the runs
+  list (`data/actions_usage.json`) and limits the closing watcher; check it each review.
+  Standard runners are free in public repositories; making the repository public is the
+  owner's decision. A run may take up to 40 minutes.

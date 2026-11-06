@@ -48,7 +48,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Settle, pick and email
+        id: bot
         env:
+          GH_TOKEN: ${{ github.token }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           ODDS_API_KEY_2: ${{ secrets.ODDS_API_KEY_2 }}
           ODDS_API_KEY_3: ${{ secrets.ODDS_API_KEY_3 }}
@@ -76,7 +78,7 @@ jobs:
       - name: Start the closing-price watcher
         # Starts the self-continuing closing watcher (closing.yml) once today's bets are
         # logged. GitHub's own schedule for it runs only a few times a day.
-        if: ${{ !inputs.preview && !inputs.diagnose && !inputs.resend }}
+        if: ${{ steps.bot.outputs.made == 'yes' && !inputs.preview && !inputs.diagnose && !inputs.resend }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

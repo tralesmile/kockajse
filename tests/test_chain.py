@@ -17,6 +17,10 @@ bot.STATE_PATH = tmp / "state.json"
 bot.PICKS_PATH = tmp / "picks.csv"
 bot.CLOSING_PATH = tmp / "closing.csv"
 bot.CLOSING_BUDGET_PATH = tmp / "closing_budget.json"
+# Public repository: the minutes guard sets no limit (tests/test_actions_budget.py covers
+# the private case).
+bot.ACTIONS_USAGE_PATH = tmp / "actions_usage.json"
+bot.ACTIONS_USAGE_PATH.write_text(json.dumps({"private": False, "minutes": 100}))
 bot.CONFIG.update(closing_chain=True, closing_chain_max_runs=60, closing_chain_idle_hours=14,
                   max_closing_credits_per_day=20)
 START = "2026-11-04T20:00:00Z"
@@ -62,6 +66,16 @@ bot.api_get = lambda path, **params: []
 assert bot.capture_closing(at(30), window_minutes=60) == 1
 assert not bot.closing_chain_ok(at(29))
 
+# Private repository with the free minutes nearly used up: no chain.
+bot.write_picks([])
+bot.log_picks(1, "paper", "2026-11-04", {1: dict(pick, event_id="g2")}, [1])
+bot.CLOSING_BUDGET_PATH.write_text("{}")
+assert bot.closing_chain_ok(at(120))
+bot.ACTIONS_USAGE_PATH.write_text(json.dumps({"private": True, "minutes": 1900,
+                                              "cycle_start": "2026-11-01"}))
+assert not bot.closing_chain_ok(at(120))
+assert bot.closing_plan(at(120), measure=False) == (0, 0)
+
 # Workflows: the closing job can start itself, the daily job starts it, and both may.
 closing = yaml.safe_load((ROOT / ".github/workflows/closing.yml").read_text())
 daily = yaml.safe_load((ROOT / ".github/workflows/daily.yml").read_text())
@@ -74,6 +88,7 @@ assert "--closing-chain" in script and "gh workflow run closing.yml" in script
 steps = daily["jobs"]["run"]["steps"]
 assert "gh workflow run closing.yml" in steps[-1]["run"]
 assert "inputs.preview" in steps[-1]["if"]
+assert "steps.bot.outputs.made" in steps[-1]["if"]
 run_minutes = json.loads((ROOT / "config.json").read_text())["closing_run_minutes"]
 assert closing["jobs"]["capture"]["timeout-minutes"] >= run_minutes + 10
 print("test_chain: all checks passed")

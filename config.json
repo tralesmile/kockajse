@@ -78,5 +78,10 @@
   "kaunitz_alpha": 0.05,
   "fallback_scores": true,
   "fallback_after_hours": 6,
-  "fallback_max_events": 12
+  "fallback_max_events": 12,
+  "actions_included_minutes": 2000,
+  "actions_budget_share": 0.85,
+  "actions_daily_reserve_minutes": 45,
+  "actions_closing_max_per_day": 120,
+  "actions_cycle_day": 1
 }

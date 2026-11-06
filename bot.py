@@ -36,6 +36,7 @@ LEDGER_PATH = ROOT / "data" / "ledger.csv"
 PICKS_PATH = ROOT / "data" / "picks.csv"
 CLOSING_PATH = ROOT / "data" / "closing.csv"
 CLOSING_BUDGET_PATH = ROOT / "data" / "closing_budget.json"
+ACTIONS_USAGE_PATH = ROOT / "data" / "actions_usage.json"
 CLOSING_FIELDS = ["date", "event_id", "sport_key", "match", "market", "sel", "point", "pick",
                   "start", "on_ticket", "captured", "minutes_before", "open_odds",
                   "open_consensus", "open_sharp", "close_odds", "close_consensus",
@@ -557,12 +558,12 @@ def overdue_events(state, now, hours=None):
     hours = CONFIG.get("fallback_after_hours", 6) if hours is None else hours
     found = {}
 
-    def consider(eid, key, home, away, start, market):
+    def consider(eid, key, home, away, start, market, max_days=7):
         if not eid or not start or (eid in SCORES and SCORES[eid].get("completed")):
             return
         age = now - parse_time(start)
         # Still-pending rows are about to be voided, so even old ones are worth a check.
-        if age < timedelta(hours=hours) or age.days > 7:
+        if age < timedelta(hours=hours) or age.days > max_days:
             return
         # Tennis is settled from sets won, which only answers match-winner bets.
         if key.startswith("tennis_") and market != "h2h":
@@ -572,8 +573,11 @@ def overdue_events(state, now, hours=None):
     for ticket in state.get("open_tickets", []):
         for leg in ticket["legs"]:
             if leg["result"] == "pending":
+                # Ticket legs at any age up to 40 days: after a stop of the runs (GitHub
+                # minutes ran out on 6 Nov) the feed, which keeps 3 days, cannot settle
+                # them, and voiding would flatter the record.
                 consider(leg["event_id"], leg["sport_key"], leg["home"], leg["away"],
-                         leg["start"], leg.get("market", "h2h"))
+                         leg["start"], leg.get("market", "h2h"), max_days=40)
     for row in read_picks() + read_shadow():
         if row["result"] == "pending" and " v " in row["match"]:
             home, away = row["match"].split(" v ", 1)
@@ -967,7 +971,7 @@ def closing_next_wait(now=None):
     return max(0, int((min(starts) - lead - now).total_seconds()))
 
 
-def closing_chain_ok(now=None, chain=0):
+def closing_chain_ok(now=None, chain=0, measure=False):
     """Whether a closing run should start the next run of the watcher chain before it ends.
 
     GitHub runs scheduled jobs hours late or not at all: from 31 Oct to 4 Nov only 15 of
@@ -990,7 +994,37 @@ def closing_chain_ok(now=None, chain=0):
     used = 0
     if CLOSING_BUDGET_PATH.exists():
         used = json.loads(CLOSING_BUDGET_PATH.read_text()).get(today, 0)
-    return used < CONFIG.get("max_closing_credits_per_day", 16)
+    if used >= CONFIG.get("max_closing_credits_per_day", 16):
+        return False
+    # GitHub Actions minutes (6 Nov): in a private repository each link costs up to
+    # closing_run_minutes of the ~2,000 free minutes a month; only chain while today's
+    # share of the spare minutes allows a full link.
+    allowance = actions_allowance(now, measure=measure)
+    return allowance is None or allowance >= CONFIG.get("closing_run_minutes", 36)
+
+
+def actions_allowance(now=None, measure=False):
+    """Closing-watcher minutes left today (None = no limit, public repository)."""
+    import actions_budget
+    usage = (actions_budget.measure(CONFIG, ACTIONS_USAGE_PATH, now) if measure
+             else actions_budget.load(ACTIONS_USAGE_PATH))
+    return actions_budget.closing_allowance(CONFIG, usage, now)
+
+
+def closing_plan(now=None, measure=True):
+    """How long one closing run may nap and run, in seconds, from the minutes guard:
+    a public repository keeps the watcher's old limits; a private one gets today's
+    allowance; with no allowance a run makes one capture pass and ends (about 1 minute)."""
+    run_s = CONFIG.get("closing_run_minutes", 36) * 60
+    chain = CONFIG.get("closing_chain", False)
+    nap_s = 100000 if chain else CONFIG.get("closing_max_wait_minutes", 15) * 60
+    allowance = actions_allowance(now, measure=measure)
+    if allowance is None:
+        return nap_s, run_s
+    if allowance <= 2:
+        return 0, 0
+    run_s = min(run_s, (allowance - 1) * 60)
+    return min(nap_s, run_s), run_s
 
 
 def late_value_bets(events, now):
@@ -1612,6 +1646,13 @@ def build_email(state, finished, ticket, note, today):
     parts.append(clv_html())
     parts.append(shadow_html())
     parts.append(scoreboard_html())
+    try:
+        import actions_budget
+        line = actions_budget.summary_line(CONFIG, actions_budget.load(ACTIONS_USAGE_PATH))
+        if line:
+            parts.append(f"<p><small>{html_lib.escape(line)}</small></p>")
+    except Exception as e:  # noqa: BLE001
+        print(f"Actions usage line failed: {e}")
     if credits_left is not None:
         total = len(odds_keys())
         which = f" on key {key_index + 1} of {total}" if total > 1 else ""
@@ -2031,6 +2072,11 @@ def run(now=None, force=False, resend=False, preview=False):
         STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
         return True
 
+    if not preview:
+        # GitHub Actions minutes used this month, for the email and the closing guard.
+        import actions_budget
+        actions_budget.measure(CONFIG, ACTIONS_USAGE_PATH, now)
+
     # A preview picks and emails a ticket but saves nothing and settles nothing.
     if not preview:
         try:
@@ -2221,7 +2267,10 @@ if __name__ == "__main__":
         link = 0
         if "--link" in sys.argv:
             link = int(sys.argv[sys.argv.index("--link") + 1] or 0)
-        print("yes" if closing_chain_ok(chain=link) else "no")
+        print("yes" if closing_chain_ok(chain=link, measure=True) else "no")
+        sys.exit()
+    if "--closing-plan" in sys.argv:
+        print(*closing_plan())
         sys.exit()
     if "--closing" in sys.argv:
         window = None
@@ -2232,5 +2281,11 @@ if __name__ == "__main__":
     if "--notify-changes" in sys.argv:
         notify_changes()
         sys.exit()
-    run(force="--force" in sys.argv, resend="--resend" in sys.argv,
-        preview="--preview" in sys.argv)
+    made = run(force="--force" in sys.argv, resend="--resend" in sys.argv,
+               preview="--preview" in sys.argv)
+    if os.environ.get("GITHUB_OUTPUT"):
+        # Lets the workflow start the closing watcher only after a real daily run, not
+        # after the late backup runs that find the day already done (6 Nov: four of them
+        # restarted the watcher and cancelled the running link).
+        with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+            fh.write(f"made={'yes' if made else 'no'}\n")

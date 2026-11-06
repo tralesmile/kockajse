@@ -14,10 +14,16 @@ name: Closing prices
 # watcher stays alive from the morning ticket until the last logged bet has started and
 # every bet is captured 15 to 60 minutes before its start. The daily run starts the chain;
 # the schedule below is only a backup. Set "closing_chain": false in config.json to stop it.
+#
+# Minutes guard (6 Nov): the chain used the private repository's ~2,000 free minutes in six
+# days and GitHub then stopped every run. Each run now asks actions_budget.py how long it may
+# nap and run; in a public repository (free run time) nothing changes.
 on:
   schedule:
-    - cron: "11,41 10-23 * * *"
-    - cron: "11,41 0-3 * * *"
+    # Hourly backup (was every 30 minutes): in a private repository every run costs at
+    # least a minute of the ~2,000 free minutes a month (see actions_budget.py).
+    - cron: "41 10-23 * * *"
+    - cron: "41 0-3 * * *"
   workflow_dispatch:
     inputs:
       chain:
@@ -54,24 +60,24 @@ jobs:
           git config user.name "betting-bot"
           git config user.email "betting-bot@users.noreply.github.com"
           save() {
-            git add data/closing.csv data/closing_budget.json data/shadow.csv 2>/dev/null || true
+            git add data/closing.csv data/closing_budget.json data/shadow.csv data/actions_usage.json 2>/dev/null || true
             git diff --cached --quiet && return 0
             git commit -q -m "Update closing prices"
             for i in 1 2 3; do git pull -q --rebase && git push -q && return 0; sleep 10; done
             return 1
           }
           cfg() { python -c "import json; print(json.load(open('config.json')).get('$1', $2))"; }
-          max_wait=$(( $(cfg closing_max_wait_minutes 15) * 60 ))
+          # Nap limit and run length in seconds from the minutes guard (actions_budget.py):
+          # unchanged in a public repository; in a private one limited to today's share
+          # of the free minutes, and "0 0" (one capture pass, no naps) when none is left.
+          read max_wait run_s <<< "$(python bot.py --closing-plan)"
+          echo "Closing plan: naps up to ${max_wait}s, run up to ${run_s}s."
           window=""
-          if [ "$(cfg closing_chain False)" = "True" ]; then
-            # A run that can hand over to a successor may nap as long as it lasts.
-            max_wait=100000
-          fi
           if [ "$CHAIN" -gt 0 ]; then
             # Inside the chain a watcher is always alive, so no early fallback capture.
             window="--window $(cfg closing_chain_window_minutes 60)"
           fi
-          end=$((SECONDS + $(cfg closing_run_minutes 36) * 60))
+          end=$((SECONDS + run_s))
           last=""
           stuck=""
           while :; do

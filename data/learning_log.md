@@ -559,3 +559,54 @@ Preview run (09:45 UTC, not counted): the AI path ran and the code built the tax
 Virtus Bologna +4.5 @1.87 and Everton @1.67 (3.12, 2 legs); the old rule would have taken
 3 legs (Rapid Wien 1.21, Celtics 1.28, Everton 1.67); tax_best priced the same legs at
 1.91 (williamhill) and 1.74 (onexbet); tax_market and likely_ticket logged as designed.
+
+## 2026-11-06 (evening review): GitHub stopped every run; a minutes guard
+
+Measured: no ticket or pick settled since the morning (217 settled picks, 58.5% won vs
+56.9% market; settlement runs with the daily job), so no new lost leg to judge; ticket 29
+(Olympiacos to win 1.38, Partizan v Maccabi Over 171.5 1.84, both Euroleague tonight) is
+open. Only 2 closing captures today (Sydney FC, 08:07 UTC). Reason: every GitHub job since
+15:57 UTC failed in 2-6 seconds with the annotation "The job was not started because
+recent account payments have failed or your spending limit needs to be increased". From
+the runs list, November minutes (each run's wall time rounded up; all workflows have one
+job): 2,243 in all, closing watcher 1,994 (1 to 5 Nov before the chain: 3-5 a day; 5 Nov
+1,199; 6 Nov 779), daily 238, notify 11. GitHub Free includes USD 12 of compute a cycle,
+about 2,000 Linux minutes; standard runners are free in public repositories (GitHub docs,
+"How use of GitHub Actions is measured"). The total crossed 2,000 at about 13:30 UTC, so
+the cycle very likely starts on the 1st: unless the owner acts, no daily ticket runs until
+1 December. The 4 Nov "billable 0 ms" check read a field that does not measure this.
+Also found: the daily backup crons ran 8 hours late (14:19-15:24 UTC) and each one, though
+it found the day done, started a new watcher link, which cancelled the queued one.
+Gemini: 24 research calls failed today (503s; both search keys hit 20 a day).
+
+Researched: GitHub billing docs (included compute as a money amount, reset each billing
+cycle, usage blocked without a payment method, public repositories free); community
+threads on scheduled-workflow delays and external timers (cron-job.org, crontap,
+runhooks: workflow_dispatch from an outside timer is the usual fix); Cloudflare Workers
+free limits (cron triggers on the free plan) as a watcher outside Actions; Dean and
+Barroso's hedged requests for the Gemini 503 storms.
+
+Ideas considered (scored in IDEAS.md): minutes guard (built); make the repository public
+(recommended, owner's decision); external timer for one-pass captures; Cloudflare Worker
+watcher (unconventional); capture triage (unconventional); hedged Gemini requests
+(unconventional); batched research; outage-aware voiding; old ticket legs in the score
+fallback (built, small).
+
+Changed: new `actions_budget.py` (cycle minutes from the runs API saved to
+`data/actions_usage.json`; closing allowance = (2,000 x 0.85 - used - 45 per remaining
+day) / remaining days, minus today's watcher minutes; no limit when public; fails safe to
+no watcher minutes, never blocks the ticket). `closing_chain_ok` needs a full link of
+allowance; `--closing-plan` sets each closing run's nap and run length (private and out
+of minutes: one capture pass, about a minute). The daily job measures usage, shows it in
+the email (warning at 75%), and starts the watcher only after a run that made the ticket
+(`made` step output). Closing backup crons hourly instead of every 30 minutes. The score
+fallback looks up ticket legs up to 40 days old, so a stop of the runs does not void them.
+config: actions_included_minutes 2000, actions_budget_share 0.85,
+actions_daily_reserve_minutes 45, actions_closing_max_per_day 120, actions_cycle_day 1.
+New tests/test_actions_budget.py; test_chain.py covers the private case. Ticket
+selection unchanged, and no preview run possible while GitHub refuses jobs.
+
+To measure next: whether jobs start again (owner makes the repository public or the
+cycle resets), data/actions_usage.json each day (private: under ~65 minutes a day),
+whether ticket 29 settles through the fallback when runs resume, closing capture share in
+private mode. The tax-aware ticket's first live comparison waits for runs to resume.

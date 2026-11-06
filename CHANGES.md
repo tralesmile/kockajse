@@ -2,6 +2,15 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-06 (evening): GitHub has stopped running the bot; your action needed
+
+- Since 15:57 UTC today GitHub refuses to start any of the bot's jobs: the repository is private, and GitHub's free plan includes only about 2,000 minutes a month for private repositories. The price watcher added on 4 November kept a runner busy almost all day and used about 2,000 minutes in two days. An earlier check wrongly said this time was free; that was my mistake.
+- Unless you act, there is no daily ticket or email until the minutes reset, very likely on 1 December. This email may itself arrive only then.
+- Recommended (your decision): make the repository public (Settings, General, Danger Zone, Change visibility). GitHub's run time is free for public repositories, so the bot works again at once with the full price watcher. Your API keys and email settings are secrets and stay hidden; the code, picks, research notes and paper results become readable by anyone. The other way is a payment method with a small spending limit (about USD 0.006 a minute).
+- New safeguard: the bot now counts the minutes it has used. In a private repository it keeps enough for the daily ticket every day and gives the price watcher only what is left (a few short checks a day). A public repository keeps the full watcher. The email shows the minutes used and warns at 75%.
+- Also fixed: late backup runs restarted the watcher, and a long stop could have voided ticket 29's legs; ticket legs are now looked up even weeks later.
+- Ticket choice unchanged. No extra Odds API or Gemini use.
+
 ## 2026-11-06: your ticket now aims to lose least after the tax, not to be the safest
 
 - Until today the bot chose the most likely ticket. That is not the ticket that loses least: the 15% tax takes a share of the winnings, so it grows with the total odds, and every leg carries the bookmaker's margin. The bot now picks the allowed ticket with the best expected return after the tax, using the more accurate "power" chances. The AI's verdicts and limits (2.50-3.50, no AVOID picks) are unchanged.
