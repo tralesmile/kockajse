@@ -18,5 +18,5 @@ Each bet is scored when its closing price is captured: expected return per unit 
 | Tax-proof value singles, power-method fair chance (favourites from 1.05) | 2 | 2 | +1.3% | 0.5 | 99% | 1.00 | undecided | - | -46% | 2 |
 | Most likely ticket using power-method chances | 3 | 0 | - | - | - | - | undecided | - | -100% | 2 |
 | Picks the AI rated AGREE (singles, average price) | 55 | 11 | -12.4% | 0.5 | 0% | 0.00 | undecided | - | -13% | 50 |
-| Picks rated RISKY (singles, average price) | 141 | 23 | -11.0% | 0.9 | 0% | 0.00 | loses after tax | - | -8% | 124 |
-| Picks rated AVOID (singles, average price) | 75 | 11 | -12.6% | 1.6 | 0% | 0.00 | undecided | - | -8% | 43 |
+| Picks rated RISKY (singles, average price) | 141 | 24 | -11.0% | 0.9 | 0% | 0.00 | loses after tax | - | -8% | 124 |
+| Picks rated AVOID (singles, average price) | 75 | 12 | -12.7% | 1.5 | 0% | 0.00 | undecided | - | -8% | 43 |
