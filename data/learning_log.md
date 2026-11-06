@@ -610,3 +610,8 @@ To measure next: whether jobs start again (owner makes the repository public or 
 cycle resets), data/actions_usage.json each day (private: under ~65 minutes a day),
 whether ticket 29 settles through the fallback when runs resume, closing capture share in
 private mode. The tax-aware ticket's first live comparison waits for runs to resume.
+
+Update 22:15 UTC: the owner made the repository public. GitHub starts jobs again: the
+failed "Email bot updates" run was re-run (success, so the change email went out) and a
+closing watcher link was started by hand; the minutes guard sees a public repository and
+sets no limit, so the full watcher runs from the next daily ticket.

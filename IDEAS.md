@@ -184,7 +184,7 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
-- Make the repository public (infrastructure, owner's decision, 5/5/1): standard GitHub
+- DONE 6 Nov 22:15 UTC by the owner: make the repository public (infrastructure, 5/5/1): standard GitHub
   runners are free in public repositories, which ends the minutes limit at once and lets
   the full closing watcher run. Secrets stay hidden; picks, research and the paper record
   become readable. Recommended in CHANGES.md on 6 Nov evening.
