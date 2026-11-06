@@ -555,3 +555,7 @@ tax_ticket and tax_ticket_best; reports regenerated from the mirror. New tests/t
 To measure next: scoreboard paired xROI of actual vs likely_ticket (expect about +2 points),
 tax_best's closing xROI (break-even would justify recommending extra accounts), average
 total odds and legs of the new ticket, closing credits per day with three more shadows.
+Preview run (09:45 UTC, not counted): the AI path ran and the code built the taxed ticket,
+Virtus Bologna +4.5 @1.87 and Everton @1.67 (3.12, 2 legs); the old rule would have taken
+3 legs (Rapid Wien 1.21, Celtics 1.28, Everton 1.67); tax_best priced the same legs at
+1.91 (williamhill) and 1.74 (onexbet); tax_market and likely_ticket logged as designed.
