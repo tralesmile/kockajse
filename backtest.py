@@ -218,6 +218,17 @@ def as_power(cands):
     return [dict(c, prob=c["prob_power"]) for c in cands]
 
 
+def _taxed(cands):
+    t = bot.build_taxed_ticket(as_power(cands), "prob_power")
+    return t["legs"] if t else None
+
+
+def _taxed_best(cands):
+    t = bot.build_taxed_ticket([dict(c, best_odds=c["best"]) for c in as_power(cands)],
+                               "prob_power", "best_odds")
+    return t["legs"] if t else None
+
+
 STRATEGIES = {
     # name: (description, function(slate) -> list of tickets, each a list of legs with odds)
     "most_likely": ("live rule: most likely allowed ticket (code, no AI)",
@@ -260,6 +271,11 @@ STRATEGIES = {
                           lambda s: [[dict(c, odds=c["best"])] for c in as_power(s)
                                      if c["best"] and c["best"] <= 4.0 and c["market"] != "dc"
                                      and c["best"] >= 1.05 and taxed_ev(c, c["best"]) > 0]),
+    "tax_ticket": ("live rule since 6 Nov: allowed ticket with the best expected return "
+                   "after tax, power-method chances",
+                   lambda s: [_taxed(s)]),
+    "tax_ticket_best": ("same, every leg at the best listed price (tax_best shadow)",
+                        lambda s: [_taxed_best(s)]),
     "value_single_4": ("same with 4%+ value",
                        lambda s: [[dict(c, odds=c["best"])] for c in s
                                   if c["best"] and c["best"] <= 4.0

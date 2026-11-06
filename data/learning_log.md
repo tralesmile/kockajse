@@ -512,3 +512,46 @@ To measure next: scoreboard coverage (share of ticket-shadow bets scored, target
 closing credits per day with the extra legs (cap 20), first verdicts in 2-3 weeks,
 whether value singles' after-tax xROI stays negative (then restrict them to the tax
 break-even curve), fallback_scores.csv on 6 Nov.
+
+## 2026-11-06 (morning review): the ticket now maximises the return after tax
+
+Measured: 217 settled judged picks, 58.5% won vs 56.9% market chance; Brier market 0.2318
+vs AI 0.2338. By verdict (won minus market): AGREE -1.7 points (50), RISKY +2.7 (124),
+AVOID +2.6 (43): verdicts still do not sort winners. Ticket legs 6/13 won vs 63.5%
+expected; six paper tickets lost in a row (23-28). Ticket 28 (5 Nov): Leverkusen v
+Marseille (73%, AGREE) lost: research showed mixed form (lost 2 of the last 3 league
+games) but nothing decisive, not foreseeable; Penn +30.5 v Illinois (52%, AGREE) lost:
+the research had no 2026-27 data (THIN), so AGREE was unjustified, but the price was fair.
+Research data quality vs results: GOOD +0.9 points (145), THIN -3.5 (19), NONE 0.0 (7),
+no signal. Fallback scores worked: all 5 Paris Masters events settled with two agreeing
+answers, ticket 27 settled as lost (de Minaur lost) instead of a false void win.
+Scoreboard: still few captures; value singles -3.3% ± 1.9 after tax at the close, picks at
+average prices -11% to -13% whatever the verdict. Gemini: 24 failed research calls today
+(503s, both search keys hit the 20-a-day limit).
+
+Researched: Whelan, "The Parlay Puzzle" (expected return (1-m)^N; combine at most two legs
+when leg chances are 1/3-1/2); parlay pricing write-ups (margin compounds per leg);
+Gemini free-tier grounding (usagebox Oct 2026, Google forum: not available on the free tier
+for Gemini 3 models, so keys 3/4 cannot add search quota); bookmaker-consensus forecasting
+(Goto et al. 2026, Kaunitz et al. 2017). Offline tests on the football-odds mirror: an
+opening blend of average and Pinnacle chances does not beat Pinnacle alone (dropped).
+Tax-aware ticket objective on 1,534 match days: expected -12.3% vs -14.5% (close) and
+-13.3% vs -15.3% (open), realised -10.0% vs -14.2% and -12.9% vs -19.7%; at the best
+prices -3.0% expected (vs -10.3% for the old rule at best prices).
+
+Ideas considered (scored in IDEAS.md): tax-aware ticket objective (built); opening crowd
+blend (dropped); data-quality gate (dropped); Gemini 3.8 search on keys 3/4 (dropped);
+tax break-even shortlist; two-account recommendation from tax_best; NHL favourites; late
+ticket shadow and Thompson chooser (kept).
+
+Changed: `taxed_return()` and `build_taxed_ticket()` in bot.py; `ai_pick` builds the
+ticket with the best expected return after tax from power chances plus the 20% AI shift
+(`blend_power`), keeps the AI's ticket when within 0.5 points; the rules fallback uses the
+same objective; config `ticket_objective` "taxed_ev". New shadows likely_ticket (old rule),
+tax_best (new rule at best prices), tax_market (no AI); their legs are captured near
+kick-off. decide.txt step 2 and lessons.md explain the objective. backtest.py gains
+tax_ticket and tax_ticket_best; reports regenerated from the mirror. New tests/test_taxed.py.
+
+To measure next: scoreboard paired xROI of actual vs likely_ticket (expect about +2 points),
+tax_best's closing xROI (break-even would justify recommending extra accounts), average
+total odds and legs of the new ticket, closing credits per day with three more shadows.

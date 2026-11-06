@@ -7,8 +7,9 @@ Sends one email every morning at about 08:00 Skopje time with:
 - one new combined ticket (total odds between 2.50 and 3.50) for the next 24 hours.
 
 Football, basketball, tennis and handball odds come from The Odds API. Picks are rule-based:
-the bookmaker margin is removed from the odds to estimate each outcome's chance, and the most
-likely combination inside the odds range is chosen. This does not beat the bookmaker; expect
+the bookmaker margin is removed from the odds to estimate each outcome's chance, and the
+combination inside the odds range with the best expected return after the 15% tax is chosen
+(the most likely combination until 6 Nov 2026). This does not beat the bookmaker; expect
 to lose money over time.
 
 ## Setup

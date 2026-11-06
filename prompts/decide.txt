@@ -35,21 +35,20 @@ Good news that is already public is already in the odds, so it rarely justifies 
 
 STEP 2. Build the ticket.
 - Use 1 to {max_legs} picks. Use at most ONE bet per match.
-- Use AGREE picks, plus at most one RISKY pick when that makes the ticket more likely to win.
+- Use AGREE picks, plus at most one RISKY pick when that improves the ticket.
   Never use an AVOID pick.
 - The product of the odds must be between {min_odds} and {max_odds}. Multiply the odds yourself
   and check the result before you answer.
-- Prefer 2 picks. Every extra pick adds the bookmaker's margin, so a ticket of 2 picks at
-  about 1.6 each is usually more likely to win than 3 or 4 short-priced picks with the same
-  total odds. Use 3 picks only when no 2-pick ticket in range has a comparable chance.
-- Among valid tickets, choose the safest: the one with the highest product of chances. The code
-  checks your choice against every valid ticket and replaces it if another is clearly more likely,
-  so compare carefully and multiply the chances yourself.
+- Choose the ticket that loses least after the 15% tax on winnings: the highest
+  combined chance x (1 + 0.85 x (total odds - 1)). This is not always the most likely ticket:
+  every extra pick adds the bookmaker's margin and the tax grows with the total odds, so
+  prefer 2 picks, total odds near the bottom of the range, and picks whose price is close to
+  or above the sharp fair price. The code checks your choice against every valid ticket and
+  replaces it if another scores clearly better, so compare carefully.
   Prefer picks with GOOD data and clear favourites over picks you know little about. A double
-  chance or totals bet is only safer than a win bet if its adjusted chance is higher.
-- Value: between tickets of similar safety (within about 3 points of combined chance), choose
-  the one whose picks pay more versus the sharp fair price. Do not use a pick whose price is more
-  than 6% below the sharp fair price unless no valid ticket exists without it.
+  chance or totals bet is only better than a win bet if its chance x odds is higher.
+- Do not use a pick whose price is more than 6% below the sharp fair price unless no valid
+  ticket exists without it.
 - If no ticket meets all the rules, return an empty ticket and explain why. Do not bend a rule to
   produce a ticket.
 

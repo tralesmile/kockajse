@@ -6,6 +6,21 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Tax-aware ticket objective, live rule (selection/modelling, bold, 5/4/2, built 6 Nov
+  morning). The real ticket no longer maximises the chance of winning; it maximises the
+  expected return after the 15% tax, chance x (1 + 0.85 x (total odds - 1)) - 1, using
+  power-method chances with the same 20% AI shift and the same verdict rules (no AVOID, at
+  most one RISKY). Backtest 2019-2026, 1,534 days: expected -12.3% vs -14.5% (power
+  measure) at closing prices and -13.3% vs -15.3% at opening prices; realised -10.0% vs
+  -14.2% (close) and -12.9% vs -19.7% (open); it takes slightly higher total odds (2.72 vs
+  2.54) and legs priced nearer fair. Supported by Whelan's "Parlay Puzzle" (expected
+  return (1-m)^N, at most two legs at 1/3-1/2 chance). Side by side: "likely_ticket" (the
+  old rule, same verdicts), "tax_market" (no AI, twin of "market"), "tax_best" (the new
+  rule at the best listed prices: backtest -3.0% expected at close, -8.2% realised; vs
+  -10.3% for the old rule at the best price). Fallback without AI uses the same objective.
+  `ticket_objective` "most_likely" restores the old rule. Measuring: paired closing-price
+  xROI actual vs likely_ticket in the scoreboard (expect +2 points; ~25 days for se 1).
+
 - Closing-price scoreboard with an always-valid sequential test (experiments, bold,
   unconventional from online A/B testing and clinical trials, 5/4/2, built 5 Nov evening).
   `scoreboard.py` scores every shadow bet, and every logged pick by verdict, the moment
@@ -152,6 +167,16 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- Tax break-even shortlist (selection, 2/3/1): give the AI only picks whose average price
+  is within ~5% of the sharp fair price, since the taxed objective rarely uses the rest;
+  frees research quota for matches that can matter.
+- Two-account recommendation with numbers (bet types, 4/4/1): tax_best is the first
+  strategy near break-even in the backtest (-3% expected at close). If its live closing
+  xROI holds over ~3 weeks, recommend the owner opens one or two accounts at the books
+  that most often carry the best price (from the best_book column).
+- NHL and other heavy-favourite pools (leagues, 2/2/1): more legs priced near fair widen
+  the taxed optimizer's choice; check The Odds API Pinnacle coverage first.
+
 - Tax break-even curve in the email (selection/bet types, 3/4/1): value singles beat the
   close by +6.6% before tax but lose about 3% after it, because at odds O the tax costs
   about 15% x (O - 1) x chance. Show the owner the CLV needed at each odds band
@@ -257,10 +282,6 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 - Sequential testing (experiments, unconventional, from clinical trials, 3/4/2): a SPRT or
   Bayesian A/B on shadow strategies' CLV, so a strategy can be declared better or dropped
   as soon as the evidence is enough, instead of a fixed ~150 bets.
-- Gemini 3.8 flash with search on keys 3 and 4 (AI workflow, 3/3/1): keys 3/4 answer that
-  2.5-flash is "no longer available to new users, use gemini-3.8-flash". If 3.8-flash
-  allows Google Search grounding on the free tier, the research quota doubles. Needs a
-  diagnose run, which the review may not start; ask the owner or test in a preview.
 - AI weight 0 shadow (modelling, 2/3/1): Brier on 68 picks is market 0.2278 vs AI 0.2358;
   a "market + 0% AI" ticket is the "market" shadow already, so read that comparison first.
 
@@ -308,6 +329,21 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   compare with the market (2/3/3).
 
 ## Dropped
+
+- Opening "bookmaker crowd" blend (modelling, unconventional, from forecast aggregation,
+  tested 6 Nov on 38,279 football-data matches 2019-2026): a log-linear blend of the
+  market-average and Pinnacle opening power chances, weight fitted on 2019-2023, picks
+  weight 0.1 on the average; test log loss 0.99001 vs 0.98998 for Pinnacle alone, KL to the
+  Pinnacle close 0.00313 vs 0.00314. Value singles chosen with the blend: +2.7% vs +2.5%
+  closing xROI before tax, tax-proof ones -0.4% vs -0.3%. Pinnacle opening is already the
+  best morning reference.
+- Data-quality gate for ticket legs (prompts, tested 6 Nov on 217 settled picks joined to
+  the research notes): GOOD +0.9 points won vs market (145), THIN -3.5 (19), NONE 0.0 (7).
+  No signal yet; ticket 28's Penn +30.5 leg had THIN data but the sample says nothing.
+- Gemini 3.8 flash with search on keys 3 and 4: third-party pricing pages (usagebox, Oct
+  2026) and the Google forum say Grounding with Google Search is not available on the
+  free tier for Gemini 3 models (paid only, 5,000 prompts a month). Keys 3/4 cannot add
+  search quota without paying.
 
 - Morning Over 2.5 drift (timing, unconventional, from momentum in finance, tested 5 Nov
   evening on 38,245 football-data matches 2019-2026, Pinnacle opening vs closing): the

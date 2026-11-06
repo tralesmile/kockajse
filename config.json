@@ -42,6 +42,7 @@
   "min_bookmakers_lines": 4,
   "ai_options": 6,
   "ai_weight": 0.2,
+  "ticket_objective": "taxed_ev",
   "markets": {
     "soccer": "h2h,totals",
     "basketball": "h2h,spreads,totals",

@@ -288,6 +288,48 @@
    "se": 0.025,
    "exp_roi": 0.0148
   },
+  "tax_ticket": {
+   "desc": "live rule since 6 Nov: allowed ticket with the best expected return after tax, power-method chances",
+   "bets": 1534,
+   "wins": 565,
+   "hit": 0.3683,
+   "exp_hit": 0.3583,
+   "avg_odds": 2.72,
+   "roi": -0.0998,
+   "roi_pre_tax": -0.0059,
+   "by_season": {
+    "1920": -0.0358,
+    "2021": -0.1199,
+    "2122": -0.1802,
+    "2223": -0.0471,
+    "2324": -0.0631,
+    "2425": -0.17,
+    "2526": -0.0502
+   },
+   "se": 0.0302,
+   "exp_roi": -0.1233
+  },
+  "tax_ticket_best": {
+   "desc": "same, every leg at the best listed price (tax_best shadow)",
+   "bets": 1539,
+   "wins": 532,
+   "hit": 0.3457,
+   "exp_hit": 0.3642,
+   "avg_odds": 2.98,
+   "roi": -0.0817,
+   "roi_pre_tax": 0.0194,
+   "by_season": {
+    "1920": -0.1408,
+    "2021": -0.0878,
+    "2122": -0.1373,
+    "2223": -0.0146,
+    "2324": -0.0144,
+    "2425": -0.07,
+    "2526": -0.1489
+   },
+   "se": 0.0324,
+   "exp_roi": -0.0297
+  },
   "value_single_4": {
    "desc": "same with 4%+ value",
    "bets": 6035,

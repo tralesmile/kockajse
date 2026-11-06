@@ -14,6 +14,7 @@ import random
 import re
 import html as html_lib
 import itertools
+import math
 import json
 import os
 import smtplib
@@ -413,6 +414,52 @@ def build_ticket(cands):
     for leg in legs:
         total *= leg["odds"]
     return {"legs": legs, "total_odds": round(total, 2), "win_prob": round(best_prob, 4)}
+
+
+def taxed_return(prob, total_odds, tax=None):
+    """Expected profit per unit of a ticket after the tax on net winnings:
+    chance x (1 + (1 - tax) x (total odds - 1)) - 1."""
+    tax = CONFIG["tax_rate"] if tax is None else tax
+    return prob * (1 + (1 - tax) * (total_odds - 1)) - 1
+
+
+def build_taxed_ticket(cands, prob_key="power_prob", odds_key="odds"):
+    """Allowed ticket with the best expected return after the 15% tax.
+
+    The most likely ticket is not the one that loses least: the tax grows with the total
+    odds and every leg carries its own margin, so the rule should maximise
+    chance x payout after tax, not chance alone. Chances are power-method fair chances
+    (calibrated on 80,000 Pinnacle closing prices). Backtest 2019-2026 (1,534 match days):
+    expected return -12.3% vs -14.5% for the most likely ticket at closing prices and
+    -13.3% vs -15.3% at opening prices (realised -11.1% vs -14.2% and -12.9% vs -19.7%).
+    odds_key="best_odds" prices every leg at the best listed bookmaker.
+    """
+    pool = []
+    for c in cands:
+        prob = c.get(prob_key) or c.get("prob")
+        odds = c.get(odds_key) or (c["odds"] if odds_key != "odds" else None)
+        if prob and odds and CONFIG["min_leg_odds"] <= odds <= CONFIG["max_leg_odds"]:
+            pool.append(dict(c, odds=odds, _p=prob))
+    pool = sorted(pool, key=lambda c: c["_p"] * c["odds"], reverse=True)[:30]
+    best, best_value = None, None
+    for size in range(1, CONFIG["max_legs"] + 1):
+        for combo in itertools.combinations(pool, size):
+            if len({c["event_id"] for c in combo}) < size:
+                continue
+            odds = math.prod(c["odds"] for c in combo)
+            if not CONFIG["min_total_odds"] <= round(odds, 2) <= CONFIG["max_total_odds"]:
+                continue
+            value = taxed_return(math.prod(c["_p"] for c in combo), odds)
+            if best_value is None or value > best_value:
+                best, best_value = combo, value
+    if not best:
+        return None
+    legs = sorted(({k: v for k, v in c.items() if k != "_p"} for c in best),
+                  key=lambda c: c["start"])
+    total = math.prod(l["odds"] for l in legs)
+    return {"legs": legs, "total_odds": round(total, 2),
+            "win_prob": round(math.prod(l["prob"] for l in legs), 4),
+            "expected_return": round(best_value, 4)}
 
 
 def pick_ticket(now):
@@ -866,7 +913,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 # scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
 # not captured twice; its pick capture is used.
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
-                   "actual")
+                   "actual", "likely_ticket", "tax_best", "tax_market")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value")
 
 
@@ -1125,6 +1172,9 @@ SHADOW_NAMES = {
     "taxed_value": "Value singles that still pay after the 15% tax",
     "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
     "power_ticket": "Most likely ticket using power-method chances",
+    "likely_ticket": "The old ticket rule: most likely ticket within the AI's verdicts",
+    "tax_best": "The real ticket rule at the best bookmaker prices",
+    "tax_market": "Market only, best return after tax (no AI)",
 }
 
 
@@ -1256,9 +1306,24 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     if market:
         out.append(("market", [dict(l, book="average") for l in market["legs"]]))
     info = RESEARCH.get("ai_ticket") or {}
-    for strategy, ids in (("ai_own", info.get("ids")), ("edge_first", info.get("edge_first_ids"))):
+    for strategy, ids in (("ai_own", info.get("ids")), ("edge_first", info.get("edge_first_ids")),
+                          ("likely_ticket", info.get("likely_ids"))):
         if short and ids and all(i in short for i in ids):
             out.append((strategy, [dict(short[i], book="average") for i in ids]))
+    # The live rule (best return after tax within the AI's verdicts) with every leg at the
+    # best listed price. Backtest: -3.0% expected after tax at closing prices, vs -8.2% for
+    # the most likely ticket at the best price; what a few bookmaker accounts would be worth.
+    ids = info.get("tax_best_ids")
+    if short and ids and all(i in short for i in ids):
+        out.append(("tax_best", [dict(short[i], odds=short[i]["best_odds"],
+                                      book=short[i]["best_book"])
+                                 if short[i].get("best_odds") else dict(short[i], book="average")
+                                 for i in ids]))
+    # Best return after tax from the market alone (no AI), the twin of "market".
+    taxed = build_taxed_ticket(pool)
+    if taxed:
+        out.append(("tax_market", [dict(l, book="average", sharp=l.get("sharp_power"))
+                                   for l in taxed["legs"]]))
     # One single a day: the allowed pick (not AVOID) with the best chance x odds. The
     # backtest found singles lose about half as much as 2.50-3.50 tickets once the tax is
     # paid (-8% vs -16% expected), because the tax grows with the total odds.
@@ -1821,21 +1886,36 @@ def ai_pick(cands, today):
     # The ticket is built in code from the AI's verdicts. Each pick's chance is the market's
     # (sharp) chance blended with a small share of the AI's estimate ("blend"), because
     # forecasting studies find an LLM's own number is worse than the market's and only a
-    # light blend helps. The AI's own ticket is kept when it is as likely as the best one
-    # (within 0.5 points), so its judgement wins ties. Reviews compare both in research/.
+    # light blend helps. "blend_power" applies the same AI shift to the power-method chance.
+    # Since 6 Nov the ticket maximises the expected return after the 15% tax
+    # (ticket_objective "taxed_ev"); the earlier rule, the most likely ticket, is kept as
+    # the "likely_ticket" shadow. The AI's own ticket is kept when it scores within 0.5
+    # points of the best one, so its judgement wins ties. Reviews compare them in research/.
     weight = CONFIG.get("ai_weight", 0.2)
     for c in short.values():
         c["blend"] = (1 - weight) * c["prob"] + weight * c["adj"]
+        base = c.get("power_prob") or c["prob"]
+        c["blend_power"] = max(0.01, min(0.99, base + weight * (c["adj"] - c["prob"])))
 
-    def chance(ids):
+    def chance(ids, key="blend"):
         value = 1.0
         for i in ids:
-            value *= short[i]["blend"]
+            value *= short[i][key]
         return value
 
+    def taxed(ids, odds_key="odds"):
+        total = math.prod(short[i].get(odds_key) or short[i]["odds"] for i in ids)
+        return taxed_return(chance(ids, "blend_power"), total)
+
+    def usable_best(ids):
+        legs = [dict(short[i], odds=short[i].get("best_odds") or short[i]["odds"]) for i in ids]
+        risky = sum(1 for l in legs if l["verdict"] == "RISKY")
+        return (all(l["verdict"] != "AVOID" for l in legs) and risky <= 1
+                and valid_combo(legs))
+
+    allowed = [i for i, c in short.items() if c["verdict"] in ("AGREE", "RISKY")]
     best, best_score = [], 0
-    pool = sorted((i for i, c in short.items() if c["verdict"] in ("AGREE", "RISKY")),
-                  key=lambda i: short[i]["blend"], reverse=True)[:45]
+    pool = sorted(allowed, key=lambda i: short[i]["blend"], reverse=True)[:45]
     for size in range(1, CONFIG["max_legs"] + 1):
         for combo in itertools.combinations(pool, size):
             if usable(combo) and chance(combo) > best_score:
@@ -1851,13 +1931,42 @@ def ai_pick(cands, today):
                     value *= short[i]["odds"]
                 if value > edge_score:
                     edge_best, edge_score = list(combo), value
+    # Expected return after tax (the live rule since 6 Nov), at the average price and,
+    # for the "tax_best" shadow, at the best listed price.
+    tax_pool = sorted(allowed, key=lambda i: short[i]["blend_power"] * short[i]["odds"],
+                      reverse=True)[:45]
+    tax_ids, tax_score = [], None
+    best_ids, best_value = [], None
+    for size in range(1, CONFIG["max_legs"] + 1):
+        for combo in itertools.combinations(tax_pool, size):
+            if usable(combo):
+                value = taxed(combo)
+                if tax_score is None or value > tax_score:
+                    tax_ids, tax_score = list(combo), value
+            if usable_best(combo):
+                value = taxed(combo, "best_odds")
+                if best_value is None or value > best_value:
+                    best_ids, best_value = list(combo), value
     ai_ok = bool(chosen and len(set(chosen)) == len(chosen)
                  and all(i in short for i in chosen) and usable(chosen))
     RESEARCH["ai_ticket"] = {"ids": chosen if ai_ok else [], "valid": ai_ok,
                              "chance": round(chance(chosen), 4) if ai_ok else None,
                              "best_ids": best, "best_chance": round(best_score, 4),
-                             "edge_first_ids": edge_best}
-    if ai_ok and chance(chosen) >= best_score - 0.005:
+                             "edge_first_ids": edge_best,
+                             "likely_ids": best,
+                             "tax_ids": tax_ids,
+                             "tax_return": None if tax_score is None else round(tax_score, 4),
+                             "ai_tax_return": round(taxed(chosen), 4) if ai_ok else None,
+                             "tax_best_ids": best_ids,
+                             "tax_best_return": (None if best_value is None
+                                                 else round(best_value, 4))}
+    if CONFIG.get("ticket_objective", "taxed_ev") == "taxed_ev" and tax_ids:
+        if ai_ok and taxed(chosen) >= tax_score - 0.005:
+            source = "AI"
+        else:
+            chosen = tax_ids
+            source = "AI verdicts, ticket built by the rules (best return after tax)"
+    elif ai_ok and chance(chosen) >= best_score - 0.005:
         source = "AI"
     else:
         chosen = best
@@ -1881,7 +1990,8 @@ def ai_pick(cands, today):
     LAST_SHORT = (short, chosen)
     if not chosen:
         return None, analysis, "The AI found no ticket that passes its checks today."
-    legs = sorted(({k: v for k, v in short[i].items() if k not in ("adj", "blend")}
+    legs = sorted(({k: v for k, v in short[i].items()
+                    if k not in ("adj", "blend", "blend_power")}
                    for i in chosen),
                   key=lambda c: c["start"])
     total, prob = 1.0, 1.0
@@ -1941,7 +2051,9 @@ def run(now=None, force=False, resend=False, preview=False):
         result = ai_pick(cands, local)
         analysis = ""
         if result is None:
-            picked = build_ticket(cands)
+            picked = (build_taxed_ticket(cands)
+                      if CONFIG.get("ticket_objective", "taxed_ev") == "taxed_ev"
+                      else None) or build_ticket(cands)
             if picked:
                 why = ""
                 if not gemini_keys():

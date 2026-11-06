@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-06: your ticket now aims to lose least after the tax, not to be the safest
+
+- Until today the bot chose the most likely ticket. That is not the ticket that loses least: the 15% tax takes a share of the winnings, so it grows with the total odds, and every leg carries the bookmaker's margin. The bot now picks the allowed ticket with the best expected return after the tax, using the more accurate "power" chances. The AI's verdicts and limits (2.50-3.50, no AVOID picks) are unchanged.
+- In seven seasons of history (1,534 match days) this rule lost about 4 points less per ticket than the old one (-10% instead of -14% at kick-off prices, -13% instead of -20% at morning prices). Expect slightly higher total odds (about 2.7 instead of 2.5) and legs whose price is closer to fair. It still does not beat the bookmaker plus the tax.
+- The old rule keeps running beside it as an experiment ("old ticket rule"), so the scoreboard can show the difference on the same days within a few weeks.
+- Also new: the same ticket at the best price any bookmaker offers. In history it came close to breaking even (-3% expected after tax). If it holds live, a later review will recommend which one or two extra bookmaker accounts would be worth having; that stays your decision.
+- No extra Odds API or Gemini use.
+
 ## 2026-11-05: every strategy is now scored at the kick-off price
 
 - Win/loss results need hundreds of bets before one strategy can be called better than another. The price just before kick-off is a far quicker judge: it is the most accurate estimate of each bet's real chance.
