@@ -83,5 +83,9 @@
   "actions_budget_share": 0.85,
   "actions_daily_reserve_minutes": 45,
   "actions_closing_max_per_day": 120,
-  "actions_cycle_day": 1
+  "actions_cycle_day": 1,
+  "late_sweep_credits_per_day": 6,
+  "late_sweep_slot_minutes": 60,
+  "late_sweep_min_events": 2,
+  "late_sweep_min_credits_left": 60
 }

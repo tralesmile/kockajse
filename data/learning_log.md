@@ -615,3 +615,46 @@ Update 22:15 UTC: the owner made the repository public. GitHub starts jobs again
 failed "Email bot updates" run was re-run (success, so the change email went out) and a
 closing watcher link was started by hand; the minutes guard sees a public repository and
 sets no limit, so the full watcher runs from the next daily ticket.
+
+## 2026-11-07 (morning review): kick-off sweep for the tax-proof singles
+
+Measured: 266 settled picks won 59.4% vs 57.3% market chance (AGREE 56.6% vs 57.9%, RISKY
+60.3% vs 56.4%, AVOID 59.7% vs 58.8%: the AI's verdicts still carry no signal; Brier market
+0.2295, AI 0.2311, sharp 0.2226 on 162). By odds: 1.00-1.30 +5.9 points vs market (47),
+1.70-2.00 +2.0 (151). Ticket legs won 6 of 15 vs 63% expected (z about -1.9), and paper
+tickets 23-29 all lost (-700; seven losses in a row at a ~36% hit rate happen about 4% of
+the time). Lost legs judged against the research: Olympiacos (Montero, Dorsey out, Fournier
+doubtful, all known and priced), Leverkusen (two defeats in three, priced), Penn +30.5 and
+Kansas St -10.5 (research had "NO CURRENT DATA" in opening week; risk visible, direction
+not), de Minaur, Partizan Over, Young Boys, Man City: no foreseeable cause. Earlier
+changes: tax-aware ticket too new (likely_ticket 1 bet); minutes guard fine (repository
+public, 2,650 cycle minutes, watcher 284 today, no limit); Gemini today 1 quota 429 and 3
+busy 503s (under the target of 8); fallback scores settled 5 Paris Masters matches.
+Scoreboard: tax-proof power singles +1.3% xROI (2 scored), late_power -1.4% (2), every
+other strategy -6% to -18%. late_power logged only 2 bets since 4 Nov: the watcher fetches
+only leagues with a logged pick.
+
+Researched: The Odds API market list (soccer spreads/draw-no-bet not in featured markets,
+"mainly US sports", so Asian handicap legs are out: dropped); arXiv 2608.05030 (LLM
+exact-score harness on Dixon-Coles: top-1 10.0% to 14.7% on 150 EPL games, no market
+comparison); preprints 202607.0719 (web search cut LLM forecasting hallucinations 75-79%;
+supports keeping search in research, nothing to change). Backtest report re-read for the
+late tax-proof rule (802 bets at close, +0.2% realised, +1.5% expected; 1.05-1.30 +5.1%).
+
+Ideas considered (scored in IDEAS.md): kick-off sweep (built); soccer Asian handicap /
+draw-no-bet legs (dropped, no feed); NFL/NHL in the pool; adverse-selection monitor for
+ticket legs (unconventional); bet-time advice per leg (unconventional, execution
+algorithms); random sweep slot (unconventional, survey sampling); LLM exact-score harness
+(low); hedged Gemini requests and late ticket shadow (kept).
+
+Changed: bot.py `plan_sweep`/`write_sweep_plan` (daily run saves `data/sweep_plan.json`:
+up to 6 busiest kick-off slots in leagues the watcher does not already fetch), `run_sweep`
+(called first in every closing pass: 15 minutes before a slot's first start, one h2h fetch,
+late_power rule logged as shadow "late_sweep"; state and credits in closing_budget.json),
+`closing_next_wait` counts planned slots so the chain stays alive for them. config:
+late_sweep_credits_per_day 6, late_sweep_slot_minutes 60, late_sweep_min_events 2,
+late_sweep_min_credits_left 60. New tests/test_sweep.py. Ticket choice unchanged; no
+preview run (selection of the ticket did not change).
+
+To measure next: late_sweep bets per day (expect ~0.5), its xROI and realised return next to
+late_power, extra score credits for new leagues, Odds API credits left at month end.

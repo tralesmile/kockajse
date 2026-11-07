@@ -6,6 +6,22 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Kick-off sweep, shadow "late_sweep" (timing/experiments, 4/3/2, built 7 Nov morning). The
+  only rule near break-even after tax is the late tax-proof single at the best price
+  (backtest at closing prices: 802 bets, +0.2% realised, +1.5% expected; odds 1.05-1.30
+  +5.1% +- 2.2), but live "late_power" logged 2 bets in 3 days: the watcher only fetches
+  leagues that already hold a logged pick (~12 matches a day). Now the daily run plans up
+  to 6 kick-off slots in other leagues (per league, matches within 60 minutes of the
+  earliest; busiest slots first, one per league, at least 2 matches, skipped when the
+  watcher already fetches that league nearby) in `data/sweep_plan.json`, and the watcher
+  fetches each slot's match-winner prices 15 minutes before its first start (1 credit) and
+  logs the late_power rule there as "late_sweep". The chain stays alive for planned slots.
+  Separate credit count in `closing_budget.json` ("sweep"), skipped when the last Odds API
+  key has under 60 credits. At the backtest's 1.9% hit rate, ~30 swept matches a day
+  should add about 0.5 bets a day (3-5x late_power). Measuring: bets per day, closing xROI
+  and realised return vs late_power (same rule, so they should agree), extra score credits.
+  Config `late_sweep_credits_per_day` 0 switches it off.
+
 - GitHub Actions minutes guard (infrastructure, 5/5/2, built 6 Nov evening). Found that
   GitHub stopped every job from 15:57 UTC on 6 Nov ("recent account payments have failed
   or your spending limit needs to be increased"): the private repository's ~2,000 free
@@ -183,6 +199,26 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   settles the AI's own choice next to it.
 
 ## New
+
+- Adverse-selection monitor for ticket legs (measurement, unconventional, from market
+  microstructure "winner's curse", 3/3/1): ticket legs won 6 of 15 vs 9.5 expected (z about
+  -1.9) while all picks won 2.1 points above the market; the taxed objective picks legs
+  whose average price is nearest fair, which could be where soft books know something.
+  Compare ticket legs' closing move with other picks' once ~40 ticket legs are captured.
+- Bet-time advice per leg (timing, unconventional, from execution algorithms /
+  implementation shortfall, 3/2/2): from captured drift of our legs by sport and market,
+  tell the owner in the email which legs to bet now and which to bet near kick-off. Needs
+  ~100 ticket-leg captures (the watcher now gets them).
+- Random sweep slot (experiments, unconventional, from survey sampling / mark-recapture,
+  2/3/1): make one of the sweep slots a random league instead of the busiest, so the share
+  of matches with a tax-proof price can be estimated without bias across the whole feed.
+- NFL and NHL in the ticket pool (leagues, 3/2/1): big US markets have low margins at EU
+  books and Pinnacle prices; more near-fair legs widen the taxed objective's choice on thin
+  weekdays (6 Nov: 27 priced events). Costs 2-3 credits a league in the morning.
+- LLM exact-score harness on a Dixon-Coles base (modelling, 1/2/4): arXiv 2608.05030 (Aug
+  2026, 150 EPL matches) raised exact-score top-1 from 10.0% to 14.7% but compared with no
+  market price, and its 1X2 log loss (0.988) is no better than bookmaker level. Not worth
+  building for a market-anchored bot.
 
 - DONE 6 Nov 22:15 UTC by the owner: make the repository public (infrastructure, 5/5/1): standard GitHub
   runners are free in public repositories, which ends the minutes limit at once and lets
@@ -370,6 +406,12 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   compare with the market (2/3/3).
 
 ## Dropped
+
+- Soccer Asian handicap or draw-no-bet legs in place of the costly derived double chance
+  (bet types, checked 7 Nov): The Odds API's market list says spreads and totals are
+  "mainly available for US sports", and draw_no_bet is an additional market for US sports
+  and selected books, fetched one event at a time. No affordable feed for it; the bot also
+  could not check that Megawin prices them.
 
 - Opening "bookmaker crowd" blend (modelling, unconventional, from forecast aggregation,
   tested 6 Nov on 38,279 football-data matches 2019-2026): a log-linear blend of the

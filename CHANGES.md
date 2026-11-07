@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-07: more chances to test the one rule that nearly beats the tax
+
+- In seven seasons of history only one rule came close to paying after the 15% tax: a single on a strong favourite, taken minutes before kick-off at the best bookmaker price, when that price still pays after the tax (about break-even overall, +5% on odds 1.05-1.30). Live it has found only 2 bets in 3 days, because the bot only re-checks prices in leagues where it already has a pick.
+- New experiment, "kick-off sweep": each morning the bot plans up to 6 busy kick-off times in other leagues (for example a Saturday 15:00 round), and the price watcher checks those matches 15 minutes before the start for the same kind of single. It starts with tomorrow morning's run. Expect about one extra paper bet every day or two, shown in the email's experiment table and scoreboard.
+- Costs at most 6 Odds API credits a day, counted apart from the other price checks, and it stops itself when the last key runs low. No extra Gemini use.
+- Your daily ticket is chosen exactly as before. The last seven paper tickets all lost; the research notes show no mistake that could have been seen in advance (seven losses in a row happen about 4% of the time at these odds).
+
 ## 2026-11-06 (evening): GitHub has stopped running the bot; your action needed
 
 - Since 15:57 UTC today GitHub refuses to start any of the bot's jobs: the repository is private, and GitHub's free plan includes only about 2,000 minutes a month for private repositories. The price watcher added on 4 November kept a runner busy almost all day and used about 2,000 minutes in two days. An earlier check wrongly said this time was free; that was my mistake.

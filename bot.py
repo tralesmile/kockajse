@@ -37,6 +37,7 @@ PICKS_PATH = ROOT / "data" / "picks.csv"
 CLOSING_PATH = ROOT / "data" / "closing.csv"
 CLOSING_BUDGET_PATH = ROOT / "data" / "closing_budget.json"
 ACTIONS_USAGE_PATH = ROOT / "data" / "actions_usage.json"
+SWEEP_PLAN_PATH = ROOT / "data" / "sweep_plan.json"
 CLOSING_FIELDS = ["date", "event_id", "sport_key", "match", "market", "sel", "point", "pick",
                   "start", "on_ticket", "captured", "minutes_before", "open_odds",
                   "open_consensus", "open_sharp", "close_odds", "close_consensus",
@@ -62,6 +63,7 @@ credits_left = None  # filled from the API response headers
 key_index = 0  # which Odds API key is in use
 AI_LOG = []  # what happened in each Gemini call, kept for previews
 SCOUTED = []  # event ids the AI scout chose today, safest first
+FIXTURES = []  # every fixture listed this run (free /events lists), for the kick-off sweep
 SCOUT_NOTE = ""
 SCOUT_EXTRA = ""  # matches the scout found outside the feed, as HTML
 RESEARCH = {}  # today's research notes and raw AI decision, saved for the review task
@@ -470,6 +472,7 @@ def pick_ticket(now):
     end = (local.replace(hour=0, minute=0, second=0, microsecond=0)
            + timedelta(days=1, hours=hours))
     fixtures = all_fixtures(start, end)
+    FIXTURES[:] = fixtures
     SCOUTED[:] = ai_scout(fixtures, local)
     wanted = [e["sport_key"] for e in fixtures if e["id"] in SCOUTED]
     # Leagues the scout chose first, then others until the daily request budget is used.
@@ -966,6 +969,7 @@ def closing_next_wait(now=None):
     now = now or datetime.now(timezone.utc)
     lead = timedelta(minutes=CONFIG.get("closing_lead_minutes", 15))
     starts = [parse_time(r["start"]) for _, r, _ in closing_todo(now)]
+    starts += [max(parse_time(s["first"]), now + lead) for s in sweep_todo(now)]
     if not starts:
         return None
     return max(0, int((min(starts) - lead - now).total_seconds()))
@@ -1067,6 +1071,148 @@ def late_shadow_bets(events, now):
     return out
 
 
+# ------------------------------------------------------------- kick-off sweep ----
+# 7 Nov review: the only rule near break-even after the 15% tax is the tax-proof single at
+# the best price minutes before kick-off ("late_power": backtest +0.2% realised, +1.5%
+# expected at closing prices over 802 bets; odds 1.05-1.30 +5.1% +- 2.2). Live it found 2
+# bets in 3 days, because the watcher only fetches leagues that already hold a logged pick.
+# The sweep spends a few Odds API credits a day (match winner only, 1 credit a league) on
+# the busiest kick-off slots of other leagues, minutes before the start, and logs the same
+# rule there as "late_sweep", so the decision on this strategy comes weeks sooner.
+
+def sweep_plan_path():
+    return STATE_PATH.parent / "sweep_plan.json"
+
+
+def plan_sweep(fixtures, today, watched=None):
+    """Choose today's kick-off slots: per league, matches starting within
+    late_sweep_slot_minutes of the earliest one form a slot; the slots with the most
+    matches win, one per league, at most late_sweep_credits_per_day. Slots of leagues the
+    watcher already fetches around that time (a logged bet starting nearby) are skipped.
+    watched: {sport_key: [start datetimes]}."""
+    credits = int(CONFIG.get("late_sweep_credits_per_day", 0) or 0)
+    plan = {"date": today, "slots": []}
+    if credits <= 0:
+        return plan
+    span = timedelta(minutes=CONFIG.get("late_sweep_slot_minutes", 60))
+    least = CONFIG.get("late_sweep_min_events", 2)
+    watched = watched or {}
+    priority = CONFIG.get("priority_keys", [])
+    by_key = {}
+    for e in fixtures or []:
+        by_key.setdefault(e["sport_key"], set()).add((e["commence_time"], e["id"]))
+    best = []
+    for key, items in by_key.items():
+        starts = sorted(items)
+        i, top = 0, None
+        while i < len(starts):
+            first = parse_time(starts[i][0])
+            group = [s for s in starts[i:] if parse_time(s[0]) < first + span]
+            near = any(first - timedelta(minutes=30) <= w <= first + span
+                       for w in watched.get(key, []))
+            if not near and len(group) >= least and (top is None or len(group) > top[0]):
+                top = (len(group), first, parse_time(group[-1][0]))
+            i += len(group)
+        if top:
+            best.append((top[0], key in priority, key, top[1], top[2]))
+    best.sort(key=lambda x: (-x[0], not x[1], x[3], x[2]))
+    for n, _, key, first, last in best[:credits]:
+        plan["slots"].append({"id": f"{key}@{iso(first)}", "sport_key": key,
+                              "first": iso(first), "last": iso(last), "events": n})
+    plan["slots"].sort(key=lambda x: x["first"])
+    return plan
+
+
+def write_sweep_plan(today, now=None):
+    """Daily run: save today's sweep plan from the fixture lists and the logged bets."""
+    watched = {}
+    for source, r in closing_todo(now or datetime.now(timezone.utc)):
+        watched.setdefault(r["sport_key"], []).append(parse_time(r["start"]))
+    plan = plan_sweep(FIXTURES, today, watched)
+    sweep_plan_path().write_text(json.dumps(plan, indent=2) + "\n")
+    return plan
+
+
+def _budget():
+    if CLOSING_BUDGET_PATH.exists():
+        try:
+            return json.loads(CLOSING_BUDGET_PATH.read_text())
+        except ValueError:
+            return {}
+    return {}
+
+
+def sweep_todo(now):
+    """Planned slots not swept yet whose last match has not started."""
+    path = sweep_plan_path()
+    if not path.exists() or not CONFIG.get("late_sweep_credits_per_day", 0):
+        return []
+    try:
+        plan = json.loads(path.read_text())
+    except ValueError:
+        return []
+    done = set(_budget().get("sweep", {}).get("done", []))
+    return [s for s in plan.get("slots", [])
+            if s["id"] not in done and parse_time(s["last"]) > now]
+
+
+def run_sweep(now):
+    """Sweep every planned slot that is due (its first match starts within
+    closing_lead_minutes): fetch the league's match-winner prices for the slot and log the
+    late_power rule there as "late_sweep". Each slot is marked done before its fetch, so a
+    failure never makes the watcher loop on it. Returns the number of bets logged."""
+    lead = timedelta(minutes=CONFIG.get("closing_lead_minutes", 15))
+    due = [s for s in sweep_todo(now) if parse_time(s["first"]) - lead <= now]
+    if not due:
+        return 0
+    budget = _budget()
+    day = now.astimezone(TZ).date().isoformat()
+    state = budget.get("sweep", {})
+    if state.get("date") != day:  # credits are per day; done ids are kept (slots after midnight)
+        state = {"date": day, "credits": 0, "done": state.get("done", [])[-40:]}
+    limit = int(CONFIG.get("late_sweep_credits_per_day", 0))
+    logged = 0
+    for slot in due:
+        state["done"].append(slot["id"])
+        budget["sweep"] = state
+        CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
+        if state["credits"] >= limit:
+            print(f"Sweep budget used ({state['credits']}/{limit}); skipping {slot['id']}.")
+            continue
+        last_key = key_index >= len(odds_keys()) - 1
+        if (last_key and credits_left is not None
+                and credits_left < CONFIG.get("late_sweep_min_credits_left", 60)):
+            print(f"Odds API credits low ({credits_left}); sweep skipped.")
+            continue
+        try:
+            events = api_get(f"/sports/{slot['sport_key']}/odds", regions=CONFIG["region"],
+                             markets="h2h", oddsFormat="decimal", commenceTimeFrom=iso(now),
+                             commenceTimeTo=iso(parse_time(slot["last"]) + timedelta(minutes=1)))
+        except Exception as exc:  # the experiment must never stop the closing watcher
+            print(f"Sweep of {slot['id']} failed: {exc}")
+            continue
+        state["credits"] += 1
+        budget["sweep"] = state
+        CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
+        shadow = read_shadow()
+        taken = {r["event_id"] for r in shadow if r["strategy"] in ("late_power", "late_sweep")}
+        bets, seen = [], set()
+        for s, c in late_shadow_bets(events, now):
+            if s == "late_power" and c["event_id"] not in taken | seen:
+                seen.add(c["event_id"])
+                bets.append(c)
+        count = sum(1 for r in shadow if r["strategy"] == "late_sweep" and r["date"] == day)
+        rows = shadow_rows(day, [("late_sweep", [c]) for c in bets])
+        for i, r in enumerate(rows):
+            r["shadow_id"] = f"{day}-late_sweep-{count + i + 1}"
+        if rows:
+            write_shadow(shadow + rows)
+        logged += len(rows)
+        print(f"Swept {slot['id']}: {len(events or [])} matches priced, {len(rows)} "
+              f"tax-proof singles logged.")
+    return logged
+
+
 def capture_closing(now=None, window_minutes=None):
     """Record the prices of logged bets shortly before they start (closing line value).
 
@@ -1079,6 +1225,10 @@ def capture_closing(now=None, window_minutes=None):
     prices are scanned for late value bets. Makes no request when nothing is due.
     """
     now = now or datetime.now(timezone.utc)
+    try:
+        run_sweep(now)
+    except Exception as exc:  # the sweep experiment must never stop the captures
+        print(f"Kick-off sweep failed: {exc}")
     window = timedelta(minutes=window_minutes or CONFIG.get("closing_early_minutes", 180))
     near = now + timedelta(minutes=NEAR_MINUTES)
     due = [(s, r) for s, r, early in closing_todo(now)
@@ -1123,7 +1273,10 @@ def capture_closing(now=None, window_minutes=None):
                                                          r["point"])), now, s))
             added += 1
         late.extend(late_shadow_bets(events, now))
-    budget = {today: used}  # only today's count is needed
+    sweep = _budget().get("sweep")
+    budget = {today: used}  # only today's count is needed (and the sweep's state)
+    if sweep:
+        budget["sweep"] = sweep
     CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
     with CLOSING_PATH.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, CLOSING_FIELDS, restval="")
@@ -1209,6 +1362,7 @@ SHADOW_NAMES = {
     "likely_ticket": "The old ticket rule: most likely ticket within the AI's verdicts",
     "tax_best": "The real ticket rule at the best bookmaker prices",
     "tax_market": "Market only, best return after tax (no AI)",
+    "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
 }
 
 
@@ -2149,6 +2303,11 @@ def run(now=None, force=False, resend=False, preview=False):
                     {"ticket_no": number, "scout": SCOUT_NOTE, **RESEARCH}, indent=2) + "\n")
             elif ticket:
                 log_picks(number, mode, today, {}, [], rules_legs=ticket["legs"])
+            try:
+                plan = write_sweep_plan(today, now)
+                print(f"Kick-off sweep: {len(plan['slots'])} slots planned.")
+            except Exception as exc:  # the experiment must never stop the daily ticket
+                print(f"Sweep plan failed: {exc}")
     elif state["open_tickets"]:
         note = "The remaining money is on open tickets. Waiting for their results."
     else:
