@@ -114,3 +114,4 @@ date,strategy,shadow_id,event_id,sport_key,match,start,market,sel,point,pick,odd
 2026-11-07,power_ticket,2026-11-07-power_ticket-1,bf11813920b38df905a906fe81cf173f,soccer_fa_cup,Plymouth Argyle v Alvechurch FC,2026-11-07T15:00:00Z,h2h,Plymouth Argyle,,Plymouth Argyle to win,1.2,average,0.8294,-0.0047,pending,
 2026-11-07,power_ticket,2026-11-07-power_ticket-1,7d1259dfc6a03ea318e89a92682386ed,soccer_fa_cup,Mansfield Town v Macclesfield Town,2026-11-07T15:00:00Z,h2h,Mansfield Town,,Mansfield Town to win,1.35,average,0.7266,-0.0191,pending,
 2026-11-07,power_ticket,2026-11-07-power_ticket-1,7260ba7fdba6afb8cfdf17e1d9ee7acf,soccer_fa_cup,Port Vale v Scunthorpe United,2026-11-07T15:00:00Z,h2h,Port Vale,,Port Vale to win,1.55,average,0.6261,-0.0295,pending,
+2026-11-07,late_value,2026-11-07-late_value-3,5c87852253fd11eea5d34ad723356607,soccer_epl,Leeds United v Tottenham Hotspur,2026-11-07T12:30:00Z,h2h,Draw,,Draw,3.56,onexbet,0.2941,0.047,pending,
