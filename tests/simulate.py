@@ -17,6 +17,7 @@ tmp = Path(tempfile.mkdtemp())
 bot.STATE_PATH = tmp / "state.json"
 bot.LEDGER_PATH = tmp / "ledger.csv"
 bot.PICKS_PATH = tmp / "picks.csv"
+bot.ODDS_USAGE_PATH = tmp / "odds_credits.json"  # never the real balance file
 bot.STATE_PATH.write_text(json.dumps({"bankroll": 400, "next_ticket_no": 1, "open_tickets": [],
                                       "last_run_date": None, "stopped": False}))
 bot.LEDGER_PATH.write_text("ticket_no,date,picks,total_odds,stake,result,payout,tax,"

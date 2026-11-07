@@ -13,6 +13,7 @@ bot.STATE_PATH = tmp / "state.json"
 bot.PICKS_PATH = tmp / "picks.csv"
 bot.CLOSING_PATH = tmp / "closing.csv"
 bot.CLOSING_BUDGET_PATH = tmp / "closing_budget.json"
+bot.ODDS_USAGE_PATH = tmp / "odds_credits.json"  # never the real balance file
 bot.CONFIG["max_closing_credits_per_day"] = 20
 START = "2026-11-03T18:00:00Z"
 T0 = datetime(2026, 11, 3, 18, 0, tzinfo=timezone.utc)

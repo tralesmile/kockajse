@@ -72,6 +72,7 @@ assert bot.read_picks()[-1]["verdict"] == "RULES"
 # --- closing line capture ---------------------------------------------------
 bot.CLOSING_PATH = tmp / "closing.csv"
 bot.CLOSING_BUDGET_PATH = tmp / "closing_budget.json"
+bot.ODDS_USAGE_PATH = tmp / "odds_credits.json"  # never the real balance file
 bot.write_picks([])
 soon = {"event_id": "c1", "sport_key": "soccer_epl", "sport": "Football", "league": "EPL",
         "home": "Home", "away": "Away", "start": "2026-11-01T15:00:00Z", "market": "h2h",

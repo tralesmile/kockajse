@@ -6,6 +6,24 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Odds API credit pacer and scores-call filter (infrastructure, 5/4/2, built 7 Nov
+  evening). Found: key 1's balance in last_run.json fell 252 -> 194 -> 109 on 5-7 Nov (58
+  and 85 credits a day) before the kick-off sweep's 6 a day began; four keys give 2,000 a
+  month, 66 a day, so at ~85-90 a day the last key would run dry around 25 Nov and the bot
+  would have no odds or feed scores until the reset (like the 6 Nov GitHub minutes stop).
+  The Odds API docs say /sports "does not count against the usage quota" and still return
+  x-requests-remaining, so the daily run now probes every key for free (`odds_budget.py`,
+  `data/odds_credits.json`: balances, 14-day history, core use per day = drop between
+  mornings minus what closing + sweep spent, median of 7), and the optional extras get
+  D = (pool - 40 - (days left - 1) x core) / days left a day, shared 20:6 between closing
+  captures and the sweep (full caps when D >= 26, or when no measurement under 36 h
+  exists). Scores calls (2 credits each) now skip leagues whose pending bets have not
+  started or are older than the feed's 3-day window (those go to the Gemini fallback).
+  The email shows credits on all keys and the date they would run out at full use.
+  Measuring: real burn per day from the history, core estimate, days the extras are cut,
+  and that no key hits 0 before 1 Dec. Check on 1 Dec that all keys reset on the 1st
+  (otherwise set `odds_cycle_day`).
+
 - Kick-off sweep, shadow "late_sweep" (timing/experiments, 4/3/2, built 7 Nov morning). The
   only rule near break-even after tax is the late tax-proof single at the best price
   (backtest at closing prices: 802 bets, +0.2% realised, +1.5% expected; odds 1.05-1.30
@@ -199,6 +217,28 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   settles the AI's own choice next to it.
 
 ## New
+
+- Value-of-information credit auction (experiments, unconventional, from Bayesian
+  experimental design / VOI, 3/2/3): when the pacer cuts the extras, give the credits to
+  the experiment whose scoreboard posterior is closest to the break-even line per credit
+  (late_power/late_sweep now) instead of a fixed 20:6 split.
+- Late sweep ticket (selection/timing, 3/3/2): build the tax-aware ticket from the
+  sweep's near-kick-off feed (best capped prices, power chances, no AI, no extra credits)
+  and settle it as a shadow; the cheapest live test of a ticket placed late.
+- Leaner morning markets (data/credits, 2/3/1): basketball spreads and totals cost 2 of
+  each league's 3 credits but won 50.0% vs 50.1% market (62 spreads) and the taxed
+  objective rarely needs near-even legs; dropping them would free ~4-6 credits a day.
+- Later daily run (timing, 3/3/1): the backtest says the same ticket rule at closing
+  prices loses 2-6 points less than at opening prices; moving the run from 08:00 to about
+  11:00 local on weekends (most football starts 13:30-21:00) would price nearer the close.
+  Needs the owner's agreement on the email time.
+- Pre-mortem prompt (prompts, unconventional, from Klein's pre-mortem, 1/2/1): ask the AI
+  to assume the ticket lost and name the likeliest cause per leg. Low: the AI's verdicts
+  have shown no signal in 266 settled picks, so more AI text is unlikely to help.
+- Prediction markets as a second sharp price (re-checked 7 Nov): the only measured study
+  found (Edge Lab, Jun 2026, ~1,800 resolved Polymarket sports markets) gives no Brier or
+  Pinnacle comparison, almost all markets were priced 75%+, and coverage is mostly NBA,
+  NFL and UFC. Still no evidence it beats Pinnacle; stays low.
 
 - Adverse-selection monitor for ticket legs (measurement, unconventional, from market
   microstructure "winner's curse", 3/3/1): ticket legs won 6 of 15 vs 9.5 expected (z about

@@ -119,6 +119,7 @@ bot.STATE_PATH = tmp / "state.json"
 bot.PICKS_PATH = tmp / "picks2.csv"
 bot.CLOSING_PATH = tmp / "closing2.csv"
 bot.CLOSING_BUDGET_PATH = tmp / "budget.json"
+bot.ODDS_USAGE_PATH = tmp / "odds_credits.json"  # never the real balance file
 (tmp / "shadow.csv").unlink()
 START = "2026-11-05T20:00:00Z"
 now = datetime(2026, 11, 5, 19, 30, tzinfo=timezone.utc)

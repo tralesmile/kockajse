@@ -37,6 +37,7 @@ PICKS_PATH = ROOT / "data" / "picks.csv"
 CLOSING_PATH = ROOT / "data" / "closing.csv"
 CLOSING_BUDGET_PATH = ROOT / "data" / "closing_budget.json"
 ACTIONS_USAGE_PATH = ROOT / "data" / "actions_usage.json"
+ODDS_USAGE_PATH = ROOT / "data" / "odds_credits.json"
 SWEEP_PLAN_PATH = ROOT / "data" / "sweep_plan.json"
 CLOSING_FIELDS = ["date", "event_id", "sport_key", "match", "market", "sel", "point", "pick",
                   "start", "on_ticket", "captured", "minutes_before", "open_odds",
@@ -536,6 +537,31 @@ def leg_result(leg, score):
     return "won" if sel == winner else "lost"
 
 
+SCORES_DAYS = 3  # the scores feed's daysFrom limit
+
+
+def score_keys(items, now=None):
+    """Leagues worth a scores call: those with a pending bet that has started and is still
+    inside the feed's 3-day window. Each call costs 2 credits; a bet older than the window
+    can never be in the answer (the Gemini fallback handles it), and one that has not
+    started cannot have a final score yet."""
+    now = now or datetime.now(timezone.utc)
+    oldest = now - timedelta(days=SCORES_DAYS)
+    keys = set()
+    for item in items:
+        if item.get("result") != "pending":
+            continue
+        try:
+            start = parse_time(item["start"])
+        except (KeyError, TypeError, ValueError):
+            keys.add(item.get("sport_key"))  # unknown start: keep the old behaviour
+            continue
+        if oldest <= start <= now:
+            keys.add(item["sport_key"])
+    keys.discard(None)
+    return keys
+
+
 def fetch_scores(keys):
     """Final scores of the last 3 days for these leagues, each league fetched once a run."""
     for key in sorted(set(keys) - FETCHED_KEYS):
@@ -633,10 +659,8 @@ def fill_missing_scores(state, now):
     """
     if not CONFIG.get("fallback_scores", True) or not gemini_keys():
         return {}
-    pending_keys = {leg["sport_key"] for t in state.get("open_tickets", [])
-                    for leg in t["legs"] if leg["result"] == "pending"}
-    pending_keys |= {r["sport_key"] for r in read_picks() + read_shadow()
-                     if r["result"] == "pending"}
+    pending_keys = score_keys([leg for t in state.get("open_tickets", []) for leg in t["legs"]]
+                              + read_picks() + read_shadow(), now)
     if pending_keys:
         fetch_scores(pending_keys)
     todo = overdue_events(state, now)
@@ -686,9 +710,8 @@ def fill_missing_scores(state, now):
 def settle(state, now):
     """Check every open ticket. Returns the tickets that reached a final result."""
     finished = []
-    open_keys = {leg["sport_key"] for t in state["open_tickets"] for leg in t["legs"]
-                 if leg["result"] == "pending"}
-    scores = fetch_scores(open_keys)
+    scores = fetch_scores(score_keys([leg for t in state["open_tickets"] for leg in t["legs"]],
+                                     now))
 
     still_open = []
     for ticket in state["open_tickets"]:
@@ -809,7 +832,7 @@ def settle_picks(now):
     pending = [r for r in rows if r["result"] == "pending"]
     if not pending:
         return
-    scores = fetch_scores({r["sport_key"] for r in pending})
+    scores = fetch_scores(score_keys(pending, now))
     for row in pending:
         score = scores.get(row["event_id"])
         if score:
@@ -998,7 +1021,8 @@ def closing_chain_ok(now=None, chain=0, measure=False):
     used = 0
     if CLOSING_BUDGET_PATH.exists():
         used = json.loads(CLOSING_BUDGET_PATH.read_text()).get(today, 0)
-    if used >= CONFIG.get("max_closing_credits_per_day", 16):
+    if used >= min(CONFIG.get("max_closing_credits_per_day", 16),
+                   odds_extras_allowance(now)[0]):
         return False
     # GitHub Actions minutes (6 Nov): in a private repository each link costs up to
     # closing_run_minutes of the ~2,000 free minutes a month; only chain while today's
@@ -1142,6 +1166,43 @@ def _budget():
     return {}
 
 
+def odds_extras_allowance(now=None):
+    """(closing, sweep) credits the optional extras may use today (odds_budget.py): the
+    configured caps, cut when the credits of all keys would not last to the reset."""
+    now = now or datetime.now(timezone.utc)
+    try:
+        import odds_budget
+        return odds_budget.allowance(CONFIG, odds_budget.load(ODDS_USAGE_PATH), now)
+    except Exception as exc:  # noqa: BLE001  the pacer must never stop a run
+        print(f"Odds credit pacer failed: {exc}")
+        return (int(CONFIG.get("max_closing_credits_per_day", 16)),
+                int(CONFIG.get("late_sweep_credits_per_day", 0)))
+
+
+def extras_spent():
+    """Credits the closing captures and the sweep have spent since the last morning run."""
+    budget = _budget()
+    spent = sum(v for v in budget.values() if isinstance(v, (int, float)))
+    sweep = budget.get("sweep")
+    if isinstance(sweep, dict):
+        spent += int(sweep.get("credits", 0) or 0)
+    return int(spent)
+
+
+def measure_odds_credits(now):
+    """Read every Odds API key's balance (free /sports call) for the pacer and the email."""
+    try:
+        import odds_budget
+        usage = odds_budget.measure(CONFIG, ODDS_USAGE_PATH, now, odds_keys(), extras_spent())
+        print(f"Odds API credits on all keys: {usage.get('total')} {usage.get('keys')}, "
+              f"core {usage.get('core', 0):.0f}/day, extras today "
+              f"{usage.get('closing_allowance')}+{usage.get('sweep_allowance')}.")
+        return usage
+    except Exception as exc:  # noqa: BLE001
+        print(f"Odds credit measurement failed: {exc}")
+        return {}
+
+
 def sweep_todo(now):
     """Planned slots not swept yet whose last match has not started."""
     path = sweep_plan_path()
@@ -1170,7 +1231,7 @@ def run_sweep(now):
     state = budget.get("sweep", {})
     if state.get("date") != day:  # credits are per day; done ids are kept (slots after midnight)
         state = {"date": day, "credits": 0, "done": state.get("done", [])[-40:]}
-    limit = int(CONFIG.get("late_sweep_credits_per_day", 0))
+    limit = min(int(CONFIG.get("late_sweep_credits_per_day", 0)), odds_extras_allowance(now)[1])
     logged = 0
     for slot in due:
         state["done"].append(slot["id"])
@@ -1242,7 +1303,7 @@ def capture_closing(now=None, window_minutes=None):
     if CLOSING_BUDGET_PATH.exists():
         budget = json.loads(CLOSING_BUDGET_PATH.read_text())
     used = budget.get(today, 0)
-    limit = CONFIG.get("max_closing_credits_per_day", 16)
+    limit = min(CONFIG.get("max_closing_credits_per_day", 16), odds_extras_allowance(now)[0])
     leagues = {}
     for s, r in due:
         leagues.setdefault(r["sport_key"], []).append((s, r))
@@ -1617,7 +1678,7 @@ def settle_shadow(now):
     pending = [r for r in rows if r["result"] == "pending"]
     if not pending:
         return
-    scores = fetch_scores({r["sport_key"] for r in pending})
+    scores = fetch_scores(score_keys(pending, now))
     for row in pending:
         score = scores.get(row["event_id"])
         if score:
@@ -1807,7 +1868,16 @@ def build_email(state, finished, ticket, note, today):
             parts.append(f"<p><small>{html_lib.escape(line)}</small></p>")
     except Exception as e:  # noqa: BLE001
         print(f"Actions usage line failed: {e}")
-    if credits_left is not None:
+    try:
+        import odds_budget
+        line = odds_budget.summary_line(CONFIG, odds_budget.load(ODDS_USAGE_PATH),
+                                        datetime.now(timezone.utc))
+    except Exception as e:  # noqa: BLE001
+        line = ""
+        print(f"Odds credit line failed: {e}")
+    if line:
+        parts.append(f"<p><small>{html_lib.escape(line)}</small></p>")
+    elif credits_left is not None:
         total = len(odds_keys())
         which = f" on key {key_index + 1} of {total}" if total > 1 else ""
         parts.append(f"<p><small>Odds API requests left this month{which}: {credits_left}"
@@ -2320,6 +2390,8 @@ def run(now=None, force=False, resend=False, preview=False):
         state["stopped"] = True
 
     state["last_run_date"] = today
+    if not preview:
+        measure_odds_credits(now)
     if not silent:
         subject, html = build_email(state, finished, ticket, note, local)
         if preview:

@@ -658,3 +658,49 @@ preview run (selection of the ticket did not change).
 
 To measure next: late_sweep bets per day (expect ~0.5), its xROI and realised return next to
 late_power, extra score credits for new leagues, Odds API credits left at month end.
+
+## 2026-11-07 (evening review): Odds API credit pacer
+
+Measured: no new settlements since the morning (266 settled picks, 59.4% won vs 57.3%
+market; AGREE -1.3, RISKY +3.9, AVOID +0.9 points vs market; flat return at the average
+price -3.5% before tax, -9.1% after; best price -9.0% after tax on 150). Ticket 30 (three
+FA Cup favourites at 1.20/1.25/1.71, 15:00 UTC) is pending; the shadows logged 41 bets
+today, mostly FA Cup. Scoreboard unchanged in substance: only the tax-proof power singles
+(+1.3%, 2 scored) and late_power (-1.4%, 2) are near break-even. Sweep: no
+data/sweep_plan.json yet (the planner was pushed after this morning's run), so it starts
+tomorrow. Actions: repository public, 3,304 cycle minutes (931 watcher minutes today), no
+limit, no cost. New finding: key 1's balance in last_run.json fell 252 -> 194 -> 109 on 5,
+6 and 7 Nov (the run log shows no key switch, so key 1 is in use): 58 and 85 credits a
+day before the sweep's 6. Four keys give 2,000 a month (66 a day); at 85-90 a day the last
+key would run out about 25 Nov, stopping the ticket, feed settling and every experiment
+until the reset. Today's closing captures used 15 of 20.
+
+Researched: The Odds API v4 docs (the /sports endpoint does not count against the quota
+and returns x-requests-remaining / -used / -last; /odds costs markets x regions; /scores
+with daysFrom costs 2; empty responses cost nothing); budget pacing as used for ad spend
+and API token budgets (spend the remaining budget evenly over the remaining period after a
+reserve, re-measured each day); Polymarket sports accuracy (Edge Lab, Jun 2026: ~1,800
+resolved markets, no Brier or Pinnacle comparison, mostly NBA/NFL/UFC, 93.6% of 75%+
+favourites won; oddspapi tutorial with no numbers): no case for a second sharp price yet.
+
+Ideas considered (scored in IDEAS.md): credit pacer with free balance probes (built);
+scores-call filter (built, small); value-of-information credit auction (unconventional);
+late sweep ticket; leaner morning markets (drop basketball spreads/totals); later daily
+run on weekends; pre-mortem prompt (unconventional, low); prediction markets (re-checked,
+stays low); late ticket shadow and hedged Gemini requests (kept).
+
+Changed: new `odds_budget.py` (free /sports probe of every key, history in
+`data/odds_credits.json`, core use per day = morning-to-morning drop minus closing and
+sweep credits, median of up to 7 days; extras allowance D = (pool - 40 - (n - 1) x core)
+/ n shared 20:6, full caps when no measurement is under 36 hours old; email line with the
+credits on all keys and the run-out date at full use). bot.py: the daily run measures
+after the ticket (not in previews); closing captures, the chain check and the sweep use
+min(cap, allowance); scores calls only for leagues with a started pending bet inside the
+feed's 3-day window (`score_keys`). config: odds_pacing, odds_cycle_day 1,
+odds_core_per_day 45, odds_reserve_credits 40. New tests/test_odds_budget.py; the other
+tests point the pacer at a temp file. Ticket selection unchanged, so no preview run.
+
+To measure next: the first odds_credits.json (balances of keys 2-4 are unknown until
+then), real burn per day, whether the extras are cut (expected: slightly, from about 19
+a day, if the burn is ~85), credits saved by the scores filter, and on 1 Dec whether every
+key resets on the 1st.

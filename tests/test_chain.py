@@ -17,6 +17,7 @@ bot.STATE_PATH = tmp / "state.json"
 bot.PICKS_PATH = tmp / "picks.csv"
 bot.CLOSING_PATH = tmp / "closing.csv"
 bot.CLOSING_BUDGET_PATH = tmp / "closing_budget.json"
+bot.ODDS_USAGE_PATH = tmp / "odds_credits.json"  # never the real balance file
 # Public repository: the minutes guard sets no limit (tests/test_actions_budget.py covers
 # the private case).
 bot.ACTIONS_USAGE_PATH = tmp / "actions_usage.json"

@@ -2,6 +2,15 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-07 (evening): the price data will now last the whole month
+
+- The bot has four free Odds API keys, 2,000 requests a month in all (about 66 a day). With the price watcher and this morning's kick-off sweep it was using about 85-90 a day, so the requests would have run out around 25 November: no ticket, no results and no experiments until the monthly reset.
+- Each morning the bot now reads how many requests are left on all four keys (this check is free) and keeps a short history, so the real daily use is measured instead of guessed.
+- The ticket always gets what it needs. The optional extras (price checks before kick-off and the kick-off sweep) get only what is left after keeping enough for every remaining day of the month. When there is plenty, nothing changes.
+- Results are no longer fetched for leagues whose bets are too old for the results feed (it only reaches back three days) or have not started yet; this saves a few requests a day.
+- The email now shows the requests left on all keys and, if they would not last, the date they would run out and how the extras were cut.
+- Your daily ticket is chosen exactly as before. No extra Gemini use.
+
 ## 2026-11-07: more chances to test the one rule that nearly beats the tax
 
 - In seven seasons of history only one rule came close to paying after the 15% tax: a single on a strong favourite, taken minutes before kick-off at the best bookmaker price, when that price still pays after the tax (about break-even overall, +5% on odds 1.05-1.30). Live it has found only 2 bets in 3 days, because the bot only re-checks prices in leagues where it already has a pick.
