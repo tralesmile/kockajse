@@ -143,3 +143,4 @@ date,strategy,shadow_id,event_id,sport_key,match,start,market,sel,point,pick,odd
 2026-11-08,value_single,2026-11-08-value_single-3,1564b836c58a5d41b3b07681dcda2a45,soccer_fa_cup,Oldham Athletic v Sheffield Wednesday,2026-11-08T17:15:00Z,h2h,Draw,,Draw,3.9,unibet_se,0.2629,0.0252,pending,
 2026-11-08,power_ticket,2026-11-08-power_ticket-1,2bf110ae63e77d8bf2550215dd936dcd,soccer_fa_cup,Wimborne Town FC v Crawley Town,2026-11-08T15:00:00Z,h2h,Crawley Town,,Crawley Town to win,1.54,average,0.6357,-0.021,pending,
 2026-11-08,power_ticket,2026-11-08-power_ticket-1,95432fedd19fd4b0534dd96656875b91,basketball_ncaab,Virginia Cavaliers v Arkansas Razorbacks,2026-11-08T18:00:00Z,h2h,Virginia Cavaliers,,Virginia Cavaliers to win,1.66,average,0.5844,-0.0299,pending,
+2026-11-08,late_value,2026-11-08-late_value-1,3a4608abdf257d2a0024b944757d9dc9,soccer_epl,Sunderland v Chelsea,2026-11-08T14:00:00Z,h2h,Sunderland,,Sunderland to win,3.7,unibet_se,0.2765,0.023,pending,
