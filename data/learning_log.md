@@ -704,3 +704,48 @@ To measure next: the first odds_credits.json (balances of keys 2-4 are unknown u
 then), real burn per day, whether the extras are cut (expected: slightly, from about 19
 a day, if the burn is ~85), credits saved by the scores filter, and on 1 Dec whether every
 key resets on the 1st.
+
+## 2026-11-09 (morning review): the daily save race, the silent sweep bug, the pacer
+
+Measured: 338 settled picks won 59.8% vs 57.6% market chance (AGREE +0.3 points, RISKY
++2.2, AVOID +1.4: still no verdict signal); by market h2h +4.3 (62), double chance +3.2
+(68), totals +0.5 (140), spreads -0.1 (68); football +2.6 (193), basketball +0.7 (134).
+Ticket legs won 9 of 20 vs 63.8% expected (z about -1.7), but near-kick-off captures show
+ticket legs -4.5% vs close (8) against -6.5% for other picks (107), so the market is not
+moving against them. Paper tickets 23-31 all lost (-900). Lost legs of 30 and 31 against
+the research: Boreham Wood 0:3 Wigan (FA Cup, 1.71, form listed, priced), Stafford Rangers
+3:3 Grimsby (FA Cup, 1.36, a draw after regular time): no foreseeable cause. Scoreboard:
+only tax-proof power singles (+0.6%, 3 scored) and late_power (-1.4%, 2) near break-even.
+
+Found three faults from the run logs: (1) the 07:05 UTC daily run made ticket 32 and sent
+its email, then failed to save (`git pull --rebase` conflict in data/actions_usage.json
+with a closing watcher commit); the 07:36 re-run picked ticket 32 again (2.90 -> 2.93, two
+emails), used ~30 more Odds API credits and finished key 1's search quota. (2) The pacer
+took the double run as normal use (core 78 a day) and cut closing captures and the sweep to
+0 for today. (3) "Sweep plan failed: too many values to unpack" on 8 and 9 Nov: the kick-off
+sweep has never run (closing_todo returns three values; the planner took two). Gemini:
+decision call failed 4 times (3.8 flash timeouts/503) before 3.6 flash answered.
+
+Researched: git merge drivers (%O/%A/%B, exit codes; devbytes on CSV merge=union
+reordering/duplicating rows, so a key-based driver is safer; suture docs), GitHub Actions
+push races (crmPack write-up: shared concurrency group; rejected here because GitHub keeps
+only one pending run per group). Verified by a real two-clone rebase that the driver runs
+during `git pull --rebase` and that %B is the replayed commit.
+
+Ideas considered (scored in IDEAS.md): data merge driver + save retry (built); re-run-aware
+pacer and skip day (built); sweep fix (built); honest ticket explanation in the email
+(built, small); idempotent ticket / write-ahead save (unconventional, payment-API
+idempotency keys); shared concurrency group (dropped); adverse-selection update
+(unconventional, market microstructure: no sign yet); FA Cup giant-killing check; NBA
+back-to-back tag; leaner morning markets and hedged Gemini requests (kept).
+
+Changed: new merge_data.py + .gitattributes (data CSV/JSON/scoreboard/odds archive),
+registered in daily.yml (save retried 5 times, stuck rebase aborted) and closing.yml
+(failed rebases aborted); odds_budget.py (rerun_spent kept out of the core,
+odds_core_skip_days, allowance recomputes the core from the history); config
+odds_core_skip_days ["2026-11-09"]; bot.py write_sweep_plan fixed, email labels the AI's
+own suggestion when the rules chose the ticket. New tests/test_merge.py; test_sweep,
+test_odds_budget and test_taxed extended. Ticket selection unchanged, so no preview run.
+
+To measure next: daily save failures (0) and one ticket email a day; first sweep_plan.json
+with slots and late_sweep bets; extras allowance back near 17+5; core estimate on 10-11 Nov.

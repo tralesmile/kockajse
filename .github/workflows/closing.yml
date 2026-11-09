@@ -59,11 +59,13 @@ jobs:
         run: |
           git config user.name "betting-bot"
           git config user.email "betting-bot@users.noreply.github.com"
+          # Row-by-row merge of data files written by the daily run too (merge_data.py).
+          git config merge.botdata.driver "python merge_data.py %O %A %B %P"
           save() {
             git add data/closing.csv data/closing_budget.json data/shadow.csv data/actions_usage.json 2>/dev/null || true
             git diff --cached --quiet && return 0
             git commit -q -m "Update closing prices"
-            for i in 1 2 3; do git pull -q --rebase && git push -q && return 0; sleep 10; done
+            for i in 1 2 3; do { git pull -q --rebase || { git rebase --abort; false; }; } && git push -q && return 0; sleep 10; done
             return 1
           }
           cfg() { python -c "import json; print(json.load(open('config.json')).get('$1', $2))"; }
@@ -97,7 +99,7 @@ jobs:
             last=$wait
             echo "Next capture in ${wait}s; waiting."
             sleep "$((wait + 5))"
-            git pull -q --rebase || true
+            git pull -q --rebase || git rebase --abort || true
           done
           if [ -z "$stuck" ] && [ "$(python bot.py --closing-chain --link "$CHAIN")" = "yes" ]; then
             left=$((end - SECONDS))

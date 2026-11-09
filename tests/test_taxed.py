@@ -134,6 +134,17 @@ assert sorted(l["event_id"] for l in ticket["legs"]) == sorted(s[i]["event_id"]
                                                               for i in info["likely_ids"])
 CFG["ticket_objective"] = "taxed_ev"
 
+# The email labels the AI's reasoning when the rules replaced its combination.
+bot.gemini = fake({"picks": picks, "ticket": [], "ticket_reason": "AI-REASON"})
+ticket, analysis, _ = bot.ai_pick(cands, now)
+assert ticket["picked_by"] != "AI"
+assert "The AI's own suggestion (not the ticket): AI-REASON" in analysis, analysis[:400]
+assert "rules picked the allowed combination with the best expected return" in analysis
+bot.gemini = fake({"picks": picks, "ticket": bot.RESEARCH["ai_ticket"]["tax_ids"],
+                   "ticket_reason": "AI-REASON"})
+ticket, analysis, _ = bot.ai_pick(cands, now)
+assert ticket["picked_by"] == "AI" and "Why this ticket:</b> AI-REASON" in analysis
+
 # --- shadows: old rule, best-price twin and market-only twin ---------------------------
 bot.gemini = fake({"picks": picks, "ticket": [], "ticket_reason": "r"})
 ticket, _, _ = bot.ai_pick(cands, now)

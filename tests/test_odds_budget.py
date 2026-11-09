@@ -110,6 +110,22 @@ assert "Enough" in ob.summary_line(CFG, {"total": 1900, "core": 30, "keys": [190
                                          "measured": NOW.isoformat()}, NOW)
 assert ob.summary_line(CFG, {}, NOW) == ""
 
+# A second daily run the same day (re-run after a failed save, 9 Nov) spends ~30 more:
+# kept apart as rerun_spent, so the core stays at the normal 48.
+op = opener_for({"a": "0", "b": "490", "c": "500", "d": "500"})
+u = ob.measure(CFG, path, NOW + timedelta(minutes=30), ["a", "b", "c", "d"], 27, op)
+assert u["history"]["2026-11-08"] == {"total": 1490, "extras_before": 27, "rerun_spent": 29}, u
+assert u["core"] == 48, u
+# Known one-off days can be left out of the estimate by config (falls back to default 45).
+hist = {"2026-11-08": {"total": 1571, "extras_before": 15},
+        "2026-11-09": {"total": 1490, "extras_before": 3}}
+assert ob.core_per_day(hist, 45) == 78
+assert ob.core_per_day(hist, 45, ["2026-11-09"]) == 45
+when = datetime(2026, 11, 9, 8, 0, tzinfo=timezone.utc)
+usage = {"measured": when.isoformat(), "total": 1490, "core": 78, "history": hist}
+assert ob.allowance(CFG, usage, when) == (0, 0)
+assert ob.allowance({**CFG, "odds_core_skip_days": ["2026-11-09"]}, usage, when) == (17, 5)
+
 # bot.py wiring: closing captures and the sweep obey the pacer's numbers.
 bot.ODDS_USAGE_PATH = tmp / "bot_odds.json"
 bot.CONFIG.update(CFG)

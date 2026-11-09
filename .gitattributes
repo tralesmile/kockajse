@@ -1,0 +1,7 @@
+# Data files written by both the daily run and the closing watcher are merged row by row
+# (merge_data.py) instead of stopping the push with a conflict. The workflows register the
+# driver; where it is not registered (a local clone) git falls back to its normal merge.
+data/*.csv merge=botdata
+data/*.json merge=botdata
+data/scoreboard.md merge=botdata
+data/odds/** merge=botdata

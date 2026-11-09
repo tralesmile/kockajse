@@ -73,8 +73,18 @@ jobs:
           git config user.email "betting-bot@users.noreply.github.com"
           git add data
           git diff --cached --quiet || git commit -m "Update ledger"
-          git pull --rebase
-          git push
+          # The closing watcher commits to main at the same time. Data files are merged
+          # row by row (merge_data.py), and the push is retried: a failed save here once
+          # lost the day's ticket after its email had gone out, and the next run picked
+          # a second one (9 Nov 2026).
+          git config merge.botdata.driver "python merge_data.py %O %A %B %P"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            echo "Save attempt $i failed; retrying."
+            sleep $((10 * i))
+          done
+          exit 1
       - name: Start the closing-price watcher
         # Starts the self-continuing closing watcher (closing.yml) once today's bets are
         # logged. GitHub's own schedule for it runs only a few times a day.

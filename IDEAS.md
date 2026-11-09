@@ -6,6 +6,37 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Row-by-row data merge driver and retried save (infrastructure, 5/5/2, built 9 Nov
+  morning). Found: on 9 Nov the daily job made ticket 32 and sent its email, then
+  `git pull --rebase` stopped on a conflict in data/actions_usage.json (the closing
+  watcher had pushed a minute earlier), so nothing was saved; a second run at 07:36 picked
+  ticket 32 again (2.90 then 2.93, two emails), spent ~30 more Odds API credits and the rest
+  of key 1's search quota. The pacer then read 78 credits as the day's core use and cut all
+  closing captures and the sweep to 0. Now `merge_data.py` is registered as a git merge
+  driver for data/*.csv, data/*.json, data/scoreboard.md and the odds archive in both
+  workflows: CSV rows matched by identity columns (changed rows from the replayed side,
+  new rows from both, none dropped or duplicated), JSON merged per key, reports from the
+  replayed side; the daily save retries 5 times and aborts a stuck rebase; the watcher's
+  pulls abort a failed rebase instead of leaving the checkout stuck. Verified with a real
+  two-clone rebase in tests/test_merge.py (in a rebase %B is the replayed commit). A shared
+  concurrency group was rejected: GitHub keeps one pending run per group, so a watcher link
+  would cancel a waiting daily run. Measuring: daily save failures (target 0), no day with
+  two ticket emails.
+- Re-run-aware credit pacer (infrastructure, 4/4/1, built 9 Nov morning): a second daily
+  measurement on the same day stores what the re-run spent as `rerun_spent`, left out of
+  the core estimate; config `odds_core_skip_days` leaves out known one-off days (9 Nov,
+  whose first measurement was lost); `allowance` recomputes the core from the history, so
+  extras return today (17 closing + 5 sweep instead of 0 + 0).
+- Kick-off sweep fix (bug, built 9 Nov): `write_sweep_plan` unpacked two values from
+  `closing_todo`, which returns three, so the plan failed on 8 and 9 Nov whenever a pick
+  was pending ("Sweep plan failed: too many values to unpack") and late_sweep never ran.
+  The 7 Nov test only covered `plan_sweep`; tests/test_sweep.py now runs the writer with a
+  pending pick. Measuring as before (bets per day, xROI vs late_power).
+- Honest ticket explanation (email, 2/5/1, built 9 Nov): when the rules replace the AI's
+  combination, the email says so, gives both expected returns after tax and labels the
+  AI's reasoning as its own suggestion (9 Nov explained a 2.60 ticket with Dallas while
+  the real one was 2.93 without it).
+
 - Odds API credit pacer and scores-call filter (infrastructure, 5/4/2, built 7 Nov
   evening). Found: key 1's balance in last_run.json fell 252 -> 194 -> 109 on 5-7 Nov (58
   and 85 credits a day) before the kick-off sweep's 6 a day began; four keys give 2,000 a
@@ -217,6 +248,23 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   settles the AI's own choice next to it.
 
 ## New
+
+- Idempotent daily ticket (infrastructure, unconventional, from payment-API idempotency
+  keys and database write-ahead logs, 4/4/2): save today's ticket (state + picks) with a
+  push before the email is sent, so any failure after that resends the same ticket
+  instead of picking a new one; a re-run with an existing ticket for today only resends.
+  The merge driver removes today's cause; build this if a save ever fails again.
+- Ticket-leg adverse selection, update 9 Nov: ticket legs won 9 of 20 vs 12.8 expected
+  (z about -1.7), but their price-vs-close is -4.5% (8 near captures) against -6.5% for
+  other picks (107): the market does not move against our ticket legs, so the gap looks
+  like bad luck so far. Keep measuring; check again at ~40 ticket-leg captures.
+- FA Cup giant-killing check (leagues, 2/2/1): 2 of the last 6 lost ticket legs were FA
+  Cup ties against non-league sides (Boreham Wood 0:3 Wigan at 1.71, Stafford 3:3 Grimsby
+  at 1.36). Both were priced by the market; test on football-data cup history only if
+  cups keep showing up on tickets.
+- NBA back-to-back tag (new data, 2/2/2): today's research mentions back-to-backs for
+  three of the six NBA favourites; record it as a field so its effect vs the closing
+  price can be measured, rather than trusted in the AI's verdict.
 
 - Value-of-information credit auction (experiments, unconventional, from Bayesian
   experimental design / VOI, 3/2/3): when the pacer cuts the extras, give the credits to
@@ -446,6 +494,11 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   compare with the market (2/3/3).
 
 ## Dropped
+
+- One concurrency group for the daily run and the closing watcher (infrastructure,
+  checked 9 Nov): GitHub keeps only one pending run per concurrency group and cancels the
+  older pending one, so the next 36-minute watcher link would cancel a waiting daily run.
+  The merge driver solves the push race without queuing.
 
 - Soccer Asian handicap or draw-no-bet legs in place of the costly derived double chance
   (bet types, checked 7 Nov): The Odds API's market list says spreads and totals are

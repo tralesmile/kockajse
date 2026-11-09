@@ -75,12 +75,17 @@ def load(path):
         return {}
 
 
-def core_per_day(history, default):
+def core_per_day(history, default, skip=()):
     """Median of the measured core use per day: drop in the total between two morning
-    measurements, minus what the extras spent in between. Falls back to the default."""
+    measurements, minus what the extras spent in between and what a repeated daily run
+    spent (rerun_spent). Days in skip (config odds_core_skip_days: known one-off
+    spending, such as the 9 Nov double run whose first measurement was lost) are left
+    out. Falls back to the default."""
     days = sorted(history)
     values = []
     for a, b in zip(days, days[1:]):
+        if b in skip:
+            continue
         ha, hb = history[a], history[b]
         gap = (_time(b + "T00:00:00+00:00") - _time(a + "T00:00:00+00:00")).days
         if gap != 1 or ha.get("total") is None or hb.get("total") is None:
@@ -88,7 +93,8 @@ def core_per_day(history, default):
         drop = ha["total"] - hb["total"]
         if drop < 0:  # a key reset in between
             continue
-        values.append(max(0, drop - int(hb.get("extras_before", 0) or 0)))
+        values.append(max(0, drop - int(hb.get("extras_before", 0) or 0)
+                          - int(hb.get("rerun_spent", 0) or 0)))
     values = values[-7:]
     if not values:
         return float(default)
@@ -120,6 +126,9 @@ def allowance(config, usage, now):
         return cap_c, cap_s
     n = days_left(now, config.get("odds_cycle_day", 1))
     core = usage.get("core") or float(config.get("odds_core_per_day", 45))
+    if usage.get("history"):  # recomputed, so a change of odds_core_skip_days acts at once
+        core = core_per_day(usage["history"], config.get("odds_core_per_day", 45),
+                            config.get("odds_core_skip_days", ()))
     spare = (usage["total"] - int(config.get("odds_reserve_credits", 40))
              - (n - 1) * core) / n
     spare = max(0.0, spare)
@@ -144,9 +153,20 @@ def measure(config, path, now, keys, extras_spent=0, opener=None):
     today = now.date().isoformat()
     history = usage.get("history", {})
     if total is not None:
-        history[today] = {"total": total, "extras_before": int(extras_spent or 0)}
+        entry = {"total": total, "extras_before": int(extras_spent or 0)}
+        old = history.get(today)
+        if old and old.get("total") is not None:
+            # A second daily run today (a re-run after a failed save): what it spent is
+            # not normal daily use, so it is kept apart from the core estimate.
+            before = int(old.get("extras_before", 0) or 0)
+            between = max(0, entry["extras_before"] - before)  # extras spent in between
+            entry["extras_before"] = max(entry["extras_before"], before)
+            entry["rerun_spent"] = (int(old.get("rerun_spent", 0) or 0)
+                                    + max(0, old["total"] - total - between))
+        history[today] = entry
     history = {d: history[d] for d in sorted(history)[-14:]}
-    core = core_per_day(history, config.get("odds_core_per_day", 45))
+    core = core_per_day(history, config.get("odds_core_per_day", 45),
+                        config.get("odds_core_skip_days", ()))
     usage = {"measured": now.isoformat(timespec="seconds"), "day": today,
              "keys": balances, "total": total, "core": core, "history": history}
     c, s = allowance(config, usage, now)

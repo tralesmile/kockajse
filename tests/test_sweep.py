@@ -122,3 +122,16 @@ assert "late_sweep" in bot.SHADOW_NAMES
 bot.log_shadow("2026-11-07", [])
 assert any(r["strategy"] == "late_sweep" for r in bot.read_shadow())
 print("sweep checks passed")
+
+# --- write_sweep_plan with a logged pending pick (crashed on 8-9 Nov: closing_todo
+# returns three values and the planner unpacked two, so no sweep ever ran) -------------
+bot.write_picks([{f: "" for f in bot.PICK_FIELDS} | {
+    "date": "2026-11-07", "event_id": "a0", "sport_key": "soccer_efl_champ",
+    "start": S15, "market": "h2h", "sel": "Leeds", "result": "pending"}])
+bot.FIXTURES = fixtures
+plan2 = bot.write_sweep_plan("2026-11-07", datetime(2026, 11, 7, 8, 0, tzinfo=timezone.utc))
+ids = [s["id"] for s in plan2["slots"]]
+# the watched Championship 15:00 slot is skipped because the pick is captured there anyway
+assert "soccer_efl_champ@2026-11-07T15:00:00Z" not in ids and ids, ids
+assert json.loads(bot.sweep_plan_path().read_text())["slots"] == plan2["slots"]
+print("Sweep tests passed.")

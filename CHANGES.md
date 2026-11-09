@@ -2,6 +2,15 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-09: fixed the double ticket email and a silent experiment bug
+
+- This morning you may have had two emails for ticket 32 (odds 2.90, then 2.93). The first run picked the ticket and sent it, but then could not save, because the price watcher saved its own data a minute earlier and the two clashed. The second run did not know about the first and picked again. The ticket that counts is the second one (2.93).
+- Fixed: the two kinds of runs now merge their data row by row instead of clashing, and the save is retried. No recorded result can be lost or doubled by this.
+- The clash also made the bot think it needs 78 price requests a day, so it switched off today's price checks before kick-off. That day is now left out of the estimate, and a repeated run is no longer counted as normal use, so the checks are back today.
+- The kick-off sweep added on 7 November never ran because of a small coding error. Fixed and tested; it starts with tomorrow's run.
+- When the rules choose a different ticket than the AI suggested, the email now says so and labels the AI's text as its own suggestion, instead of explaining legs that are not on your ticket.
+- Your ticket is chosen exactly as before. No extra Odds API or Gemini use.
+
 ## 2026-11-07 (evening): the price data will now last the whole month
 
 - The bot has four free Odds API keys, 2,000 requests a month in all (about 66 a day). With the price watcher and this morning's kick-off sweep it was using about 85-90 a day, so the requests would have run out around 25 November: no ticket, no results and no experiments until the monthly reset.

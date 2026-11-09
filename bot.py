@@ -1150,7 +1150,7 @@ def plan_sweep(fixtures, today, watched=None):
 def write_sweep_plan(today, now=None):
     """Daily run: save today's sweep plan from the fixture lists and the logged bets."""
     watched = {}
-    for source, r in closing_todo(now or datetime.now(timezone.utc)):
+    for _source, r, _early in closing_todo(now or datetime.now(timezone.utc)):
         watched.setdefault(r["sport_key"], []).append(parse_time(r["start"]))
     plan = plan_sweep(FIXTURES, today, watched)
     sweep_plan_path().write_text(json.dumps(plan, indent=2) + "\n")
@@ -2225,6 +2225,7 @@ def ai_pick(cands, today):
                              "tax_best_ids": best_ids,
                              "tax_best_return": (None if best_value is None
                                                  else round(best_value, 4))}
+    answer_ids = list(chosen) if ai_ok else []
     if CONFIG.get("ticket_objective", "taxed_ev") == "taxed_ev" and tax_ids:
         if ai_ok and taxed(chosen) >= tax_score - 0.005:
             source = "AI"
@@ -2248,7 +2249,22 @@ def ai_pick(cands, today):
                      f"(market {c['prob']:.0%}, AI {c['adj']:.0%}). "
                      f"{html_lib.escape(c['summary'])}")
     reason = html_lib.escape(str(answer.get("ticket_reason", ""))[:600])
-    analysis = (f"<p>{SCOUT_NOTE}</p><p><b>Why this ticket:</b> {reason}</p><p>"
+    if source == "AI":
+        why = f"<b>Why this ticket:</b> {reason}"
+    else:
+        # The rules replaced the AI's own combination; its reasoning is about other legs,
+        # so it is labelled as such (9 Nov: the email explained a 2.60 ticket with Dallas
+        # while the real ticket was 2.93 without it).
+        gain = ("" if tax_score is None or not ai_ok else
+                f" Expected return after tax: rules {tax_score:+.1%}, "
+                f"AI's own {taxed(answer_ids):+.1%}.")
+        rule = ("best expected return after the tax" if "after tax" in source
+                else "highest chance")
+        gain = gain if "after tax" in source else ""
+        why = (f"<b>Why this ticket:</b> the rules picked the allowed combination with the "
+               f"{rule} from the AI's verdicts." + gain
+               + f"<br><small>The AI's own suggestion (not the ticket): {reason}</small>")
+    analysis = (f"<p>{SCOUT_NOTE}</p><p>{why}</p><p>"
                 + "<br>".join(lines) + "</p>" + SCOUT_EXTRA)
 
     global LAST_SHORT
