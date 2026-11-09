@@ -749,3 +749,42 @@ test_odds_budget and test_taxed extended. Ticket selection unchanged, so no prev
 
 To measure next: daily save failures (0) and one ticket email a day; first sweep_plan.json
 with slots and late_sweep bets; extras allowance back near 17+5; core estimate on 10-11 Nov.
+
+## 2026-11-09 (evening review): late ticket shadows
+
+Measured: 338 settled picks won 59.2% vs 57.6% market (football +2.6 points on 193,
+basketball +0.7 on 134; h2h +4.3, double chance +3.2, totals +0.5, spreads -0.1; AGREE
++0.3, RISKY +2.2, AVOID +1.4: no verdict signal). By odds band (after tax, flat): 1.15-1.30
+won 82.0% vs 75.0% market (61), -1.7% at the average price and -1.0% at the best price;
+every longer band -9% to -14%. Ticket 32 (2.93) is pending; tickets 23-31 all lost (-900),
+judged not foreseeable this morning. Scoreboard unchanged: only tax-proof power singles
+(+0.6%, 3 scored) and late_power (-1.4%, 2) near break-even; the real ticket -13.9% (3).
+Effect of this morning's changes: too early (merge driver and sweep fix act from tomorrow's
+run; no sweep_plan.json yet). Odds API: key 1 is empty, keys 2-4 hold 489/500/500 (1,490
+for 22 days, ~68 a day); today's extras were cut to 3 by the double run.
+
+Researched: Kalshi's own calibration study (Aug 2026; sports left out of its quality
+sample, no sportsbook comparison); Burgi, Deng and Whelan, GWU WP 2026-001 (313,972 Kalshi
+prices: more accurate towards the close, favourite-longshot bias on every day, contracts
+above 50c slightly positive); Edge Lab line-shopping write-up (1,615 US games: opening
+bettors ~0.5% EV worse than 8 hours later; no tests, weak source); Oikonomidis 2013
+(Southampton thesis: low-margin "book-balancers" lead price discovery, high-margin
+"position-takers" lag); Whelan Jul 2026 on parlays ((1-m)^N; NJ June 2026 hold 17.8% on
+parlays vs 4.3% on other bets).
+
+Ideas considered (scored in IDEAS.md): late ticket shadows (built); break-even price per
+leg in the email (unconventional, limit orders); bookmaker information share
+(unconventional, Hasbrouck price discovery); late favourite ticket; Kalshi as second sharp
+(re-checked, stays low); leaner morning markets, later daily run, late ticket email,
+Thompson chooser (kept).
+
+Changed: bot.py `late_ticket_bets` / `log_late_tickets`: every closing pass pools the
+events it fetched (captures and sweep, `PASS_EVENTS`) and runs build_taxed_ticket on the
+matches starting within 90 minutes (at least 3), once per local day per strategy:
+"late_ticket" (average price) and "late_ticket_best" (best capped price), scored as late_
+shadows. config late_ticket_window_minutes 90, late_ticket_min_events 3. New
+tests/test_late_ticket.py (added to IMPROVING.md). Ticket choice unchanged, so no preview.
+
+To measure next: late_ticket days logged per week (expect most days), late_ticket vs
+tax_market and late_ticket_best vs tax_best on the same days; first sweep_plan.json and
+late_sweep bets; one ticket email a day.

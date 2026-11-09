@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-09 (evening): testing whether your ticket is better placed just before kick-off
+
+- History says the same ticket rule loses about 2 to 6 points less per ticket when it uses the prices just before kick-off instead of the morning prices, because late prices are more accurate. This was never tested live.
+- New experiment, "late ticket": when the price watcher checks matches minutes before they start, it now also builds a ticket with the same rule (2.50-3.50, best return after the tax, no AI) from the matches starting in the next 90 minutes, once a day. One version at the average price, one at the best bookmaker price.
+- Both are settled like paper tickets and shown in the scoreboard next to their morning twins, so within a few weeks we can see on the same days whether betting later pays. If it does, a later review would suggest sending you the ticket closer to kick-off.
+- Your ticket and email time are unchanged. No extra Odds API or Gemini use: it reuses prices the watcher already fetches.
+- Ticket 32 is still running; the last nine tickets lost, which the research notes show no warning of.
+
 ## 2026-11-09: fixed the double ticket email and a silent experiment bug
 
 - This morning you may have had two emails for ticket 32 (odds 2.90, then 2.93). The first run picked the ticket and sent it, but then could not save, because the price watcher saved its own data a minute earlier and the two clashed. The second run did not know about the first and picked again. The ticket that counts is the second one (2.93).

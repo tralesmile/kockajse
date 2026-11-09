@@ -6,6 +6,21 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- Late ticket shadows "late_ticket" and "late_ticket_best" (timing/selection, bold, 4/3/2,
+  built 9 Nov evening; merges the "late ticket shadow" and "late sweep ticket" ideas). The
+  backtest says the tax-aware ticket rule loses 2-6 points less per ticket at closing
+  prices than at morning prices, and the 2026 sources agree that late prices are the more
+  accurate ones (Edge Lab line-shopping write-up: opening-line bettors about 0.5% EV worse;
+  Burgi, Deng and Whelan 2026 on Kalshi: prices grow more accurate towards the close). Every
+  closing pass and sweep already fetches whole leagues minutes before kick-off, so the same
+  rule (power chances, 2.50-3.50, no AI) now runs there for free on matches starting within
+  90 minutes, when at least 3 such matches are priced; the first valid ticket of the local
+  day is logged (average price, twin of "tax_market") and at the best capped price (twin of
+  "tax_best"). Scored at its own near-close chances like the other late_ shadows. Measure:
+  late_ticket vs tax_market and late_ticket_best vs tax_best on the same days (xROI and
+  realised); if the gap holds at ~30 days, build the "late ticket email" (tell the owner to
+  place the ticket near kick-off). No extra Odds API or Gemini use.
+
 - Row-by-row data merge driver and retried save (infrastructure, 5/5/2, built 9 Nov
   morning). Found: on 9 Nov the daily job made ticket 32 and sent its email, then
   `git pull --rebase` stopped on a conflict in data/actions_usage.json (the closing
@@ -249,6 +264,27 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- Break-even price per leg in the email (bet types/real money, unconventional, from limit
+  orders in trading, 3/3/1): print for each ticket leg the lowest price at which the
+  ticket still has the expected return the bot computed, so the owner can check Megawin's
+  own price before betting and skip a leg it prices worse ("limit price"). Useful the day
+  real money is considered; cheap, no credits.
+- Bookmaker information share (modelling, unconventional, from Hasbrouck's price-discovery
+  "information share" in market microstructure, 3/2/3): from data/odds/ snapshots and
+  closing.csv, measure which books' morning prices sit nearest the later close (Oikonomidis
+  2013: "book-balancers" lead, "position-takers" lag); weight leaders more when predicting
+  the close. The 6 Nov backtest found Pinnacle alone the best opening reference, so this
+  needs a book that beats Pinnacle on our captures first; ~2 weeks of archives needed.
+- Late favourite ticket (selection, 2/2/1): the late ticket with min_leg_odds 1.05 and 3-4
+  legs; live picks at 1.15-1.30 won 82% vs 75% market (61), the backtest's best band, and
+  the Kalshi study (Burgi et al. 2026) finds contracts above 50c earn small positive
+  returns (favourite-longshot bias). Waits for the late_ticket's first weeks; max_legs is
+  the owner's ticket format.
+- Kalshi as a second sharp price (re-checked 9 Nov): Kalshi's own calibration study (Aug
+  2026, 2.2 million points) leaves sports out of its quality sample and gives no sportsbook
+  comparison; Burgi, Deng and Whelan (GWU 2026-001) find a favourite-longshot bias at every
+  horizon and -20% average returns before fees. Still no case over Pinnacle; stays low.
+
 - Idempotent daily ticket (infrastructure, unconventional, from payment-API idempotency
   keys and database write-ahead logs, 4/4/2): save today's ticket (state + picks) with a
   push before the email is sent, so any failure after that resends the same ticket
@@ -270,9 +306,6 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   experimental design / VOI, 3/2/3): when the pacer cuts the extras, give the credits to
   the experiment whose scoreboard posterior is closest to the break-even line per credit
   (late_power/late_sweep now) instead of a fixed 20:6 split.
-- Late sweep ticket (selection/timing, 3/3/2): build the tax-aware ticket from the
-  sweep's near-kick-off feed (best capped prices, power chances, no AI, no extra credits)
-  and settle it as a shadow; the cheapest live test of a ticket placed late.
 - Leaner morning markets (data/credits, 2/3/1): basketball spreads and totals cost 2 of
   each league's 3 credits but won 50.0% vs 50.1% market (62 spreads) and the taxed
   objective rarely needs near-even legs; dropping them would free ~4-6 credits a day.
@@ -381,9 +414,6 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
   ticket and send a short "bet now" email with the late prices (or swap a leg whose price
   fell). Backtest: the same rule at closing prices loses 2-6 points less. Build once the
   chain has run cleanly for a few days and late_power vs power_value shows the gap live.
-- Late ticket shadow "late_ticket" (selection/timing, 4/3/2): run build_ticket on the
-  watcher's near-kick-off feed (best capped prices, power chances) for the ticket legs'
-  leagues and settle it beside "actual"; the cheapest live test of betting later.
 - Slow-book move follower (market microstructure, unconventional, 3/2/2): both value
   singles captured on 4 Nov opened at onexbet 1.92 and 1.97 and closed at 1.71 and 1.81
   (CLV +6.3% and +5.8%), i.e. the outlier book's price was the one that moved. If this

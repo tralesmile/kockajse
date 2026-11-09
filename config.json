@@ -88,6 +88,8 @@
   "late_sweep_slot_minutes": 60,
   "late_sweep_min_events": 2,
   "late_sweep_min_credits_left": 60,
+  "late_ticket_window_minutes": 90,
+  "late_ticket_min_events": 3,
   "odds_pacing": true,
   "odds_cycle_day": 1,
   "odds_core_per_day": 45,

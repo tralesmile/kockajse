@@ -1095,6 +1095,75 @@ def late_shadow_bets(events, now):
     return out
 
 
+# ---------------------------------------------------------------- late ticket ----
+# 9 Nov evening review: the backtest says the ticket rule loses 2-6 points less per ticket
+# at closing prices than at the morning prices the real ticket uses, but no live test
+# existed. Every closing pass and sweep already fetches whole leagues minutes before their
+# matches start, so the same tax-aware ticket rule can be run there for free (no AI, no
+# extra credits): "late_ticket" at the average price (twin of the morning "tax_market"),
+# "late_ticket_best" at the best capped price (twin of "tax_best"). The first valid ticket
+# of the day is logged, as a bettor would place it, and never replaced.
+
+LATE_TICKETS = ("late_ticket", "late_ticket_best")
+PASS_EVENTS = []  # every event fetched in the current closing pass (captures and sweep)
+
+
+def late_ticket_bets(events, now, shadow=None):
+    """The tax-aware ticket built from near-kick-off prices, as (strategy, legs).
+
+    Only matches starting within late_ticket_window_minutes (and not started) are used, so
+    every leg is priced close to its own kick-off; a pass with fewer than
+    late_ticket_min_events such matches is skipped (too little choice). Each strategy logs
+    one ticket per local day."""
+    window = CONFIG.get("late_ticket_window_minutes", 0)
+    if not window:
+        return []
+    shadow = read_shadow() if shadow is None else shadow
+    day = now.astimezone(TZ).date().isoformat()
+    done = {r["strategy"] for r in shadow if r["date"] == day and r["strategy"] in LATE_TICKETS}
+    if len(done) == len(LATE_TICKETS):
+        return []
+    end = now + timedelta(minutes=window)
+    seen, cands = set(), []
+    for event in events or []:
+        if event["id"] in seen or not now < parse_time(event["commence_time"]) <= end:
+            continue
+        seen.add(event["id"])
+        cands.extend(candidates_from_event(event))
+    if len(seen) < CONFIG.get("late_ticket_min_events", 3):
+        return []
+    out = []
+    for strategy, odds_key in (("late_ticket", "odds"), ("late_ticket_best", "best_odds")):
+        if strategy in done:
+            continue
+        ticket = build_taxed_ticket(cands, odds_key=odds_key)
+        if not ticket:
+            continue
+        book = (lambda l: "average") if odds_key == "odds" else (
+            lambda l: l.get("best_book") or "average")
+        out.append((strategy, [dict(l, book=book(l), sharp=l.get("power_prob"))
+                               for l in ticket["legs"]]))
+    return out
+
+
+def log_late_tickets(events, now):
+    """Log today's late tickets from this pass's feed; returns how many were logged."""
+    try:
+        shadow = read_shadow()
+        tickets = late_ticket_bets(events, now, shadow)
+        if not tickets:
+            return 0
+        day = now.astimezone(TZ).date().isoformat()
+        write_shadow(shadow + shadow_rows(day, tickets))
+        for strategy, legs in tickets:
+            print(f"Late ticket {strategy}: " + " | ".join(
+                f"{l['pick']} @{l['odds']}" for l in legs))
+        return len(tickets)
+    except Exception as exc:  # the experiment must never stop the closing watcher
+        print(f"Late ticket failed: {exc}")
+        return 0
+
+
 # ------------------------------------------------------------- kick-off sweep ----
 # 7 Nov review: the only rule near break-even after the 15% tax is the tax-proof single at
 # the best price minutes before kick-off ("late_power": backtest +0.2% realised, +1.5%
@@ -1255,6 +1324,7 @@ def run_sweep(now):
         state["credits"] += 1
         budget["sweep"] = state
         CLOSING_BUDGET_PATH.write_text(json.dumps(budget) + "\n")
+        PASS_EVENTS.extend(events or [])
         shadow = read_shadow()
         taken = {r["event_id"] for r in shadow if r["strategy"] in ("late_power", "late_sweep")}
         bets, seen = [], set()
@@ -1286,6 +1356,7 @@ def capture_closing(now=None, window_minutes=None):
     prices are scanned for late value bets. Makes no request when nothing is due.
     """
     now = now or datetime.now(timezone.utc)
+    PASS_EVENTS.clear()
     try:
         run_sweep(now)
     except Exception as exc:  # the sweep experiment must never stop the captures
@@ -1295,6 +1366,7 @@ def capture_closing(now=None, window_minutes=None):
     due = [(s, r) for s, r, early in closing_todo(now)
            if parse_time(r["start"]) <= (near if early else now + window)]
     if not due:
+        log_late_tickets(PASS_EVENTS, now)
         print("No logged bet starts soon; nothing to capture.")
         return 0
     window = max(window, timedelta(minutes=NEAR_MINUTES))
@@ -1325,6 +1397,7 @@ def capture_closing(now=None, window_minutes=None):
                          markets=",".join(markets), oddsFormat="decimal",
                          commenceTimeFrom=iso(now), commenceTimeTo=iso(now + window))
         used += len(markets)
+        PASS_EVENTS.extend(events or [])
         cands = {}
         for event in events or []:
             for c in candidates_from_event(event, strict=False):
@@ -1355,6 +1428,7 @@ def capture_closing(now=None, window_minutes=None):
                 r["shadow_id"] = f"{day}-{strategy}-{count + i + 1}"
             new += rows_
         write_shadow(shadow + new)
+    log_late_tickets(PASS_EVENTS, now)
     print(f"Captured closing prices for {added} bets, {len(late)} late value bets "
           f"({used}/{limit} credits today).")
     return added
@@ -1424,6 +1498,8 @@ SHADOW_NAMES = {
     "tax_best": "The real ticket rule at the best bookmaker prices",
     "tax_market": "Market only, best return after tax (no AI)",
     "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
+    "late_ticket": "Late ticket: the ticket rule minutes before kick-off (no AI, average price)",
+    "late_ticket_best": "Late ticket at the best bookmaker prices (no AI)",
 }
 
 
