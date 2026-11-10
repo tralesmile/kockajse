@@ -427,6 +427,23 @@ def taxed_return(prob, total_odds, tax=None):
     return prob * (1 + (1 - tax) * (total_odds - 1)) - 1
 
 
+def breakeven_prices(legs, win_prob, tax=None):
+    """Limit prices for a ticket ("limit orders" from trading). Returns the total odds at
+    which the ticket breaks even after the tax on net winnings, and for each leg the lowest
+    price that alone would make the ticket break even with the other legs unchanged
+    (None when no price can, i.e. win_prob <= 0). The chance is held fixed, so this is the
+    price check for another bookmaker: a leg priced below it makes the ticket worse."""
+    tax = CONFIG["tax_rate"] if tax is None else tax
+    if not legs or not win_prob or win_prob <= 0:
+        return None
+    need_total = 1 + (1 / win_prob - 1) / (1 - tax)
+    total = 1.0
+    for leg in legs:
+        total *= leg["odds"]
+    per_leg = [round(need_total * leg["odds"] / total, 2) for leg in legs]
+    return {"total": round(need_total, 2), "per_leg": per_leg}
+
+
 def build_taxed_ticket(cands, prob_key="power_prob", odds_key="odds"):
     """Allowed ticket with the best expected return after the 15% tax.
 
@@ -1865,6 +1882,18 @@ def legs_table(legs, with_result):
             f'style="border-collapse:collapse;font-size:14px">{head}{rows}</table>')
 
 
+def breakeven_line(ticket):
+    """One email line: the break-even prices to compare with the bookmaker's own prices."""
+    be = breakeven_prices(ticket.get("legs", []), ticket.get("win_prob"))
+    if not be:
+        return ""
+    legs = "; ".join(f"{l.get('pick', l.get('sel', 'leg'))}: {p:.2f}"
+                     for l, p in zip(ticket["legs"], be["per_leg"]))
+    return (f"Break-even after tax: total odds {be['total']:.2f} (ticket has "
+            f"{ticket['total_odds']:.2f}). Lowest price per leg that alone would reach it: "
+            f"{legs}.<br>")
+
+
 def build_email(state, finished, ticket, note, today):
     parts = [f"<h2>Betting report, {today.strftime('%d.%m.%Y')}</h2>"]
 
@@ -1902,6 +1931,7 @@ def build_email(state, finished, ticket, note, today):
             f"If it wins: payout {money(gross)}, tax {money(tax)}, you receive {money(net)} "
             f"(profit {money(net - ticket['stake'])}).<br>"
             f"Estimated chance from the odds: {ticket['win_prob']:.0%}.<br>"
+            f"{breakeven_line(ticket)}"
             f"Picked by: {ticket.get('picked_by', 'rules')}.</p>"
             "<p><small>Odds are the average of European bookmakers and will differ slightly "
             "at Megawin. Double chance odds are estimated from the win/draw/win prices. "

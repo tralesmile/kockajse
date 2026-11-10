@@ -264,7 +264,18 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
-- Break-even price per leg in the email (bet types/real money, unconventional, from limit
+- 10 Nov brainstorm (scored impact/confidence/effort, not built unless noted): break-even
+  limit prices in the email (3/3/1, built); no-bet day rule as forecasting-tournament
+  abstention, skip the ticket when its taxed EV is below a floor (3/2/2: every ticket is
+  negative after tax, so it would skip every day; needs the owner's call); rest-day /
+  schedule-congestion feature for NBA from the odds feed's commence times (2/2/3);
+  ClubElo as a second opinion for football legs (3/2/3, Elo is already inside Pinnacle's
+  price); ensemble of two Gemini decisions with disagreement as a skip signal (2/2/3, AI
+  verdicts show no signal: AGREE +0.3, RISKY +2.2, AVOID +1.4 points); same-game
+  correlation (negative: bookmakers ban it); CLV-weighted bookmaker trust (see information
+  share below); tennis-only favourites singles (2/2/2, only 5 settled).
+
+- [BUILT 10 Nov, live] Break-even price per leg in the email (bet types/real money, unconventional, from limit
   orders in trading, 3/3/1): print for each ticket leg the lowest price at which the
   ticket still has the expected return the bot computed, so the owner can check Megawin's
   own price before betting and skip a leg it prices worse ("limit price"). Useful the day

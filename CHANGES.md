@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-10: the ticket email now shows break-even prices
+
+- The email for each ticket now adds one line: the total odds at which the ticket would break even after the 15% tax, and the lowest price per leg that alone would get it there.
+- Why: Megawin's prices differ from the European average the bot uses. If you ever bet for real, you can check each leg against this line and skip a leg priced lower.
+- Your ticket is chosen exactly as before; nothing else changed. The ticket still loses on average after tax, so paper mode should stay on; ticket 32 won, 9 of the last 10 lost.
+
 ## 2026-11-09 (evening): testing whether your ticket is better placed just before kick-off
 
 - History says the same ticket rule loses about 2 to 6 points less per ticket when it uses the prices just before kick-off instead of the morning prices, because late prices are more accurate. This was never tested live.

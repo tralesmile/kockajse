@@ -788,3 +788,24 @@ tests/test_late_ticket.py (added to IMPROVING.md). Ticket choice unchanged, so n
 To measure next: late_ticket days logged per week (expect most days), late_ticket vs
 tax_market and late_ticket_best vs tax_best on the same days; first sweep_plan.json and
 late_sweep bets; one ticket email a day.
+
+## 2026-11-10 (morning review): break-even limit prices
+
+Measured: 392 settled picks won 58.4% (football 63.2% on 193, basketball 53.2% on 188,
+handball and tennis under 10 each). Tickets 23-31 lost, ticket 32 (2.93) won (-736 paper
+total). Scoreboard: still no strategy beats the tax with a verdict; tax-proof power singles
++0.6% (3 scored), late singles -6.6% (13), real ticket -13.9% (3), AGREE/RISKY/AVOID all
+lose after tax. Ticket 33 (Miami -9, 1.91) is pending. Odds API 1,456 left, key 1 empty;
+repository is now public (4,796 Actions minutes this cycle, no longer a limit).
+Today's decision step hit Gemini 503s and fell back to gemini-3.6-flash: no harm.
+
+Researched: nothing new on the web this run; built on 9 Nov sources (Burgi et al. 2026,
+Oikonomidis 2013). Chose a cheap preparatory change since no live evidence supports a
+bigger strategy change yet.
+
+Changed: bot.py breakeven_prices / breakeven_line; the ticket email now prints the total
+odds at which the ticket breaks even after tax and the lowest price per leg that alone
+reaches it, for checking Megawin's own prices. New tests/test_breakeven.py. Ticket choice
+unchanged, so no preview run.
+
+To measure next: late_ticket vs tax_market on the same days; sweep_plan.json; one email a day.

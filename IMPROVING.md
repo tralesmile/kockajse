@@ -66,7 +66,7 @@ tweak. Every review:
    evidence or research supports them. Keep each change focused enough that its effect can
    be measured, and note in `prompts/lessons.md` any lesson the AI should apply daily.
 4. **Check.** Add or update tests for new code. Run `python tests/test_markets.py`,
-   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py`, `python tests/test_taxed.py`, `python tests/test_actions_budget.py`, `python tests/test_sweep.py`, `python tests/test_odds_budget.py`, `python tests/test_merge.py`, `python tests/test_late_ticket.py` and `python tests/simulate.py`;
+   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py`, `python tests/test_taxed.py`, `python tests/test_actions_budget.py`, `python tests/test_sweep.py`, `python tests/test_odds_budget.py`, `python tests/test_merge.py`, `python tests/test_late_ticket.py`, `python tests/test_breakeven.py` and `python tests/simulate.py`;
    all must pass. After a
    change to how picks are chosen, you may start one preview run to see it work live:
    `gh api -X POST repos/tralesmile/kockajse/actions/workflows/daily.yml/dispatches -f ref=main -F 'inputs[preview]=true'`
