@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-10",
+  "slots": [
+    {
+      "id": "soccer_uefa_champs_league_women@2026-11-10T20:00:00Z",
+      "sport_key": "soccer_uefa_champs_league_women",
+      "first": "2026-11-10T20:00:00Z",
+      "last": "2026-11-10T20:00:00Z",
+      "events": 3
+    },
+    {
+      "id": "basketball_nba@2026-11-11T00:40:00Z",
+      "sport_key": "basketball_nba",
+      "first": "2026-11-11T00:40:00Z",
+      "last": "2026-11-11T01:10:00Z",
+      "events": 2
+    }
+  ]
+}

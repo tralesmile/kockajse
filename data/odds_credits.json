@@ -1,14 +1,14 @@
 {
-  "measured": "2026-11-09T07:36:17+00:00",
-  "day": "2026-11-09",
+  "measured": "2026-11-10T07:05:31+00:00",
+  "day": "2026-11-10",
   "keys": [
-    1,
-    489,
+    0,
+    456,
     500,
     500
   ],
-  "total": 1490,
-  "core": 78.0,
+  "total": 1456,
+  "core": 21.0,
   "history": {
     "2026-11-08": {
       "total": 1571,
@@ -17,8 +17,12 @@
     "2026-11-09": {
       "total": 1490,
       "extras_before": 3
+    },
+    "2026-11-10": {
+      "total": 1456,
+      "extras_before": 13
     }
   },
-  "closing_allowance": 0,
-  "sweep_allowance": 0
+  "closing_allowance": 20,
+  "sweep_allowance": 6
 }
