@@ -4,4 +4,5 @@
 data/*.csv merge=botdata
 data/*.json merge=botdata
 data/scoreboard.md merge=botdata
+data/audit.md merge=botdata
 data/odds/** merge=botdata

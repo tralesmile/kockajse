@@ -6,6 +6,30 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 10 Nov evening] Standing audits `audit.py` -> `data/audit.md` and one email line
+  (experiments/measurement, 3/4/1). (a) AI value audit: Brier of the sharp power chance
+  shifted toward the AI chance at weights 0-1 on settled picks, with a paired standard error
+  and the correlation of the AI's disagreement with outcomes. 10 Nov reading, 392 picks:
+  Brier 0.23024 at w=0, 0.23052 at the live w=0.2 (gain -2.9 +- 4.0 in 1e-4), correlation
+  -0.02 +- 0.05; won minus sharp chance AGREE -3.9 points (96), RISKY +4.2 (200), AVOID +1.4
+  (96). So the AI neither helps nor measurably hurts, and the rule "no AVOID, at most one
+  RISKY" has no support; the no-AI twins (tax_market, market) settle it on tickets. If the
+  gain stays under zero at ~800 picks, recommend ai_weight 0 and dropping the verdict rules
+  (frees Gemini search quota). (b) Bookmaker lead-lag (Hasbrouck information share, above):
+  first-seen h2h chance of each book vs the closing power chance, 38-44 match sides from the
+  odds archive: RMSE Pinnacle 0.0455, mean of all books 0.0433 (paired gain of the mean
+  -0.0001 +- 0.0014), best single books (betonlineag, betfair_ex_eu, coolbet 0.038-0.040) are
+  within noise of the rest; no book beats Pinnacle reliably. Status: measuring; rerun daily
+  as the archive grows (~150 sides for a real test).
+- 10 Nov evening brainstorm (impact/confidence/effort): ensemble fair price as mean of all
+  books (2/2/1, no gain yet, see audit); lay-price (h2h_lay) exchange spread as a
+  confidence flag (2/2/3); drop the AI verdict rules (3/2/1, waits for the audit); weekly
+  auto "go/no-go for real money" paragraph computed from the scoreboard (3/3/2); prompt
+  contrarian pass (1/2/1, AI has no signal); bookmaker-specific favourite-longshot table
+  from the archive (2/2/2); NBA/NCAAB totals model from pace (1/1/5); matched-betting
+  sign-up bonuses (unconventional, the only reliably positive retail bet, 4/1/1 but
+  depends on Megawin's offers and the owner's decision: noted only).
+
 - Late ticket shadows "late_ticket" and "late_ticket_best" (timing/selection, bold, 4/3/2,
   built 9 Nov evening; merges the "late ticket shadow" and "late sweep ticket" ideas). The
   backtest says the tax-aware ticket rule loses 2-6 points less per ticket at closing

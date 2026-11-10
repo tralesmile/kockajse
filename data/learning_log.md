@@ -809,3 +809,28 @@ reaches it, for checking Megawin's own prices. New tests/test_breakeven.py. Tick
 unchanged, so no preview run.
 
 To measure next: late_ticket vs tax_market on the same days; sweep_plan.json; one email a day.
+
+## 2026-11-10 (evening review): do the AI and the bookmaker choice earn their keep?
+
+Measured: nothing settled since this morning (392 settled picks; ticket 33 pending), so no
+new lost leg to judge. Recomputed on all 392: won 58.4% vs 56.9% market; by odds band 1.15-1.30
+won 81.8% vs 75.2% (66), the longer bands at or below the market. AI audit: Brier of the
+sharp chance 0.23024, with the live 20% AI shift 0.23052 (gain -2.9 +- 4.0 in 1e-4);
+correlation of the AI's disagreement with the outcome -0.021 +- 0.051; won minus sharp chance
+AGREE -3.9 points (96), RISKY +4.2 (200), AVOID +1.4 (96). The verdicts therefore carry no
+signal and, if anything, point the wrong way, which is what the ticket rules lean on.
+Bookmaker lead-lag on the 8-day odds archive (44 closing captures): the first price of
+Pinnacle is not nearer its own close than most books (RMSE 0.0455 vs 0.038-0.045); the mean
+of all books is marginally nearer (-0.0001 +- 0.0014): noise.
+
+Researched: only the existing sources (Hasbrouck information share, Oikonomidis 2013); the
+data decided. Ideas considered (IDEAS.md): standing AI audit and lead-lag audit (built);
+ensemble of all books as fair price (no gain); lay-price spread; drop the verdict rules
+(waits for the audit); weekly real-money go/no-go paragraph; matched-betting bonuses
+(noted only, owner's decision); NBA pace totals; bookmaker favourite-longshot table.
+
+Changed: new `audit.py` (writes data/audit.md; one line in the daily email), tests/test_audit.py,
+bot.scoreboard_html calls it. Ticket choice unchanged, so no preview run.
+
+To measure next: audit gain at ~800 picks (if still <= 0, recommend ai_weight 0 and no verdict
+rules); lead-lag at ~150 sides; late_ticket vs tax_market; one email a day.

@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-10 (evening): a standing check on whether the AI helps
+
+- New daily check in the email and in data/audit.md: does the AI's opinion make the chances more accurate than the bookmakers' own sharp price? On the 392 finished picks so far it does not (no gain, no harm beyond noise), and the AI's "agree" picks won less often than expected while its "risky" ones won more.
+- A second check looks at which bookmaker's morning price best predicts the final price before kick-off. So far none beats Pinnacle, the sharp bookmaker the bot already uses.
+- Why: the bot spends scarce Gemini searches on the AI. If the check stays at "no gain" for a few more weeks, a later review will recommend relying on the market alone, which also removes the failures when Gemini is busy.
+- Your ticket is chosen exactly as before. No extra Odds API or Gemini use.
+
 ## 2026-11-10: the ticket email now shows break-even prices
 
 - The email for each ticket now adds one line: the total odds at which the ticket would break even after the 15% tax, and the lowest price per leg that alone would get it there.

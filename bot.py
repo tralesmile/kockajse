@@ -1851,11 +1851,18 @@ def scoreboard_html():
     data/scoreboard.md for the reviews. Never stops the email if it fails."""
     try:
         import scoreboard
-        return scoreboard.write(STATE_PATH.parent, CONFIG["tax_rate"], SHADOW_NAMES,
+        page = scoreboard.write(STATE_PATH.parent, CONFIG["tax_rate"], SHADOW_NAMES,
                                 picks_path=PICKS_PATH, closing_path=CLOSING_PATH)[2]
     except Exception as exc:  # noqa: BLE001 - a report must not break the daily run
         print(f"Scoreboard failed: {exc}")
-        return ""
+        page = ""
+    try:  # standing audits (audit.py): does the AI's shift help, which book leads the close
+        import audit
+        ai = audit.write(STATE_PATH.parent, CONFIG.get("ai_weight", 0.2))[0]
+        page += audit.email_line(ai)
+    except Exception as exc:  # noqa: BLE001
+        print(f"Audit failed: {exc}")
+    return page
 
 
 # --------------------------------------------------------------- email ----
