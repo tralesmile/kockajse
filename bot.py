@@ -1514,6 +1514,8 @@ SHADOW_NAMES = {
     "likely_ticket": "The old ticket rule: most likely ticket within the AI's verdicts",
     "tax_best": "The real ticket rule at the best bookmaker prices",
     "tax_market": "Market only, best return after tax (no AI)",
+    "h2h_ticket": "Moneyline-only ticket, best return after tax (no handicaps or totals, no AI)",
+    "h2h_ticket_best": "Moneyline-only ticket at the best bookmaker prices (no AI)",
     "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
     "late_ticket": "Late ticket: the ticket rule minutes before kick-off (no AI, average price)",
     "late_ticket_best": "Late ticket at the best bookmaker prices (no AI)",
@@ -1666,6 +1668,16 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     if taxed:
         out.append(("tax_market", [dict(l, book="average", sharp=l.get("sharp_power"))
                                    for l in taxed["legs"]]))
+    # Moneyline-only twin of tax_market (11 Nov evening review). On 426 settled picks, h2h favourites
+    # won 73.2% vs 67.3% market (about break-even after tax), while handicaps and totals
+    # were coin flips at ~1.88 (-11%); legs of that kind carried most real ticket losses.
+    h2h_pool = [c for c in pool if c.get("market") == "h2h"]
+    for name, okey in (("h2h_ticket", "odds"), ("h2h_ticket_best", "best_odds")):
+        t = build_taxed_ticket(h2h_pool, odds_key=okey)
+        if t:
+            out.append((name, [dict(l, book="average", sharp=l.get("sharp_power")) if okey == "odds"
+                               else dict(l, book=l.get("best_book") or "average",
+                                         sharp=l.get("sharp_power")) for l in t["legs"]]))
     # One single a day: the allowed pick (not AVOID) with the best chance x odds. The
     # backtest found singles lose about half as much as 2.50-3.50 tickets once the tax is
     # paid (-8% vs -16% expected), because the tax grows with the total odds.

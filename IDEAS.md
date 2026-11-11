@@ -298,6 +298,18 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- [BUILT 11 Nov evening, shadow] Moneyline-only ticket (ticket selection, 3/3/1): by market on
+  426 settled picks, h2h favourites won 73.2% vs 67.3% market (71, about -0.6% after tax at
+  average prices), double chance +3.2 points (68, -9.9%), spreads +0.8 (116, -10.7%), totals
+  +0.3 (176, -12.0%). Handicap/total legs are coin flips at ~1.88 and pay the margin plus
+  tax; on tickets the 4 spread legs won 1 and the h2h legs 8 of 15. Shadows "h2h_ticket" and
+  "h2h_ticket_best" use the tax rule on h2h legs only. Judge against tax_market on the same days.
+- 11 Nov evening brainstorm (impact/confidence/effort): moneyline-only ticket (built, above);
+  no-bet floor (3/2/2, owner's call); fractional-Kelly shadow staking (2/2/2, stake is the
+  owner's); Elo second opinion (3/2/3); lay-price spread from betfair_ex_eu (2/2/3); ensemble
+  of two Gemini decisions (2/2/3); NBA rest-day feature (2/2/3); handball/volleyball favourites
+  singles (2/1/2).
+
 - 10 Nov brainstorm (scored impact/confidence/effort, not built unless noted): break-even
   limit prices in the email (3/3/1, built); no-bet day rule as forecasting-tournament
   abstention, skip the ticket when its taxed EV is below a floor (3/2/2: every ticket is

@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-11 (evening): testing a moneyline-only ticket
+
+- On all finished picks, bets on a plain winner (favourites) hit about 6 points more often than the bookmakers' prices imply and nearly break even after tax. Handicap and over/under bets are coin flips that lose about 11% after tax.
+- New side experiment: each day the bot also records a ticket made only of "to win" bets (at the average price and at the best bookmaker price). It is settled like a paper ticket and shown in the scoreboard next to the existing market-only ticket.
+- Your real ticket is chosen exactly as before. If the new ticket does better over a few weeks, a later review will suggest switching. No extra Odds API or Gemini use.
+
 ## 2026-11-11: a daily "real money: go or no-go" line
 
 - data/audit.md now starts with a plain verdict on whether any strategy has proved it beats the 15% tax. Today: NO-GO. None of the three strategies with 20 or more scored bets beats it; the best is the AI's AGREE singles at -10.5% after tax.

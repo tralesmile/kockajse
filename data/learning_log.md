@@ -853,3 +853,20 @@ Ticket choice unchanged, no preview.
 
 To measure next: late_ticket vs tax_market, sweep_plan.json, audit gain at ~800 picks,
 leg-type (handicap vs h2h vs totals) win rate on ticket legs.
+
+## 2026-11-11 (evening review): which bet type pays least?
+
+Measured: nothing new settled since the morning (ticket 34 pending). Split the settled picks
+by market: h2h 73.2% won vs 67.3% market (71, -0.6% after tax), double chance 69.1% vs 66.0%
+(68, -9.9%), spreads 50.9% vs 50.1% (116, -10.7%), totals 52.8% vs 52.5% (176, -12.0%). Ticket
+legs: h2h 8 of 15 won vs 70.5% expected, spreads 1 of 4, totals 4 of 5 (tiny samples). The
+favourite-longshot bias shows up in moneylines; handicaps and totals are efficient coin flips
+that only cost margin and tax.
+
+Researched: no new sources; used the Burgi et al. 2026 favourite-longshot finding already logged.
+
+Changed: two new shadow strategies, h2h_ticket and h2h_ticket_best (tax rule restricted to
+moneyline legs), with tests/test_h2h_ticket.py. The real ticket is unchanged, so no preview run.
+
+To measure next: h2h_ticket vs tax_market on the same days (needs ~20 days); if it wins, a later
+review should restrict the real ticket to moneylines.
