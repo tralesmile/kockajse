@@ -4,43 +4,43 @@ Built by audit.py from recorded data; nothing here changes a recorded result.
 
 ## Does the AI add anything to the sharp chance?
 
-392 settled picks. Brier score (lower is better) of the sharp chance shifted toward the AI's chance by weight w:
+431 settled picks. Brier score (lower is better) of the sharp chance shifted toward the AI's chance by weight w:
 
 | w | Brier |
 |---|---|
-| 0.00 | 0.23024 |
-| 0.10 | 0.23036 |
-| 0.20 | 0.23052 |
-| 0.35 | 0.23083 |
-| 0.50 | 0.23121 |
-| 1.00 | 0.23303 |
+| 0.00 | 0.23080 |
+| 0.10 | 0.23087 |
+| 0.20 | 0.23098 |
+| 0.35 | 0.23120 |
+| 0.50 | 0.23150 |
+| 1.00 | 0.23300 |
 
-Live weight 0.20 vs 0: Brier gain -2.9 +- 4.0 (x0.0001; positive means the AI helps). Correlation of (AI chance - sharp chance) with (outcome - sharp chance): -0.021 +- 0.051. No measurable benefit from the AI shift yet.
+Live weight 0.20 vs 0: Brier gain -1.8 +- 3.8 (x0.0001; positive means the AI helps). Correlation of (AI chance - sharp chance) with (outcome - sharp chance): -0.007 +- 0.048. No measurable benefit from the AI shift yet.
 
-Won minus sharp chance by verdict (picks, mean): AGREE -3.9 points (96), AVOID +1.4 points (96), RISKY +4.2 points (200)
+Won minus sharp chance by verdict (picks, mean): AGREE -0.5 points (109), AVOID -0.2 points (101), RISKY +3.8 points (221)
 
 ## Which bookmaker's first price best predicts Pinnacle's closing chance?
 
-38 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0455, average of all books 0.0433; paired absolute-error gain of the average over Pinnacle -0.0001 +- 0.0014.
+40 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0447, average of all books 0.0427; paired absolute-error gain of the average over Pinnacle -0.0001 +- 0.0014.
 
 | Bookmaker | Matches | Bias | RMSE |
 |---|---|---|---|
 | betonlineag | 39 | -0.0045 | 0.0384 |
-| betfair_ex_eu | 40 | -0.0047 | 0.0393 |
+| betfair_ex_eu | 41 | -0.0056 | 0.0393 |
 | coolbet | 35 | -0.0043 | 0.0397 |
 | matchbook | 35 | -0.0069 | 0.0405 |
-| nordicbet | 33 | +0.0001 | 0.0421 |
-| betsson | 33 | -0.0002 | 0.0421 |
+| nordicbet | 35 | -0.0004 | 0.0413 |
+| betsson | 35 | -0.0007 | 0.0414 |
+| sport888 | 42 | -0.0016 | 0.0425 |
 | winamax_de | 40 | +0.0015 | 0.0427 |
 | codere_it | 39 | -0.0019 | 0.0432 |
-| sport888 | 39 | -0.0016 | 0.0436 |
-| williamhill | 39 | -0.0015 | 0.0436 |
-| gtbets | 26 | -0.0030 | 0.0449 |
-| unibet_nl | 31 | -0.0035 | 0.0451 |
-| pinnacle | 38 | +0.0057 | 0.0455 |
-| onexbet | 39 | -0.0029 | 0.0456 |
-| leovegas_se | 41 | -0.0014 | 0.0456 |
-| unibet_se | 41 | -0.0047 | 0.0461 |
+| williamhill | 40 | -0.0021 | 0.0433 |
+| gtbets | 28 | -0.0029 | 0.0438 |
+| unibet_nl | 34 | -0.0045 | 0.0442 |
+| leovegas_se | 44 | -0.0020 | 0.0447 |
+| pinnacle | 40 | +0.0056 | 0.0447 |
+| unibet_se | 44 | -0.0051 | 0.0452 |
+| onexbet | 42 | -0.0040 | 0.0452 |
 | winamax_fr | 25 | +0.0065 | 0.0462 |
 | everygame | 22 | +0.0020 | 0.0483 |
 | betclic_fr | 24 | +0.0064 | 0.0483 |

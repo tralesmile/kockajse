@@ -1,18 +1,25 @@
 {
-  "date": "2026-11-10",
+  "date": "2026-11-11",
   "slots": [
     {
-      "id": "soccer_uefa_champs_league_women@2026-11-10T20:00:00Z",
-      "sport_key": "soccer_uefa_champs_league_women",
-      "first": "2026-11-10T20:00:00Z",
-      "last": "2026-11-10T20:00:00Z",
+      "id": "soccer_england_efl_trophy@2026-11-11T19:00:00Z",
+      "sport_key": "soccer_england_efl_trophy",
+      "first": "2026-11-11T19:00:00Z",
+      "last": "2026-11-11T19:00:00Z",
+      "events": 2
+    },
+    {
+      "id": "basketball_ncaab@2026-11-11T19:11:00Z",
+      "sport_key": "basketball_ncaab",
+      "first": "2026-11-11T19:11:00Z",
+      "last": "2026-11-11T20:00:00Z",
       "events": 3
     },
     {
-      "id": "basketball_nba@2026-11-11T00:40:00Z",
-      "sport_key": "basketball_nba",
-      "first": "2026-11-11T00:40:00Z",
-      "last": "2026-11-11T01:10:00Z",
+      "id": "soccer_uefa_champs_league_women@2026-11-11T20:00:00Z",
+      "sport_key": "soccer_uefa_champs_league_women",
+      "first": "2026-11-11T20:00:00Z",
+      "last": "2026-11-11T20:00:00Z",
       "events": 2
     }
   ]
