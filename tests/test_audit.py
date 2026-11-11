@@ -57,3 +57,14 @@ with tempfile.TemporaryDirectory() as tmp:
     assert "| off |" in text and "Brier" in text
     assert "Fewer than" in audit.markdown(None, None)
 print("audit tests passed")
+
+# Go / no-go readout.
+st = {"a": {"scored": 30, "mean": -0.05, "se": 0.01, "verdict": "loses after tax"},
+      "b": {"scored": 10, "mean": 0.2, "se": 0.1, "verdict": "undecided"}}
+r = audit.go_no_go(st)
+assert not r["go"] and r["best"] == "a" and r["needed"] is None and r["text"].startswith("NO-GO")
+st["c"] = {"scored": 40, "mean": 0.02, "se": 0.01, "verdict": "beats the tax"}
+r = audit.go_no_go(st)
+assert r["go"] and r["winners"] == ["c"] and r["needed"] == int(__import__("math").ceil((1.96 * 0.01 * 40 ** 0.5 / 0.02) ** 2))
+assert not audit.go_no_go({})["go"]
+print("go/no-go ok")

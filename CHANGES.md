@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-11: a daily "real money: go or no-go" line
+
+- data/audit.md now starts with a plain verdict on whether any strategy has proved it beats the 15% tax. Today: NO-GO. None of the three strategies with 20 or more scored bets beats it; the best is the AI's AGREE singles at -10.5% after tax.
+- When a strategy does pass the always-valid test, the line will say "GO candidate" and how many more bets would confirm its edge. Paper mode stays on either way; real money remains your decision.
+- Ticket 33 (Miami -9) lost; that leg was a coin-flip handicap at 1.91 and the research gave no warning. Your ticket is chosen exactly as before. No extra Odds API or Gemini use.
+
 ## 2026-11-10 (evening): a standing check on whether the AI helps
 
 - New daily check in the email and in data/audit.md: does the AI's opinion make the chances more accurate than the bookmakers' own sharp price? On the 392 finished picks so far it does not (no gain, no harm beyond noise), and the AI's "agree" picks won less often than expected while its "risky" ones won more.

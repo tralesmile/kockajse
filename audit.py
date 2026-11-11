@@ -149,9 +149,34 @@ def _judge(ai):
     return "No measurable benefit from the AI shift yet"
 
 
-def markdown(ai, lead):
+def go_no_go(stats, min_scored=20):
+    """Real-money readout from scoreboard stats: NO-GO unless a strategy with enough scored
+    bets has an always-valid 'beats the tax' verdict. Also gives, for the best strategy by
+    mean, the bets still needed to detect its current edge (z=1.96) when that edge is positive."""
+    rows = [(k, v) for k, v in (stats or {}).items()
+            if v.get("scored", 0) >= min_scored and v.get("mean") is not None and v.get("se")]
+    if not rows:
+        return {"go": False, "best": None, "winners": [], "needed": None,
+                "text": f"NO-GO: no strategy has {min_scored} scored bets yet."}
+    winners = sorted(k for k, v in rows if v["verdict"] == "beats the tax")
+    name, v = max(rows, key=lambda kv: kv[1]["mean"])
+    needed = None
+    if v["mean"] > 0:
+        sd = v["se"] * math.sqrt(v["scored"])
+        needed = int(math.ceil((1.96 * sd / v["mean"]) ** 2))
+    text = (f"GO candidate: {', '.join(winners)} beats the tax at an always-valid test; "
+            "still the owner's decision, paper mode stays on." if winners else
+            f"NO-GO: none of {len(rows)} strategies with {min_scored}+ scored bets beats the tax; "
+            f"best is {name} at {v['mean'] * 100:+.1f}% after tax on {v['scored']} bets"
+            + (f" (about {needed} bets to confirm that edge)." if needed else " (negative)."))
+    return {"go": bool(winners), "best": name, "winners": winners, "needed": needed, "text": text}
+
+
+def markdown(ai, lead, gng=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
+    if gng:
+        out += ["## Real-money go / no-go", "", gng["text"], ""]
     out.append("## Does the AI add anything to the sharp chance?")
     if ai is None:
         out += ["", f"Fewer than {MIN_PICKS} settled picks with an AI chance.", ""]
@@ -191,7 +216,16 @@ def write(data_dir=None, ai_weight=0.2):
     ai = ai_audit(_read(data_dir / "picks.csv"), live_weight=ai_weight)
     lead = (book_lead_lag(data_dir / "odds", _read(data_dir / "closing.csv"), power_devig)
             if power_devig else None)
-    text = markdown(ai, lead)
+    gng = None
+    try:
+        import scoreboard
+        tax = json.loads((ROOT / "config.json").read_text())["tax_rate"]
+        stats = scoreboard.build(_read(data_dir / "shadow.csv"), _read(data_dir / "closing.csv"),
+                                 tax, None, _read(data_dir / "picks.csv"))[0]
+        gng = go_no_go(stats)
+    except Exception:  # noqa: BLE001 - the readout is optional
+        gng = None
+    text = markdown(ai, lead, gng)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

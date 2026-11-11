@@ -2,6 +2,10 @@
 
 Built by audit.py from recorded data; nothing here changes a recorded result.
 
+## Real-money go / no-go
+
+NO-GO: none of 3 strategies with 20+ scored bets beats the tax; best is pick:AGREE at -10.5% after tax on 41 bets (negative).
+
 ## Does the AI add anything to the sharp chance?
 
 431 settled picks. Brier score (lower is better) of the sharp chance shifted toward the AI's chance by weight w:

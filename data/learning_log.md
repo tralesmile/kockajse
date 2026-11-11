@@ -834,3 +834,22 @@ bot.scoreboard_html calls it. Ticket choice unchanged, so no preview run.
 
 To measure next: audit gain at ~800 picks (if still <= 0, recommend ai_weight 0 and no verdict
 rules); lead-lag at ~150 sides; late_ticket vs tax_market; one email a day.
+
+## 2026-11-11 (review): go/no-go readout
+
+Measured: 431 settled picks won 58.2% vs 56.4% market (football 63.4% vs 60.6% on 194,
+basketball 53.5% vs 52.3% on 226). By odds band after tax, flat: 1.15-1.30 -1.1% (68, won
+82.4% vs 75.2%), every longer band -10% to -15%. Ticket 33 (Toledo + Miami -9, 3.38) lost on
+the Miami handicap, a coin flip at 1.91, not foreseeable; tickets 23-33 are 1 win in 11
+(-836 paper). AI audit still no gain (-1.8 +- 3.8); AGREE -0.5 points, RISKY +3.8.
+Scoreboard: no strategy beats the tax; nothing changed in the picture since 10 Nov.
+
+Researched: no new sources; the data are too thin for a strategy change, so no blind
+replacement. Considered the ideas in IDEAS.md (fade spread legs, totals-only ticket, NBA
+injury timing, Pinnacle drift model, ruin simulation, Kalshi third price).
+
+Changed: audit.py go_no_go and a section in data/audit.md; tests/test_audit.py extended.
+Ticket choice unchanged, no preview.
+
+To measure next: late_ticket vs tax_market, sweep_plan.json, audit gain at ~800 picks,
+leg-type (handicap vs h2h vs totals) win rate on ticket legs.

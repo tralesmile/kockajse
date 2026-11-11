@@ -6,6 +6,16 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 11 Nov] Real-money go/no-go readout in audit.md (experiments/measurement, 3/4/1):
+  from scoreboard stats, NO-GO unless a strategy with 20+ scored bets has an always-valid
+  "beats the tax" verdict; also bets still needed to confirm the best positive edge. 11 Nov:
+  NO-GO, best pick:AGREE -10.5% (41). 11 Nov brainstorm (impact/confidence/effort): fade
+  spread legs on tickets, since handicaps are coin flips at 1.9 (3/2/2, check ticket
+  leg-type win rate first); ticket of totals only (2/1/2); Brier-weighted Kelly-style
+  stake display (1/2/2); lineup-news timing for NBA via injury report at 17:00 ET (3/2/4);
+  closing-line model of Pinnacle drift from odds archive (3/2/4); prediction-market
+  Kalshi sports price as a third fair price (2/1/3, re-checked, low); sequential
+  betting-bank ruin simulation for the owner (2/3/2); drop AVOID/RISKY rules (waits for audit).
 - [BUILT 10 Nov evening] Standing audits `audit.py` -> `data/audit.md` and one email line
   (experiments/measurement, 3/4/1). (a) AI value audit: Brier of the sharp power chance
   shifted toward the AI chance at weights 0-1 on settled picks, with a paired standard error
