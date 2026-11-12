@@ -1,26 +1,24 @@
 {
-  "when": "2026-11-11T07:05:30Z",
+  "when": "2026-11-12T07:05:29Z",
   "ai_log": [
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 112s, 2107 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 24s, 8581 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 25s, 7048 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 12s, 3544 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 18s, 7057 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 25s, 3265 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 34s, 9538 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 31s, 6047 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 31s, 4000 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 29s, 4788 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 9s, 2585 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 9s, 2965 chars",
-    "research (gemini-2.5-flash, key 1): ok on attempt 1, 28s, 3869 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 114s, 2244 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 10s, 3219 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 11s, 3269 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 28s, 3309 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 24s, 3527 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 9s, 2858 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 30s, 5728 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 17s, 5964 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 6s, 1334 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 25s, 3051 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 21s, 10797 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 18s, 7029 chars",
+    "research (gemini-2.5-flash, key 1): ok on attempt 1, 20s, 5468 chars",
     "decision (gemini-3.8-flash, key 1) attempt 1 failed: The read operation timed out ",
-    "decision (gemini-3.8-flash, key 1) attempt 2 failed: The read operation timed out ",
+    "decision (gemini-3.8-flash, key 1) attempt 2 failed: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
     "decision (gemini-3.8-flash, key 2) attempt 1 failed: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
     "decision (gemini-3.8-flash): busy 3 times, trying the next model",
-    "decision (gemini-3.6-flash, key 1) attempt 1 failed: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-    "decision (gemini-3.6-flash, key 1) attempt 2 failed: HTTP Error 503: Service Unavailable {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-    "decision (gemini-3.6-flash, key 2): ok on attempt 1, 52s, 10133 chars"
+    "decision (gemini-3.6-flash, key 1): ok on attempt 1, 34s, 8415 chars"
   ],
-  "odds_requests_left": 423
+  "odds_requests_left": 382
 }
