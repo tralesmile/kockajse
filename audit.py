@@ -172,11 +172,53 @@ def go_no_go(stats, min_scored=20):
     return {"go": bool(winners), "best": name, "winners": winners, "needed": needed, "text": text}
 
 
-def markdown(ai, lead, gng=None):
+def bankroll_sim(ledger_rows, tax=0.15, start=400.0, stake_pct=25.0, min_stake=50.0,
+                 horizon=30, runs=4000, seed=7, min_tickets=10):
+    """Monte Carlo of the owner's money if he followed the ticket rule for real: tickets are
+    resampled (with replacement) from the settled paper/real ledger as (won, total odds),
+    stake = max(min_stake, stake_pct% of bankroll), win pays stake x (odds-1) after tax on
+    the profit. Returns the median bankroll after `horizon` tickets, the chance of ending
+    below the start and the chance of ever dropping below the minimum stake (cannot bet)."""
+    import random
+    pool = []
+    for r in ledger_rows:
+        res, odds = (r.get("result") or "").strip(), _f(r.get("total_odds"))
+        if res in ("won", "lost") and odds and odds > 1:
+            pool.append((res == "won", odds))
+    if len(pool) < min_tickets:
+        return None
+    rng = random.Random(seed)
+    finals, broke = [], 0
+    for _ in range(runs):
+        bank, hit = start, False
+        for _ in range(horizon):
+            if bank < min_stake:
+                hit = True
+                break
+            stake = max(min_stake, bank * stake_pct / 100.0)
+            won, odds = rng.choice(pool)
+            bank += stake * (odds - 1) * (1 - tax) if won else -stake
+        broke += hit or bank < min_stake
+        finals.append(bank)
+    finals.sort()
+    return {"tickets": len(pool), "win_rate": sum(w for w, _ in pool) / len(pool),
+            "median": finals[len(finals) // 2], "p_below_start": sum(f < start for f in finals) / runs,
+            "p_broke": broke / runs, "horizon": horizon, "start": start}
+
+
+def markdown(ai, lead, gng=None, sim=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
     if gng:
         out += ["## Real-money go / no-go", "", gng["text"], ""]
+    if sim:
+        out += ["## If the owner bet this ticket rule for real", "",
+                f"Resampling the {sim['tickets']} settled tickets (win rate {sim['win_rate']*100:.0f}%) "
+                f"at the live stake rule from a bankroll of {sim['start']:.0f}: after {sim['horizon']} "
+                f"tickets the median bankroll is {sim['median']:.0f}, {sim['p_below_start']*100:.0f}% of "
+                f"runs end below the start and {sim['p_broke']*100:.0f}% fall under the minimum stake "
+                "(cannot place another ticket). Small sample, so read it as a rough guide to the "
+                "size of the swings, not a forecast.", ""]
     out.append("## Does the AI add anything to the sharp chance?")
     if ai is None:
         out += ["", f"Fewer than {MIN_PICKS} settled picks with an AI chance.", ""]
@@ -225,7 +267,14 @@ def write(data_dir=None, ai_weight=0.2):
         gng = go_no_go(stats)
     except Exception:  # noqa: BLE001 - the readout is optional
         gng = None
-    text = markdown(ai, lead, gng)
+    sim = None
+    try:
+        cfg = json.loads((ROOT / "config.json").read_text())
+        sim = bankroll_sim(_read(data_dir / "ledger.csv"), cfg["tax_rate"], cfg["starting_bankroll"],
+                           cfg["stake_percent"], cfg["min_stake"])
+    except Exception:  # noqa: BLE001 - optional
+        sim = None
+    text = markdown(ai, lead, gng, sim)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

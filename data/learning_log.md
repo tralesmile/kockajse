@@ -870,3 +870,23 @@ moneyline legs), with tests/test_h2h_ticket.py. The real ticket is unchanged, so
 
 To measure next: h2h_ticket vs tax_market on the same days (needs ~20 days); if it wins, a later
 review should restrict the real ticket to moneylines.
+
+## 2026-11-12 (review): what would real money look like?
+
+Measured: ticket 34 (Partizan + Portland, 2.53) won, so tickets are now 10 won of 34 (29%);
+the scoreboard still has no strategy beating the tax (best pick:AGREE -10.0% on 46 scored
+bets; h2h_ticket has 2 bets so far, late_ticket 6). AI audit on 485 picks: gain -2.0 +- 3.4,
+RISKY +2.0 points, AGREE +0.4. Today's NCAAB picks are -26.5 handicaps, the same coin-flip
+type that lost ticket 33.
+
+Researched: no new sources; the data are still too thin for a selling-point change.
+Considered nine ideas (IDEAS.md): spread-size filter, line staleness from Pinnacle vs field,
+NBA rest flag, tennis favourites, extremising, exchange prices, moneyline reallocation, AI-rule
+drop, bankroll ruin simulation.
+
+Changed: audit.py bankroll_sim and an audit.md section (tests in tests/test_audit.py): at the live
+stake rule, 83% of resampled 30-ticket runs fall below the minimum stake. Ticket choice unchanged,
+no preview run.
+
+To measure next: h2h_ticket vs tax_market (~20 days), late_ticket vs tax_market, audit gain at
+~800 picks, win rate of big-spread (|line| > 15) picks.

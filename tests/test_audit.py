@@ -68,3 +68,13 @@ r = audit.go_no_go(st)
 assert r["go"] and r["winners"] == ["c"] and r["needed"] == int(__import__("math").ceil((1.96 * 0.01 * 40 ** 0.5 / 0.02) ** 2))
 assert not audit.go_no_go({})["go"]
 print("go/no-go ok")
+
+# Bankroll simulation.
+led = [{"result": "lost", "total_odds": "2.5"}] * 9 + [{"result": "won", "total_odds": "2.5"}]
+sim = audit.bankroll_sim(led)
+assert sim["tickets"] == 10 and abs(sim["win_rate"] - 0.1) < 1e-9 and sim["p_below_start"] > 0.8
+assert audit.bankroll_sim(led[:3]) is None
+sure = audit.bankroll_sim([{"result": "won", "total_odds": "3"}] * 12, tax=0.0, horizon=3)
+assert sure["p_broke"] == 0 and sure["median"] > 400
+assert "owner bet this ticket rule" in audit.markdown(None, None, None, sim)
+print("bankroll sim ok")

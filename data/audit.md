@@ -6,6 +6,10 @@ Built by audit.py from recorded data; nothing here changes a recorded result.
 
 NO-GO: none of 3 strategies with 20+ scored bets beats the tax; best is pick:AGREE at -10.0% after tax on 46 bets (negative).
 
+## If the owner bet this ticket rule for real
+
+Resampling the 34 settled tickets (win rate 29%) at the live stake rule from a bankroll of 400: after 30 tickets the median bankroll is 30, 95% of runs end below the start and 83% fall under the minimum stake (cannot place another ticket). Small sample, so read it as a rough guide to the size of the swings, not a forecast.
+
 ## Does the AI add anything to the sharp chance?
 
 485 settled picks. Brier score (lower is better) of the sharp chance shifted toward the AI's chance by weight w:

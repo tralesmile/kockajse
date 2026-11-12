@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-12: a "what if you bet for real" check
+
+- data/audit.md now shows a simulation: if you had bet the bot's tickets with real money at the current stake rule (25% of the bank, at least 50), what would typically happen over the next 30 tickets.
+- On the 34 paper tickets so far (10 won) the typical outcome is a bank of about 30, and most runs drop below the minimum stake. It is a rough guide to how big the swings are, not a forecast.
+- Your ticket is chosen exactly as before. Paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-11 (evening): testing a moneyline-only ticket
 
 - On all finished picks, bets on a plain winner (favourites) hit about 6 points more often than the bookmakers' prices imply and nearly break even after tax. Handicap and over/under bets are coin flips that lose about 11% after tax.

@@ -6,6 +6,24 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 12 Nov] Bankroll ruin simulation in audit.md (measurement, 2/3/2): bootstrap the settled
+  tickets at the live stake rule (25%, min 50, 400 start): 34 tickets, 29% won, median bank
+  after 30 tickets 30, 83% fall below the minimum stake. Tells the owner what real betting
+  would feel like. 12 Nov brainstorm (impact/confidence/effort): (1) NCAAB big-spread
+  filter, skip handicaps beyond +-15 where the line is a coin flip with high variance (2/2/1,
+  today's picks are -26.5; check leg win rate first); (2) Pinnacle-vs-field divergence as a
+  rating of line staleness (3/2/3); (3) rest-days/back-to-back NBA flag from the schedule
+  feed (2/2/3); (4) tennis-only favourites singles, the market is thin at ATP 250 (2/1/3);
+  (5) unconventional: Kelly-style "fractional stake by edge" display, useless while no edge
+  (1/3/1); (6) unconventional, forecasting-tournament extremising of the market chance
+  (Satopaa et al.) tested in the AI audit as w<0 (shift AWAY from AI; Brier already shows
+  w>0 hurts, so w=-0.1 is a free check) (2/2/1); (7) unconventional, market-maker view:
+  lay prices from betting exchanges as the true chance without bookmaker margin (2/2/3,
+  matchbook and betfair_ex_eu already near-best in lead-lag); (8) bet-type reallocation:
+  moneyline-only is the one market near break-even (-0.6%), already shadowed as h2h_ticket
+  on 11 Nov, waits for ~20 days; (9) drop the AI verdict rules to free Gemini quota (waits
+  for audit at ~800 picks, now 485, gain -2.0 +- 3.4).
+
 - [BUILT 11 Nov] Real-money go/no-go readout in audit.md (experiments/measurement, 3/4/1):
   from scoreboard stats, NO-GO unless a strategy with 20+ scored bets has an always-valid
   "beats the tax" verdict; also bets still needed to confirm the best positive edge. 11 Nov:
