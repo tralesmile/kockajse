@@ -206,7 +206,44 @@ def bankroll_sim(ledger_rows, tax=0.15, start=400.0, stake_pct=25.0, min_stake=5
             "p_broke": broke / runs, "horizon": horizon, "start": start}
 
 
-def markdown(ai, lead, gng=None, sim=None):
+def market_breakdown(pick_rows, tax=0.15, min_n=8):
+    """Won rate vs market chance and flat return after tax, by bet type and handicap size.
+
+    Returns a list of (label, n, won_rate, market_chance, return, se) with at least min_n picks.
+    Return per unit staked: odds-1 times (1-tax) when won, -1 when lost; se is of the mean return.
+    """
+    groups = {}
+    for r in pick_rows:
+        if r.get("result") not in ("won", "lost"):
+            continue
+        odds, chance = _f(r.get("odds")), _f(r.get("market_chance"))
+        if odds is None or chance is None:
+            continue
+        market = r.get("market") or "?"
+        labels = [market]
+        if market == "spreads":
+            line = _f(r.get("point"))
+            if line is not None:
+                labels.append("spreads, |line| > 15" if abs(line) > 15 else "spreads, |line| <= 15")
+        if market == "totals" and r.get("sel") in ("Over", "Under"):
+            labels.append("totals " + r["sel"])
+        if market == "h2h":
+            labels.append("h2h, odds < 1.30" if odds < 1.30 else "h2h, odds >= 1.30")
+        won = r["result"] == "won"
+        ret = (odds - 1) * (1 - tax) if won else -1.0
+        for lab in labels:
+            groups.setdefault(lab, []).append((1.0 if won else 0.0, chance, ret))
+    out = []
+    for lab, vals in sorted(groups.items()):
+        if len(vals) < min_n:
+            continue
+        n = len(vals)
+        mean_ret, se = _mean_se([v[2] for v in vals])
+        out.append((lab, n, sum(v[0] for v in vals) / n, sum(v[1] for v in vals) / n, mean_ret, se))
+    return out
+
+
+def markdown(ai, lead, gng=None, sim=None, mb=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
     if gng:
@@ -219,6 +256,15 @@ def markdown(ai, lead, gng=None, sim=None):
                 f"runs end below the start and {sim['p_broke']*100:.0f}% fall under the minimum stake "
                 "(cannot place another ticket). Small sample, so read it as a rough guide to the "
                 "size of the swings, not a forecast.", ""]
+    if mb:
+        out += ["## Which bet types pay after tax?", "",
+                "Settled picks at the average price, flat stake, after the tax. Handicaps and "
+                "totals are coin flips that only cost margin and tax; moneyline favourites are the "
+                "one group near break-even (a return of 0 would be break-even).", "",
+                "| Group | Picks | Won | Market chance | Return after tax | se |", "|---|---|---|---|---|---|"]
+        out += [f"| {l} | {n} | {w*100:.1f}% | {c*100:.1f}% | {r*100:+.1f}% | {se*100:.1f} |"
+                for l, n, w, c, r, se in mb]
+        out.append("")
     out.append("## Does the AI add anything to the sharp chance?")
     if ai is None:
         out += ["", f"Fewer than {MIN_PICKS} settled picks with an AI chance.", ""]
@@ -274,7 +320,13 @@ def write(data_dir=None, ai_weight=0.2):
                            cfg["stake_percent"], cfg["min_stake"])
     except Exception:  # noqa: BLE001 - optional
         sim = None
-    text = markdown(ai, lead, gng, sim)
+    mb = None
+    try:
+        mb = market_breakdown(_read(data_dir / "picks.csv"),
+                              json.loads((ROOT / "config.json").read_text())["tax_rate"])
+    except Exception:  # noqa: BLE001 - optional
+        mb = None
+    text = markdown(ai, lead, gng, sim, mb)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

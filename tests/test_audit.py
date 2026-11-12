@@ -78,3 +78,14 @@ sure = audit.bankroll_sim([{"result": "won", "total_odds": "3"}] * 12, tax=0.0, 
 assert sure["p_broke"] == 0 and sure["median"] > 400
 assert "owner bet this ticket rule" in audit.markdown(None, None, None, sim)
 print("bankroll sim ok")
+
+# Market breakdown: a won 2.0 pick after 15% tax returns 0.85, a lost one -1; small groups are hidden.
+mrows = [{"result": "won" if i % 2 == 0 else "lost", "odds": "2.0", "market_chance": "0.5",
+          "market": "spreads", "point": "-20"} for i in range(10)]
+mrows += [{"result": "won", "odds": "1.2", "market_chance": "0.8", "market": "h2h", "point": ""}] * 3
+mrows.append({"result": "pending", "odds": "2.0", "market_chance": "0.5", "market": "spreads", "point": "-3"})
+mb = {r[0]: r for r in audit.market_breakdown(mrows)}
+assert "h2h" not in mb and mb["spreads"][1] == 10 and "spreads, |line| > 15" in mb
+assert abs(mb["spreads"][4] - (0.85 - 1) / 2) < 1e-9
+assert "Which bet types pay" in audit.markdown(None, None, mb=list(mb.values()))
+print("market breakdown ok")

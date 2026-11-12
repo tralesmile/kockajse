@@ -890,3 +890,19 @@ no preview run.
 
 To measure next: h2h_ticket vs tax_market (~20 days), late_ticket vs tax_market, audit gain at
 ~800 picks, win rate of big-spread (|line| > 15) picks.
+
+## 2026-11-12 (evening review): bet-type breakdown
+
+Measured: 531 picks, flat stake after 15% tax. Spreads 141 picks won 49.6% vs 50.1% market (-12.9%);
+big lines (|line| > 15, 64 picks) -12.5% vs -13.3% for smaller ones, so no case for a big-spread
+filter. Totals 198 at -13.0%; Over 57.4% won (-5.1%, 108) vs Under 45.6% (-22.5%, 90), a gap that
+is about 1.5 se, so treated as noise. Moneylines 78 at -2.2%, double chance 68 at -9.9%. The 27
+ticket legs won 55.6% vs 63.5% expected, driven by handicap legs.
+
+Researched: nothing new; the data again say handicaps and totals are efficient coin flips that only
+pay margin and tax, and only favourite moneylines come near break-even.
+
+Changed: audit.py market_breakdown and a section in data/audit.md (test added in tests/test_audit.py).
+Ticket choice unchanged, no preview run.
+
+To measure next: h2h_ticket vs tax_market (about 20 days), totals Over vs Under at ~300 picks.

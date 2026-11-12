@@ -6,6 +6,14 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 12 Nov evening] Bet-type breakdown in audit.md (measurement, 2/4/1): won vs market chance and
+  flat return after tax by market, spread size, Over/Under and h2h odds. Result on 531 picks:
+  spreads 141 at -12.9% (|line| > 15 is no worse than smaller lines, -12.5% vs -13.3%, so the
+  "skip big spreads" filter is DROPPED), totals -13.0% (Over -5.1%, Under -22.5%, 108 vs 90, noise
+  until ~300), h2h -2.2% (78), double chance -9.9%. Next: h2h_ticket vs tax_market on same days.
+  Brainstorm: totals-Over-only shadow (2/1/1, small sample, likely noise), per-league h2h table
+  (2/2/2), Brier-based shrink of Under (1/1/1), plus the standing unconventional ideas above.
+
 - [BUILT 12 Nov] Bankroll ruin simulation in audit.md (measurement, 2/3/2): bootstrap the settled
   tickets at the live stake rule (25%, min 50, 400 start): 34 tickets, 29% won, median bank
   after 30 tickets 30, 83% fall below the minimum stake. Tells the owner what real betting

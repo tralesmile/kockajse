@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-12 (evening): which kinds of bets pay after tax
+
+- data/audit.md now has a table of results by bet type: handicaps, over/under, plain winners and double chance, each with win rate, the market's chance and the return after the 15% tax.
+- On 531 finished picks, handicaps lose about 13% and over/under about 13% (they are coin flips), while plain "to win" bets lose only about 2%. Big handicaps (more than 15 points) are no worse than small ones, so no filter for them.
+- Your ticket is chosen exactly as before; the moneyline-only experiment keeps running and a later review will suggest switching if it wins. No extra Odds API or Gemini use.
+
 ## 2026-11-12: a "what if you bet for real" check
 
 - data/audit.md now shows a simulation: if you had bet the bot's tickets with real money at the current stake rule (25% of the bank, at least 50), what would typically happen over the next 30 tickets.
