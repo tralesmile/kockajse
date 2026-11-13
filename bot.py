@@ -937,7 +937,7 @@ def closing_row(pick, cand, now, source="pick"):
     if cand is None:
         return row  # the line moved away (or the bet left the feed): nothing to compare
     sharp = cand["sharp"]
-    if source == "power_value":  # its opening fair chance is power-de-margined: compare alike
+    if source in ("power_value", "fav_flat"):  # its opening fair chance is power-de-margined: compare alike
         sharp = cand.get("sharp_power")
     close = sharp if sharp is not None else cand["consensus"]
     row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
@@ -954,14 +954,15 @@ def closing_row(pick, cand, now, source="pick"):
 
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
-SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value")
+SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value",
+              "fav_flat")
 # Ticket shadows whose legs are not always in the pick log (the market and power tickets
 # choose from every candidate): their legs are captured too, so the closing-price
 # scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
 # not captured twice; its pick capture is used.
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market")
-SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value")
+SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat")
 
 
 NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
@@ -1480,6 +1481,8 @@ def clv_html():
     table += line("Value singles (best price)", [r for r in rows if r.get("source") == "value_single"])
     table += line("Kaunitz singles (best price)", [r for r in rows if r.get("source") == "kaunitz_single"])
     table += line("Tax-proof value singles", [r for r in rows if r.get("source") == "taxed_value"])
+    table += line("Favourite singles to 1.30 (fav_flat)",
+                  [r for r in rows if r.get("source") == "fav_flat"])
     table += line("Tax-proof value, power chance",
                   [r for r in rows if r.get("source") == "power_value"])
     return ("<h3>Closing line</h3><table border='1' cellpadding='5' cellspacing='0' "
@@ -1510,6 +1513,7 @@ SHADOW_NAMES = {
     "single": "One single a day (best value pick the AI allows)",
     "taxed_value": "Value singles that still pay after the 15% tax",
     "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
+    "fav_flat": "Favourite singles to 1.30, break-even after tax (power chance, best price)",
     "power_ticket": "Most likely ticket using power-method chances",
     "likely_ticket": "The old ticket rule: most likely ticket within the AI's verdicts",
     "tax_best": "The real ticket rule at the best bookmaker prices",
@@ -1606,22 +1610,28 @@ def taxed_ev(prob, odds):
     return prob * (odds - 1) * (1 - CONFIG["tax_rate"]) - (1 - prob)
 
 
-def taxed_value_bets(cands, key="sharp"):
+FAV_FLAT_MIN_EV = -0.02
+FAV_FLAT_MAX_ODDS = 1.30
+
+
+def taxed_value_bets(cands, key="sharp", min_ev=0.0, max_odds=None, markets=None):
     """Singles whose best (outlier-capped) price beats the sharp chance by enough to pay the
     tax too. The 15% tax on winnings needs about +4% value at odds 1.40 and +10% at 2.70,
     so ordinary 2% value bets lose money here. In the 2019-2026 backtest (backtest.py) this
     rule found about 35 bets a season in 17 leagues, expected +2% after tax (unproven).
     key="sharp_power" uses the power-de-margined sharp chance instead (power_value shadow).
     The wide list starts at odds 1.05 (value_min_odds): the tax costs least on favourites."""
-    hi = CONFIG.get("value_max_odds", 4.0)
+    hi = max_odds or CONFIG.get("value_max_odds", 4.0)
     best = {}
     for c in cands:
         if c.get(key) is None or not c.get("best_odds") or c["market"] == "dc":
             continue
+        if markets and c["market"] not in markets:
+            continue
         if c["best_odds"] > hi:
             continue
         ev = taxed_ev(c[key], c["best_odds"])
-        if ev <= 0:
+        if ev <= min_ev:
             continue
         if c["event_id"] not in best or ev > best[c["event_id"]][0]:
             best[c["event_id"]] = (ev, c)
@@ -1716,6 +1726,15 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     for c in taxed_value_bets(wide_all, "sharp_power")[:CONFIG.get("value_max_singles", 10)]:
         out.append(("power_value", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
                                          sharp=c["sharp_power"], book=c["best_book"])]))
+    # "fav_flat" (13 Nov review): moneyline favourites at the best price up to 1.30 whose taxed
+    # expected return is above -2%, not just above 0. The tax on a win at 1.05-1.30 is
+    # about 0.5-4% of the stake, so these bets nearly escape it. Backtest 2019-2026, 41,971
+    # matches: 994 bets, +0.6% after tax (se 1.3) vs +4.3% (se 2.3) for the strict >0 rule on
+    # 222 bets; the looser cut gives 4x more bets so the live test settles sooner.
+    for c in taxed_value_bets(wide_all, "sharp_power", min_ev=FAV_FLAT_MIN_EV, max_odds=FAV_FLAT_MAX_ODDS,
+                              markets=("h2h",))[:CONFIG.get("value_max_singles", 10)]:
+        out.append(("fav_flat", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                                      sharp=c["sharp_power"], book=c["best_book"])]))
     # The live ticket rule (most likely ticket) with power chances instead of proportional.
     power_pool = [dict(c, prob=c["power_prob"]) for c in pool if c.get("power_prob")]
     power = build_ticket(power_pool)

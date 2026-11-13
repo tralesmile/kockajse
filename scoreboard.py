@@ -67,7 +67,7 @@ def closing_fair(closing_rows):
         if p is None:
             continue
         key = _key(r["event_id"], r["market"], r["sel"], r["point"])
-        has_power = _f(r.get("close_power")) is not None or r.get("source") == "power_value"
+        has_power = _f(r.get("close_power")) is not None or r.get("source") in ("power_value", "fav_flat")
         best = out.get(key)
         if best is None or (minutes, not has_power) < (best[1], not best[2]):
             out[key] = (p, minutes, has_power)

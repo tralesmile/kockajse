@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-13 (evening): testing favourite bets that almost escape the tax
+
+- New side experiment "fav_flat": each day the bot also records single bets on clear favourites (price up to 1.30, to win) that break even after the 15% tax, at the best bookmaker price. Win-sized profits at those prices lose very little to tax.
+- Why: over seven seasons of past matches this kind of bet came out at about +0.6% after tax, close to break-even and far better than tickets (-10%), but only when the best price across many bookmakers is used. One bookmaker alone (such as Megawin) would not give those prices.
+- It is settled like a paper bet and shown in the scoreboard and closing-price table. Your real ticket is chosen exactly as before; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-12 (evening): which kinds of bets pay after tax
 
 - data/audit.md now has a table of results by bet type: handicaps, over/under, plain winners and double chance, each with win rate, the market's chance and the return after the 15% tax.

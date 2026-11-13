@@ -923,3 +923,27 @@ Changed: audit.py calibration_bands and an audit.md section (test in tests/test_
 unchanged, no preview run.
 
 To measure next: calibration slope and the 75%+ band at ~100 picks; h2h_ticket vs tax_market (~20 days).
+
+## 2026-11-13 (evening review): can any favourite band beat the tax? (fav_flat shadow)
+
+Measured: tickets now 10 won of 35 (ticket 36 pending); no strategy beats the tax on the scoreboard
+(go/no-go NO-GO). 525 settled picks; the 75%+ band (+1.8%) and 1.15-1.30 band (-1.1%) are the only
+near-break-even ones, as in the earlier calibration. Backtest sweep (41,971 matches, 7 seasons,
+Pinnacle power chance, best close price, 15% tax on winnings) of taxed expected return threshold x odds band:
+1.05-1.30 with taxed EV >= -2%: 1068 bets +1.1% (se 1.2); >= 0: 238 bets +5.1% (se 2.2); longer bands
+1.30-3.00 are -6% to +3% with se 2-10 (noise); 3.00-5.00 clearly negative. Moneyline only, to 1.30, EV > -2%:
+994 bets +0.6% (se 1.3), seasons -6% to +9%; at the AVERAGE price only 96 bets qualify (-0.5%), so the edge,
+if any, exists only when shopping the best price across ~30 books.
+
+Researched: no new web sources (data decided). Considered 9 ideas (IDEAS.md): looser favourite band as a
+shadow (built), tax-adjusted cross-book arbitrage scan (a hedged arb loses the tax on the winning leg only,
+needs >15% margin: dropped without building), Thompson-sampling selector over shadow strategies (premature,
+all strategies undecided), Elo second opinion, NBA rest flag, per-league h2h table, Over-only shadow, line
+staleness, no-bet floor (owner).
+
+Changed: new shadow "fav_flat" (moneyline favourites to 1.30 at the best price, taxed EV above -2%, power
+chance), with closing-price capture and a scoreboard row; backtest.py "fav_flat"; tests/test_fav_flat.py.
+The real ticket is unchanged, so no preview run.
+
+To measure next: fav_flat at ~30 scored bets (xROI vs -0%); h2h_ticket vs tax_market; honest reading: the edge
+is only reachable with best-price shopping, which the owner's single bookmaker cannot do.

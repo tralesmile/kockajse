@@ -6,6 +6,14 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 13 Nov evening] fav_flat shadow (selection, 3/2/1): moneyline favourites at best price to 1.30
+  with taxed EV > -2% (power chance). Backtest 994 bets +0.6% (se 1.3) after tax, 4x the bets of the strict
+  rule (222, +4.3%, se 2.3), edge only at best price (average price: 96 bets, -0.5%). Live test needs ~30
+  scored bets. Brainstorm (impact/confidence/effort): tax-adjusted cross-book arb scan (2/1/2, DROPPED: tax
+  on the winning leg only, needs >15% margin); Thompson-sampling strategy selector (3/2/3, waits for data);
+  Elo second opinion (2/2/4); NBA rest flag (2/2/3); per-league h2h table (2/2/2); totals Over-only shadow
+  (2/1/1); line staleness Pinnacle vs field (3/2/3); no-bet floor on weak days (owner decision).
+
 - [BUILT 12 Nov evening] Bet-type breakdown in audit.md (measurement, 2/4/1): won vs market chance and
   flat return after tax by market, spread size, Over/Under and h2h odds. Result on 531 picks:
   spreads 141 at -12.9% (|line| > 15 is no worse than smaller lines, -12.5% vs -13.3%, so the

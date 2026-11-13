@@ -75,7 +75,7 @@ d = dict(tk)
 assert "power_value" in d and d["power_value"][0]["odds"] == 1.12, [n for n, _ in tk]
 assert d["power_value"][0]["book"] == "onexbet"
 # The older value shadows still ignore prices under min_leg_odds.
-assert not any(l["event_id"] == "p1" for n, legs in tk if n != "power_value" for l in legs)
+assert not any(l["event_id"] == "p1" for n, legs in tk if n not in ("power_value", "fav_flat") for l in legs)
 assert "power_ticket" in d
 total = 1.0
 for leg in d["power_ticket"]:
