@@ -243,7 +243,42 @@ def market_breakdown(pick_rows, tax=0.15, min_n=8):
     return out
 
 
-def markdown(ai, lead, gng=None, sim=None, mb=None):
+def calibration_bands(pick_rows, tax=0.15, edges=(0.0, 0.45, 0.55, 0.65, 0.75, 1.01), min_n=8):
+    """Favourite-longshot check: won rate vs market chance and taxed flat return by chance band.
+
+    Returns (bands, slope): bands is a list of (label, n, won, market_chance, return, se);
+    slope is the least-squares slope of outcome on market chance (1.0 = calibrated, above 1 means
+    favourites win more and longshots less than priced), or None with fewer than 20 picks.
+    """
+    rows = []
+    for r in pick_rows:
+        if r.get("result") not in ("won", "lost"):
+            continue
+        odds, chance = _f(r.get("odds")), _f(r.get("market_chance"))
+        if odds is None or chance is None:
+            continue
+        won = r["result"] == "won"
+        rows.append((chance, 1.0 if won else 0.0, (odds - 1) * (1 - tax) if won else -1.0))
+    bands = []
+    for lo, hi in zip(edges, edges[1:]):
+        vals = [v for v in rows if lo <= v[0] < hi]
+        if len(vals) < min_n:
+            continue
+        n = len(vals)
+        mean_ret, se = _mean_se([v[2] for v in vals])
+        bands.append((f"{lo*100:.0f}-{min(hi,1)*100:.0f}%", n, sum(v[1] for v in vals) / n,
+                      sum(v[0] for v in vals) / n, mean_ret, se))
+    slope = None
+    if len(rows) >= 20:
+        mx = sum(v[0] for v in rows) / len(rows)
+        my = sum(v[1] for v in rows) / len(rows)
+        var = sum((v[0] - mx) ** 2 for v in rows)
+        if var > 0:
+            slope = sum((v[0] - mx) * (v[1] - my) for v in rows) / var
+    return bands, slope
+
+
+def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
     if gng:
@@ -264,6 +299,16 @@ def markdown(ai, lead, gng=None, sim=None, mb=None):
                 "| Group | Picks | Won | Market chance | Return after tax | se |", "|---|---|---|---|---|---|"]
         out += [f"| {l} | {n} | {w*100:.1f}% | {c*100:.1f}% | {r*100:+.1f}% | {se*100:.1f} |"
                 for l, n, w, c, r, se in mb]
+        out.append("")
+    if cal and cal[0]:
+        bands, slope = cal
+        out += ["## Favourite-longshot check: results by market-chance band", "",
+                "Settled picks at the average price, flat stake, after the tax. A calibration slope "
+                "above 1 means favourites win more often than priced and longshots less often"
+                + (f" (now {slope:.2f})" if slope is not None else "") + ".", "",
+                "| Market chance | Picks | Won | Priced | Return after tax | se |", "|---|---|---|---|---|---|"]
+        out += [f"| {l} | {n} | {w*100:.1f}% | {c*100:.1f}% | {r*100:+.1f}% | {se*100:.1f} |"
+                for l, n, w, c, r, se in bands]
         out.append("")
     out.append("## Does the AI add anything to the sharp chance?")
     if ai is None:
@@ -326,7 +371,13 @@ def write(data_dir=None, ai_weight=0.2):
                               json.loads((ROOT / "config.json").read_text())["tax_rate"])
     except Exception:  # noqa: BLE001 - optional
         mb = None
-    text = markdown(ai, lead, gng, sim, mb)
+    cal = None
+    try:
+        cal = calibration_bands(_read(data_dir / "picks.csv"),
+                                json.loads((ROOT / "config.json").read_text())["tax_rate"])
+    except Exception:  # noqa: BLE001 - optional
+        cal = None
+    text = markdown(ai, lead, gng, sim, mb, cal)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

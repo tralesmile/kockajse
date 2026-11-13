@@ -324,6 +324,13 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## New
 
+- [BUILT 13 Nov, audit] Calibration by chance band (modelling, 2/2/1): slope 1.31, 75%+ favourites +8.4
+  points over price (41 picks, +1.8% after tax, se 6.7). Supports the moneyline-favourite shadows; if
+  the slope holds at ~100 picks, extremise the power chances for favourites in the taxed objective.
+  Also brainstormed, not built: logit-recalibration shadow (3/2/2), Elo second opinion (3/2/3),
+  NBA rest flag (2/2/3), exchange lay price (2/2/3), Gemini ensemble disagreement as skip signal
+  (2/2/3), handball favourites singles (2/1/2), no-bet floor (owner's call).
+
 - [BUILT 11 Nov evening, shadow] Moneyline-only ticket (ticket selection, 3/3/1): by market on
   426 settled picks, h2h favourites won 73.2% vs 67.3% market (71, about -0.6% after tax at
   average prices), double chance +3.2 points (68, -9.9%), spreads +0.8 (116, -10.7%), totals

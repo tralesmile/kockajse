@@ -906,3 +906,20 @@ Changed: audit.py market_breakdown and a section in data/audit.md (test added in
 Ticket choice unchanged, no preview run.
 
 To measure next: h2h_ticket vs tax_market (about 20 days), totals Over vs Under at ~300 picks.
+
+## 2026-11-13 (review): do favourites beat their price?
+
+Measured: 525 settled picks by market-chance band, flat stake after 15% tax: 45-55% (347) won 49.6% vs
+50.2% priced (-13.8%); 55-65% (83) 60.2% vs 58.7% (-9.3%); 65-75% (53) 77.4% vs 71.2% (-3.3%); 75%+
+(41) 85.4% vs 77.0% (+1.8%, se 6.7). Calibration slope 1.31: the favourite-longshot bias again, but
+every band is within about 1 se of its price. Tickets 34 won, 35 lost (10 of 35 won); no strategy beats
+the tax on the scoreboard, go/no-go still NO-GO. Ticket 36 not yet run at review time.
+
+Researched: no new sources; reused Burgi et al. 2026 (favourite-longshot bias) already logged.
+Considered: extremising chances (logit slope), moneyline-only ticket (running), no-bet floor (owner),
+Elo second opinion, NBA rest flag, exchange lay prices, ensemble Gemini runs, handball favourites singles.
+
+Changed: audit.py calibration_bands and an audit.md section (test in tests/test_audit.py). Ticket choice
+unchanged, no preview run.
+
+To measure next: calibration slope and the 75%+ band at ~100 picks; h2h_ticket vs tax_market (~20 days).

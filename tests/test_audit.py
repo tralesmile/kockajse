@@ -89,3 +89,11 @@ assert "h2h" not in mb and mb["spreads"][1] == 10 and "spreads, |line| > 15" in 
 assert abs(mb["spreads"][4] - (0.85 - 1) / 2) < 1e-9
 assert "Which bet types pay" in audit.markdown(None, None, mb=list(mb.values()))
 print("market breakdown ok")
+
+# Calibration bands: favourites that win more than priced give a slope above 1 and a positive band.
+rows = [{"result": "won" if i % 10 else "lost", "odds": "1.25", "market_chance": "0.75"} for i in range(40)]
+rows += [{"result": "won" if i % 2 else "lost", "odds": "1.9", "market_chance": "0.5"} for i in range(40)]
+bands, slope = audit.calibration_bands(rows)
+assert len(bands) == 2 and bands[-1][2] > bands[-1][3] and slope > 1
+assert audit.calibration_bands(rows[:3]) == ([], None)
+print("calibration bands ok")

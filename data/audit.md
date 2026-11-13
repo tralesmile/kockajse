@@ -27,6 +27,17 @@ Settled picks at the average price, flat stake, after the tax. Handicaps and tot
 | totals Over | 118 | 55.1% | 52.6% | -8.8% | 7.6 |
 | totals Under | 101 | 48.5% | 51.7% | -17.6% | 8.5 |
 
+## Favourite-longshot check: results by market-chance band
+
+Settled picks at the average price, flat stake, after the tax. A calibration slope above 1 means favourites win more often than priced and longshots less often (now 1.31).
+
+| Market chance | Picks | Won | Priced | Return after tax | se |
+|---|---|---|---|---|---|
+| 45-55% | 347 | 49.6% | 50.2% | -13.8% | 4.7 |
+| 55-65% | 83 | 60.2% | 58.7% | -9.3% | 8.2 |
+| 65-75% | 53 | 77.4% | 71.2% | -3.3% | 7.3 |
+| 75-100% | 41 | 85.4% | 77.0% | +1.8% | 6.7 |
+
 ## Does the AI add anything to the sharp chance?
 
 525 settled picks. Brier score (lower is better) of the sharp chance shifted toward the AI's chance by weight w:
