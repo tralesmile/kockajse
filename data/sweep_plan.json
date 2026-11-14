@@ -1,12 +1,40 @@
 {
-  "date": "2026-11-13",
+  "date": "2026-11-14",
   "slots": [
     {
-      "id": "basketball_ncaab@2026-11-14T03:00:00Z",
+      "id": "soccer_france_coupe_de_france@2026-11-14T17:00:00Z",
+      "sport_key": "soccer_france_coupe_de_france",
+      "first": "2026-11-14T17:00:00Z",
+      "last": "2026-11-14T17:30:00Z",
+      "events": 6
+    },
+    {
+      "id": "soccer_spain_segunda_division@2026-11-14T17:30:00Z",
+      "sport_key": "soccer_spain_segunda_division",
+      "first": "2026-11-14T17:30:00Z",
+      "last": "2026-11-14T17:30:00Z",
+      "events": 2
+    },
+    {
+      "id": "handball_germany_bundesliga@2026-11-14T18:00:00Z",
+      "sport_key": "handball_germany_bundesliga",
+      "first": "2026-11-14T18:00:00Z",
+      "last": "2026-11-14T18:00:00Z",
+      "events": 2
+    },
+    {
+      "id": "soccer_brazil_serie_b@2026-11-14T19:30:00Z",
+      "sport_key": "soccer_brazil_serie_b",
+      "first": "2026-11-14T19:30:00Z",
+      "last": "2026-11-14T19:30:00Z",
+      "events": 7
+    },
+    {
+      "id": "basketball_ncaab@2026-11-15T03:00:00Z",
       "sport_key": "basketball_ncaab",
-      "first": "2026-11-14T03:00:00Z",
-      "last": "2026-11-14T03:30:00Z",
-      "events": 4
+      "first": "2026-11-15T03:00:00Z",
+      "last": "2026-11-15T03:00:00Z",
+      "events": 2
     }
   ]
 }
