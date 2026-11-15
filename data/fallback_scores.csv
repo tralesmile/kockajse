@@ -4,3 +4,4 @@ checked,event_id,sport_key,match,start,home_score,away_score,extra_time,source_1
 2026-11-06T07:05:33Z,0b15b685479df1479050365848bcfe54,tennis_atp_paris_masters,Alejandro Tabilo v Rafael Jodar,2026-11-02T11:10:00Z,0,2,False,"Tennis Majors, Sofascore, Kalshi","Tennis Majors [3], Sofascore [10], Kalshi [20]",yes
 2026-11-06T07:05:33Z,1be19552d8710b4628e2747163b4cf78,tennis_atp_paris_masters,Novak Djokovic v Rinky Hijikata,2026-11-04T13:40:00Z,1,2,False,"365Scores, TennisWorldUSA.org, Tennis Majors, Kalshi","365Scores [1], ATP Tour [5], Tennis Majors [6]",yes
 2026-11-06T07:05:33Z,d9db521dae7522d7d24255286307307f,tennis_atp_paris_masters,Alex Molcan v Taylor Fritz,2026-11-04T13:50:00Z,1,2,False,"YouTube, Kalshi","Tennis Majors [9], YouTube [18], Kalshi [26]",yes
+2026-11-15T07:05:29Z,5097c74987296cf0630dece4e02b1a0c,soccer_france_coupe_de_france,Stade Béthunois v Nancy,2026-11-14T17:00:00Z,3,3,True,Futbol24,Futbol24,yes
