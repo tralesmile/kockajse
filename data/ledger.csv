@@ -36,3 +36,4 @@ ticket_no,date,picks,total_odds,stake,result,payout,tax,net_profit,bankroll_afte
 35,2026-11-12,England v Croatia: England to win @1.26 (won) | Montenegro v Latvia: Under 2.5 goals @2.0 (lost),2.52,100,lost,0.0,0.0,-100,-805.9,paper
 36,2026-11-13,Panathinaikos v FC Barcelona Bàsquet: FC Barcelona Bàsquet +10 (handicap) @1.85 (won) | Serbia v Germany: Under 3.5 goals @1.78 (lost),3.29,100,lost,0.0,0.0,-100,-905.9,paper
 37,2026-11-14,Northern Ireland v Ukraine: Under 2.5 goals @1.49 (won) | Romania v Poland: Poland to win @1.82 (lost),2.71,100,lost,0.0,0.0,-100,-1005.9,paper
+38,2026-11-15,Wisconsin Badgers v Coastal Carolina Chanticleers: Coastal Carolina Chanticleers +28.5 (handicap) @1.96 (won) | Milwaukee Bucks v Atlanta Hawks: Atlanta Hawks to win @1.32 (won),2.59,100,won,259.0,23.85,135.15,-870.75,paper

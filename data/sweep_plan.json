@@ -1,40 +1,12 @@
 {
-  "date": "2026-11-15",
+  "date": "2026-11-16",
   "slots": [
     {
-      "id": "soccer_france_coupe_de_france@2026-11-15T13:00:00Z",
-      "sport_key": "soccer_france_coupe_de_france",
-      "first": "2026-11-15T13:00:00Z",
-      "last": "2026-11-15T13:00:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_germany_bundesliga_women@2026-11-15T15:00:00Z",
-      "sport_key": "soccer_germany_bundesliga_women",
-      "first": "2026-11-15T15:00:00Z",
-      "last": "2026-11-15T15:00:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_uefa_nations_league@2026-11-15T17:00:00Z",
-      "sport_key": "soccer_uefa_nations_league",
-      "first": "2026-11-15T17:00:00Z",
-      "last": "2026-11-15T17:00:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_spain_segunda_division@2026-11-15T17:30:00Z",
-      "sport_key": "soccer_spain_segunda_division",
-      "first": "2026-11-15T17:30:00Z",
-      "last": "2026-11-15T17:30:00Z",
-      "events": 2
-    },
-    {
-      "id": "basketball_nba@2026-11-15T23:10:00Z",
+      "id": "basketball_nba@2026-11-17T00:10:00Z",
       "sport_key": "basketball_nba",
-      "first": "2026-11-15T23:10:00Z",
-      "last": "2026-11-15T23:10:00Z",
-      "events": 2
+      "first": "2026-11-17T00:10:00Z",
+      "last": "2026-11-17T00:40:00Z",
+      "events": 5
     }
   ]
 }
