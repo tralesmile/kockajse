@@ -937,7 +937,7 @@ def closing_row(pick, cand, now, source="pick"):
     if cand is None:
         return row  # the line moved away (or the bet left the feed): nothing to compare
     sharp = cand["sharp"]
-    if source in ("power_value", "fav_flat"):  # its opening fair chance is power-de-margined: compare alike
+    if source in ("power_value", "fav_flat", "banker", "banker_double"):  # its opening fair chance is power-de-margined: compare alike
         sharp = cand.get("sharp_power")
     close = sharp if sharp is not None else cand["consensus"]
     row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
@@ -955,7 +955,7 @@ def closing_row(pick, cand, now, source="pick"):
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
 SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value",
-              "fav_flat")
+              "fav_flat", "banker", "banker_double")
 # Ticket shadows whose legs are not always in the pick log (the market and power tickets
 # choose from every candidate): their legs are captured too, so the closing-price
 # scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
@@ -963,7 +963,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
                    "veto_ticket_best")
-SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat")
+SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "banker", "banker_double")
 
 
 NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
@@ -1515,6 +1515,8 @@ SHADOW_NAMES = {
     "taxed_value": "Value singles that still pay after the 15% tax",
     "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
     "fav_flat": "Favourite singles to 1.30, break-even after tax (power chance, best price)",
+    "banker": "Banker: the single most likely bet of the day (power chance, best price)",
+    "banker_double": "Banker double: the two most likely bets on different matches (best price)",
     "power_ticket": "Most likely ticket using power-method chances",
     "likely_ticket": "The old ticket rule: most likely ticket within the AI's verdicts",
     "tax_best": "The real ticket rule at the best bookmaker prices",
@@ -1615,6 +1617,7 @@ def taxed_ev(prob, odds):
 
 FAV_FLAT_MIN_EV = -0.02
 FAV_FLAT_MAX_ODDS = 1.30
+BANKER_MIN_CHANCE = 0.70
 
 
 def taxed_value_bets(cands, key="sharp", min_ev=0.0, max_odds=None, markets=None):
@@ -1751,6 +1754,23 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
                               markets=("h2h",))[:CONFIG.get("value_max_singles", 10)]:
         out.append(("fav_flat", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
                                       sharp=c["sharp_power"], book=c["best_book"])]))
+    # "banker" / "banker_double" (16 Nov review, owner's win-rate goal): the single most likely bet
+    # of the day by the sharp power chance (any market, best price), and the two most likely bets
+    # on different matches as a double. They answer "how high can the hit rate go, and what does it
+    # cost after tax?" side by side with fav_flat and the AI tickets.
+    sure = sorted((c for c in wide_all if c.get("sharp_power") and c.get("best_odds")
+                   and c["best_odds"] >= 1.03 and c["sharp_power"] >= BANKER_MIN_CHANCE),
+                  key=lambda c: (c["sharp_power"], c["best_odds"]), reverse=True)
+    seen, firsts = set(), []
+    for c in sure:
+        if c["event_id"] not in seen:
+            seen.add(c["event_id"])
+            firsts.append(dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                               sharp=c["sharp_power"], book=c["best_book"]))
+    if firsts:
+        out.append(("banker", [firsts[0]]))
+    if len(firsts) >= 2:
+        out.append(("banker_double", firsts[:2]))
     # The live ticket rule (most likely ticket) with power chances instead of proportional.
     power_pool = [dict(c, prob=c["power_prob"]) for c in pool if c.get("power_prob")]
     power = build_ticket(power_pool)

@@ -6,6 +6,11 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 16 Nov late evening] Win-rate shadows banker / banker_double (selection, 3/3/1): the most likely bet of the day
+  at the best price (power chance >= 70%, any market) and the two most likely on different matches. Settles the question
+  "how high a hit rate, at what tax cost". Other ideas that day (impact/confidence/effort): Elo second opinion (2/2/4), NBA rest
+  flag (2/2/3), Over-only shadow (2/1/1), Thompson-sampling strategy selector (3/2/3, waits), exchange lay prices (2/2/3).
+
 - [BUILT 16 Nov evening] AI as veto only (prompts/workflow, 4/3/2): shadows veto_ticket and veto_ticket_best,
   market-chosen taxed ticket without the AVOID picks. Waits ~20 days for veto vs tax_market vs actual. Follow-up
   if the AI gain stays at zero: stop AI ranking, use Gemini only for late-news checks on favourites.

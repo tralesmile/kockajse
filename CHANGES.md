@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-16 (late evening): testing the highest win-rate bets
+
+- New side experiments "banker" (the single most likely bet of the day) and "banker_double" (the two most likely, on different matches), both at the best bookmaker price and recorded as paper bets.
+- Why: you want the success rate of the picks as high as possible. These show how high it can go and what the 15% tax costs at those short prices.
+- They are settled and compared at closing prices in the scoreboard next to the real ticket. Your real ticket is unchanged; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-16 (evening): testing the AI as a veto only
 
 - New side experiment "veto ticket": each day the bot also records a ticket chosen by the bookmakers' prices alone (best return after the 15% tax), skipping only the picks the AI marked AVOID. One version at the average price, one at the best bookmaker price.

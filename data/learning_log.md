@@ -982,3 +982,24 @@ the same days. tests/test_veto_ticket.py added; all tests pass. Real ticket unch
 
 To measure next: veto_ticket vs tax_market and actual at ~20 days; audit AI gain at ~800 picks, then decide whether
 to drop the AI ranking and spend the Gemini searches only on late-news checks of shortlisted favourites.
+
+## 2026-11-16 (second evening review): win-rate shadows (banker, banker_double)
+
+Measured: owner's new goal is the success rate of picked bets. Settled picks by sharp chance: 70-75% band won 81% (42),
+75-80% won 86% (50, +2.4% after tax at average price), with only 2 picks above 80% in the pick log because the AI shortlist
+rarely holds heavy favourites. The most likely pick per day (16 days) won 81% at -3.6% after tax. Shadow win rates so far:
+h2h_ticket 89% of legs (9), ai_own 76% (33), tax_best 73%, actual 57% (30), value_single 23%. Current leaders: win rate = the
+moneyline-only and favourite shadows (small n); return after tax = late tax-proof singles (+1.3%, 6 bets) and the kick-off sweep
+(+4.4%, 3), all undecided. No strategy beats the tax (NO-GO unchanged).
+
+Researched (web, one search round): oddspapi, EdgeScout, BeatTheBookie and devigger write-ups all use Pinnacle de-margined
+prices and closing line value as the benchmark, which the bot already does; nothing new to adapt.
+Considered (IDEAS.md): banker single, banker double, higher-chance dc singles, Elo second opinion, NBA rest flag, Over-only
+shadow, Thompson-sampling selector (waits for data), exchange lay prices, drop AI ranking (waits for ~800 picks).
+
+Changed: new shadows "banker" (the single most likely bet of the day, any market, best price, sharp power chance at least 70%)
+and "banker_double" (two most likely on different matches), settled and captured at the close, in the scoreboard;
+tests/test_banker.py. Real ticket unchanged, no preview run.
+
+To measure next: banker win rate and return at ~30 bets vs fav_flat and ai_own; if win rate is high but return stays below the
+tax, report the price of a high hit rate to the owner.
