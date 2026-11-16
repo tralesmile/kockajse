@@ -6,6 +6,17 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [DROPPED 16 Nov] Extremising / recalibrating the sharp chance (modelling, 2/4/1): backtest on 38,426
+  matches (7 seasons, Pinnacle close power chance, best close price): Brier is lowest at logit slope k=1.0
+  (0.59333; k=1.1 0.59398, k=0.9 0.59445), so Pinnacle's power chance is already calibrated and stretching
+  it (forecasting-tournament extremising) only hurts. Favourites (>=55%) with taxed EV > -2% at best price:
+  +1.6% over 2,309 bets (se about 1.1), per season -3.1% to +16.1%, so still consistent with fav_flat but
+  not proof. Tool: recal_check.py. 16 Nov brainstorm (impact/confidence/effort): Elo second opinion (2/2/4);
+  NBA rest flag (2/2/3); Over-only totals shadow (2/1/1); Thompson-sampling strategy selector (3/2/3,
+  waits for data); injury-news timing for NBA (3/2/4); exchange lay price as fair chance (2/2/3);
+  Nations League goals-total filter, 2 of the last 3 lost legs were Unders in internationals (1/1/1, n too small);
+  drop AI rules to free Gemini quota (waits for audit at ~800 picks).
+
 - [BUILT 13 Nov evening] fav_flat shadow (selection, 3/2/1): moneyline favourites at best price to 1.30
   with taxed EV > -2% (power chance). Backtest 994 bets +0.6% (se 1.3) after tax, 4x the bets of the strict
   rule (222, +4.3%, se 2.3), edge only at best price (average price: 96 bets, -0.5%). Live test needs ~30

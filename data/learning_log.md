@@ -947,3 +947,24 @@ The real ticket is unchanged, so no preview run.
 
 To measure next: fav_flat at ~30 scored bets (xROI vs -0%); h2h_ticket vs tax_market; honest reading: the edge
 is only reachable with best-price shopping, which the owner's single bookmaker cannot do.
+
+## 2026-11-16 (review): is the sharp chance worth stretching? (no bot change)
+
+Measured: tickets 35 (England won, Montenegro Under 2.5 lost), 36 (Barcelona +10 won, Serbia v Germany Under 3.5
+lost), 37 (N. Ireland Under won, Poland lost) = 3 more losses, 11 of 38 won. Research for the lost legs showed no
+warning: two were goals-total unders in Nations League dead rubbers (coin flips), one a 1.82 favourite. All
+21 test files pass. Scoreboard still NO-GO; fav_flat has 10 bets so far (too few).
+
+Backtest (41,971 matches; 38,426 with Pinnacle close and best close price): Brier by logit slope k: 0.9 0.59445,
+1.0 0.59333, 1.05 0.59345, 1.1 0.59398, 1.2 0.59607, so no extremising gain. Favourite bets with taxed EV > -2% at
+best price pooled +1.6% over 2,309 bets (se about 1.1); per season 2019/20 +4.2%, 20/21 -2.9%, 21/22 -3.1%, 22/23
++9.8%, 23/24 +0.3%, 24/25 +0.8%, 25/26 +16.1% (76 bets). First vs second half of the data at EV > 0: -1.0% vs +6.3%,
+suggesting best-price shopping works better in recent years, still within noise.
+
+Researched: no new web sources (the data decided). Considered 9 ideas (IDEAS.md): extremising (dropped), Elo second
+opinion, NBA rest flag, Over-only shadow, Thompson-sampling selector, NBA injury timing, exchange lay prices,
+Nations League totals filter, drop AI rules.
+
+Changed: added recal_check.py (backtest tool) and tests/test_recal.py. The bot, its picks and CHANGES.md are untouched.
+
+To measure next: fav_flat at ~30 scored bets; h2h_ticket vs tax_market; audit AI gain at ~800 picks.
