@@ -6,6 +6,10 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 16 Nov evening] AI as veto only (prompts/workflow, 4/3/2): shadows veto_ticket and veto_ticket_best,
+  market-chosen taxed ticket without the AVOID picks. Waits ~20 days for veto vs tax_market vs actual. Follow-up
+  if the AI gain stays at zero: stop AI ranking, use Gemini only for late-news checks on favourites.
+
 - [DROPPED 16 Nov] Extremising / recalibrating the sharp chance (modelling, 2/4/1): backtest on 38,426
   matches (7 seasons, Pinnacle close power chance, best close price): Brier is lowest at logit slope k=1.0
   (0.59333; k=1.1 0.59398, k=0.9 0.59445), so Pinnacle's power chance is already calibrated and stretching

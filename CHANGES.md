@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-16 (evening): testing the AI as a veto only
+
+- New side experiment "veto ticket": each day the bot also records a ticket chosen by the bookmakers' prices alone (best return after the 15% tax), skipping only the picks the AI marked AVOID. One version at the average price, one at the best bookmaker price.
+- Why: on 664 finished picks the AI's chances were no more accurate than the sharp bookmaker's, and its AGREE/RISKY/AVOID labels barely separated winners from losers. So the AI should not choose or rank bets; at most it should warn about concrete bad news.
+- It is settled like a paper ticket and appears in the scoreboard next to the real ticket and the no-AI ticket, so in a few weeks we can see on the same days whether the veto helps at all.
+- Your real ticket is chosen exactly as before; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-13 (evening): testing favourite bets that almost escape the tax
 
 - New side experiment "fav_flat": each day the bot also records single bets on clear favourites (price up to 1.30, to win) that break even after the 15% tax, at the best bookmaker price. Win-sized profits at those prices lose very little to tax.

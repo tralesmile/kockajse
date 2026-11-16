@@ -961,7 +961,8 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 # scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
 # not captured twice; its pick capture is used.
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
-                   "actual", "likely_ticket", "tax_best", "tax_market")
+                   "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
+                   "veto_ticket_best")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat")
 
 
@@ -1518,6 +1519,8 @@ SHADOW_NAMES = {
     "likely_ticket": "The old ticket rule: most likely ticket within the AI's verdicts",
     "tax_best": "The real ticket rule at the best bookmaker prices",
     "tax_market": "Market only, best return after tax (no AI)",
+    "veto_ticket": "AI as veto only: market ticket (best return after tax) without the AVOID picks",
+    "veto_ticket_best": "AI as veto only, at the best bookmaker prices",
     "h2h_ticket": "Moneyline-only ticket, best return after tax (no handicaps or totals, no AI)",
     "h2h_ticket_best": "Moneyline-only ticket at the best bookmaker prices (no AI)",
     "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
@@ -1678,6 +1681,19 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     if taxed:
         out.append(("tax_market", [dict(l, book="average", sharp=l.get("sharp_power"))
                                    for l in taxed["legs"]]))
+    # AI as a veto only (16 Nov review). On 664 settled picks the AI's chances were no better than
+    # the sharp price (Brier 0.2341 vs 0.2326) and its verdicts barely separated winners from
+    # losers, so it should not choose or rank picks. This ticket is chosen by the market alone
+    # (best return after tax) from the shortlisted picks the AI did not mark AVOID, with no
+    # AGREE preference and no cap on RISKY. Same days as tax_market (no veto) and actual (AI
+    # rules), so the value of the veto itself is measurable.
+    vetoed = [c for c in (short or {}).values() if c.get("verdict", "RISKY") != "AVOID"]
+    for name, okey in (("veto_ticket", "odds"), ("veto_ticket_best", "best_odds")):
+        t = build_taxed_ticket(vetoed, odds_key=okey) if vetoed else None
+        if t:
+            out.append((name, [dict(l, book="average", sharp=l.get("sharp_power")) if okey == "odds"
+                               else dict(l, book=l.get("best_book") or "average",
+                                         sharp=l.get("sharp_power")) for l in t["legs"]]))
     # Moneyline-only twin of tax_market (11 Nov evening review). On 426 settled picks, h2h favourites
     # won 73.2% vs 67.3% market (about break-even after tax), while handicaps and totals
     # were coin flips at ~1.88 (-11%); legs of that kind carried most real ticket losses.

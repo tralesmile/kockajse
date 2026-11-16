@@ -968,3 +968,17 @@ Nations League totals filter, drop AI rules.
 Changed: added recal_check.py (backtest tool) and tests/test_recal.py. The bot, its picks and CHANGES.md are untouched.
 
 To measure next: fav_flat at ~30 scored bets; h2h_ticket vs tax_market; audit AI gain at ~800 picks.
+
+## 2026-11-16 (evening review): AI as veto (veto_ticket shadow)
+
+Measured (664 settled picks): won minus market chance AGREE +2.3 points (189), RISKY +1.3 (320), AVOID -0.7 (155);
+Brier AI chance 0.2341 vs market 0.2326; AI-minus-market gap bins show no pattern (only 20 picks differ by more
+than 3 points). The 35 ticket legs won 57.1% vs 62.3% expected. Conclusion: the AI neither ranks nor prices better
+than the sharp book; at most it can warn of concrete news.
+
+Changed: shadows "veto_ticket" and "veto_ticket_best" (bot.py): market-only taxed ticket from shortlisted picks
+not marked AVOID, no AGREE preference, no RISKY cap. Compare with tax_market (no veto) and actual (AI rules) on
+the same days. tests/test_veto_ticket.py added; all tests pass. Real ticket unchanged, no preview run.
+
+To measure next: veto_ticket vs tax_market and actual at ~20 days; audit AI gain at ~800 picks, then decide whether
+to drop the AI ranking and spend the Gemini searches only on late-news checks of shortlisted favourites.
