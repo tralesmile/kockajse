@@ -6,6 +6,18 @@ review is free to change anything that could help: the prompts, the way matches 
 researched and judged, the code, the data sources, the bet types, the selection logic.
 Be open to new ideas and try them. The daily tips email keeps going throughout.
 
+## Standing goal from the owner (16 Nov 2026)
+
+Make the success rate of the picked bets as high as possible. Every review: try several
+different ways to improve it (prompts and AI workflow, data, maths, bet types, selection
+rules); search the web for people and projects doing similar things (open-source betting
+and sports-modelling repositories, papers, syndicate write-ups, data-provider docs) and
+adapt what has measurably worked; keep testing very different strategies side by side
+(shadow tickets, backtests) until the best one is found; retire what the data rejects and
+double down on what wins. Say in `data/learning_log.md` which strategy leads on win rate
+and on return after tax. "No edge found" is never the end of a review: propose and test
+the next, more different strategy.
+
 ## Be creative
 
 The owner wants the most creative, best possible solution each time, not the safest small
