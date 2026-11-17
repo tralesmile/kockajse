@@ -278,7 +278,43 @@ def calibration_bands(pick_rows, tax=0.15, edges=(0.0, 0.45, 0.55, 0.65, 0.75, 1
     return bands, slope
 
 
-def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None):
+def strategy_leaders(shadow_rows, tax=0.15, min_legs=10):
+    """Which strategy leads on win rate and on return after tax (owner's standing goal).
+
+    From the settled shadow legs: leg win rate with a Wilson 95% lower bound, flat-stake return per
+    leg after the tax at the recorded odds, and the share of days on which every leg won (the ticket
+    win rate). Returns rows (name, legs, won, lower, ret, se, days, day_win) with at least min_legs
+    settled legs, sorted by win rate; a day counts only when none of its legs is still pending.
+    """
+    by, days = {}, {}
+    for r in shadow_rows:
+        name, res, odds = r.get("strategy"), r.get("result"), _f(r.get("odds"))
+        if not name or odds is None:
+            continue
+        d = days.setdefault((name, r.get("date")), [0, 0])  # [pending, lost]
+        if res not in ("won", "lost"):
+            d[0] += 1
+            continue
+        if res == "lost":
+            d[1] += 1
+        by.setdefault(name, []).append((1.0 if res == "won" else 0.0,
+                                        (odds - 1) * (1 - tax) if res == "won" else -1.0))
+    out = []
+    for name, v in by.items():
+        n = len(v)
+        if n < min_legs:
+            continue
+        p = sum(x[0] for x in v) / n
+        z = 1.96
+        lower = (p + z * z / (2 * n) - z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / (1 + z * z / n)
+        ret, se = _mean_se([x[1] for x in v])
+        settled = [d for (nm, _), d in days.items() if nm == name and d[0] == 0]
+        out.append((name, n, int(sum(x[0] for x in v)), lower, ret, se, len(settled),
+                    (sum(1 for d in settled if d[1] == 0) / len(settled)) if settled else 0.0))
+    return sorted(out, key=lambda t: (-t[3], -t[1]))
+
+
+def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
     if gng:
@@ -309,6 +345,18 @@ def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None):
                 "| Market chance | Picks | Won | Priced | Return after tax | se |", "|---|---|---|---|---|---|"]
         out += [f"| {l} | {n} | {w*100:.1f}% | {c*100:.1f}% | {r*100:+.1f}% | {se*100:.1f} |"
                 for l, n, w, c, r, se in bands]
+        out.append("")
+    if leaders:
+        best_ret = max(leaders, key=lambda t: t[4])
+        out += ["## Who leads? Win rate and return after tax by shadow strategy", "",
+                "Settled shadow legs, flat stake at the recorded odds, after the tax. Sorted by the "
+                "lower bound of the 95% win-rate interval, so a small lucky sample does not top the "
+                f"table. Return leader: {best_ret[0]} ({best_ret[4]*100:+.1f}%, {best_ret[1]} legs); "
+                "a return of 0 would be break-even.", "",
+                "| Strategy | Legs | Won | Win rate | 95% lower | Return after tax | se | Days | Days all legs won |",
+                "|---|---|---|---|---|---|---|---|---|"]
+        out += [f"| {nm} | {n} | {w} | {w/n*100:.0f}% | {lo*100:.0f}% | {r*100:+.1f}% | {se*100:.1f} | {dd} | "
+                f"{dw*100:.0f}% |" for nm, n, w, lo, r, se, dd, dw in leaders]
         out.append("")
     out.append("## Does the AI add anything to the sharp chance?")
     if ai is None:
@@ -377,7 +425,13 @@ def write(data_dir=None, ai_weight=0.2):
                                 json.loads((ROOT / "config.json").read_text())["tax_rate"])
     except Exception:  # noqa: BLE001 - optional
         cal = None
-    text = markdown(ai, lead, gng, sim, mb, cal)
+    leaders = None
+    try:
+        leaders = strategy_leaders(_read(data_dir / "shadow.csv"),
+                                   json.loads((ROOT / "config.json").read_text())["tax_rate"])
+    except Exception:  # noqa: BLE001 - optional
+        leaders = None
+    text = markdown(ai, lead, gng, sim, mb, cal, leaders)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

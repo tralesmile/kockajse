@@ -1028,3 +1028,24 @@ all 24 test files pass. Preview run not started (no gh dispatch access from this
 
 To measure next: actual vs prev_rule on the same days at ~15 days (win rate first, then return after tax); if prev_rule wins,
 revert via config (set tiers to [null]). Then test a two-leg cap and a late-news veto.
+
+## 2026-11-17 (evening review): who leads, and does line movement predict losses? (audit leaderboard)
+
+Measured (shadow.csv, settled legs; new table "Who leads?" in data/audit.md): leg win rate leader with a 95% lower bound is
+late_ticket_best 88% (15 of 17, lower 66%) then h2h_ticket 91% (10 of 11, lower 62%), ai_own 74% (35 legs), tax_best 75%, while the
+real "actual" ticket sits at 59% (32 legs) and 29% of days with all legs won; on that basis moneyline-only tickets lead win rate
+(small n, last review's tier change targets exactly this). Leader on return after tax at closing prices (scoreboard): late tax-proof
+singles +1.3% and the kick-off sweep +4.4%, both undecided; nothing beats the tax, go/no-go stays NO-GO. Today's real ticket (placed
+before the tier change) still holds a handicap leg. Line-move check on 341 settled picks: correlation of the morning-to-close move
+with outcome minus closing chance +0.04, so a steam veto adds nothing.
+
+Researched: one search round (open-source models, calibration-vs-accuracy selection, Elo tennis, backtest tutorials); only titles
+returned, consistent with what is logged: de-margined sharp prices, calibration over accuracy, closing line value.
+
+Considered: steam veto (dropped), 2-of-3 trixie cover (raises how often something pays but not profit, not built), Elo tennis, NBA
+rest flag, Gemini late-news veto, Thompson sampling, exchange lay price, drop Under totals.
+
+Changed: audit.py strategy_leaders and the audit.md section, test in tests/test_audit.py; all test files pass. The bot, its picks and
+CHANGES.md are untouched, so no preview run and no email.
+
+To measure next: actual vs prev_rule on the same days (tier change, from 18 Nov); fav_flat/banker at ~30 bets; AI gain at ~800 picks.

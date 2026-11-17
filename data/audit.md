@@ -4,7 +4,7 @@ Built by audit.py from recorded data; nothing here changes a recorded result.
 
 ## Real-money go / no-go
 
-NO-GO: none of 5 strategies with 20+ scored bets beats the tax; best is late_value at -6.1% after tax on 23 bets (negative).
+NO-GO: none of 5 strategies with 20+ scored bets beats the tax; best is late_value at -6.2% after tax on 27 bets (negative).
 
 ## If the owner bet this ticket rule for real
 
@@ -38,6 +38,30 @@ Settled picks at the average price, flat stake, after the tax. A calibration slo
 | 65-75% | 65 | 80.0% | 71.0% | +0.3% | 6.3 |
 | 75-100% | 54 | 85.2% | 76.9% | +1.4% | 5.8 |
 
+## Who leads? Win rate and return after tax by shadow strategy
+
+Settled shadow legs, flat stake at the recorded odds, after the tax. Sorted by the lower bound of the 95% win-rate interval, so a small lucky sample does not top the table. Return leader: late_value (+38.6%, 23 legs); a return of 0 would be break-even.
+
+| Strategy | Legs | Won | Win rate | 95% lower | Return after tax | se | Days | Days all legs won |
+|---|---|---|---|---|---|---|---|---|
+| late_ticket_best | 17 | 15 | 88% | 66% | +36.9% | 13.9 | 8 | 75% |
+| h2h_ticket | 11 | 10 | 91% | 62% | +31.2% | 14.8 | 5 | 80% |
+| ai_own | 35 | 26 | 74% | 58% | +8.1% | 11.4 | 15 | 53% |
+| h2h_ticket_best | 12 | 10 | 83% | 55% | +26.3% | 18.0 | 5 | 60% |
+| tax_best | 24 | 18 | 75% | 55% | +4.4% | 13.4 | 10 | 50% |
+| power_ticket | 31 | 22 | 71% | 53% | -1.9% | 11.8 | 13 | 38% |
+| likely_ticket | 21 | 15 | 71% | 50% | +4.6% | 15.3 | 10 | 50% |
+| fav_flat | 10 | 8 | 80% | 49% | -10.8% | 14.9 | 3 | 33% |
+| tax_market | 21 | 14 | 67% | 45% | -2.4% | 16.1 | 10 | 40% |
+| actual_best | 29 | 18 | 62% | 44% | -6.8% | 14.3 | 13 | 31% |
+| market | 31 | 19 | 61% | 44% | -12.0% | 13.0 | 14 | 36% |
+| edge_first | 28 | 17 | 61% | 42% | -2.0% | 15.4 | 14 | 29% |
+| actual | 32 | 19 | 59% | 42% | -12.8% | 13.4 | 14 | 29% |
+| late_ticket | 17 | 11 | 65% | 41% | -0.9% | 18.9 | 8 | 38% |
+| late_value | 23 | 13 | 57% | 37% | +38.6% | 27.3 | 7 | 43% |
+| single | 13 | 8 | 62% | 36% | -7.9% | 22.0 | 13 | 62% |
+| value_single | 30 | 7 | 23% | 12% | -38.7% | 21.6 | 11 | 9% |
+
 ## Does the AI add anything to the sharp chance?
 
 700 settled picks. Brier score (lower is better) of the sharp chance shifted toward the AI's chance by weight w:
@@ -57,32 +81,32 @@ Won minus sharp chance by verdict (picks, mean): AGREE +1.9 points (193), AVOID 
 
 ## Which bookmaker's first price best predicts Pinnacle's closing chance?
 
-79 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0377, average of all books 0.0374; paired absolute-error gain of the average over Pinnacle -0.0026 +- 0.0013.
+83 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0379, average of all books 0.0377; paired absolute-error gain of the average over Pinnacle -0.0023 +- 0.0012.
 
 | Bookmaker | Matches | Bias | RMSE |
 |---|---|---|---|
-| betanysports | 26 | -0.0052 | 0.0274 |
-| betonlineag | 67 | -0.0028 | 0.0344 |
-| matchbook | 50 | -0.0049 | 0.0377 |
-| pinnacle | 79 | +0.0030 | 0.0377 |
-| winamax_de | 68 | -0.0014 | 0.0382 |
-| sport888 | 85 | -0.0039 | 0.0386 |
-| nordicbet | 75 | -0.0017 | 0.0395 |
-| betsson | 75 | -0.0018 | 0.0395 |
+| betanysports | 29 | -0.0066 | 0.0268 |
+| betonlineag | 70 | -0.0032 | 0.0338 |
+| winamax_de | 75 | -0.0009 | 0.0377 |
+| pinnacle | 83 | +0.0016 | 0.0379 |
+| sport888 | 93 | -0.0046 | 0.0391 |
+| matchbook | 56 | -0.0037 | 0.0392 |
+| nordicbet | 82 | -0.0012 | 0.0392 |
+| betsson | 82 | -0.0014 | 0.0393 |
 | betfair_ex_eu | 71 | -0.0054 | 0.0396 |
-| williamhill | 73 | -0.0024 | 0.0400 |
-| winamax_fr | 54 | +0.0060 | 0.0405 |
-| mybookieag | 42 | -0.0008 | 0.0409 |
-| betclic_fr | 49 | +0.0022 | 0.0412 |
-| codere_it | 55 | -0.0056 | 0.0413 |
-| coolbet | 53 | -0.0063 | 0.0426 |
-| onexbet | 82 | -0.0050 | 0.0427 |
-| gtbets | 49 | +0.0003 | 0.0428 |
-| leovegas_se | 84 | -0.0023 | 0.0432 |
-| unibet_se | 84 | -0.0048 | 0.0434 |
-| unibet_nl | 64 | -0.0057 | 0.0442 |
-| unibet_fr | 34 | +0.0121 | 0.0448 |
+| betclic_fr | 52 | +0.0023 | 0.0401 |
+| williamhill | 81 | -0.0031 | 0.0402 |
+| winamax_fr | 61 | +0.0065 | 0.0403 |
+| codere_it | 58 | -0.0057 | 0.0406 |
+| mybookieag | 47 | +0.0004 | 0.0410 |
+| coolbet | 59 | -0.0048 | 0.0416 |
+| onexbet | 90 | -0.0050 | 0.0425 |
+| gtbets | 53 | +0.0018 | 0.0430 |
+| leovegas_se | 92 | -0.0025 | 0.0432 |
+| unibet_se | 92 | -0.0048 | 0.0433 |
+| unibet_nl | 71 | -0.0058 | 0.0444 |
 | everygame | 27 | +0.0028 | 0.0449 |
-| marathonbet | 54 | -0.0028 | 0.0459 |
-| pmu_fr | 51 | +0.0102 | 0.0481 |
-| tipico_de | 38 | +0.0097 | 0.0562 |
+| marathonbet | 62 | -0.0022 | 0.0455 |
+| unibet_fr | 40 | +0.0125 | 0.0456 |
+| pmu_fr | 58 | +0.0097 | 0.0470 |
+| tipico_de | 41 | +0.0076 | 0.0546 |

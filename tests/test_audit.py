@@ -97,3 +97,20 @@ bands, slope = audit.calibration_bands(rows)
 assert len(bands) == 2 and bands[-1][2] > bands[-1][3] and slope > 1
 assert audit.calibration_bands(rows[:3]) == ([], None)
 print("calibration bands ok")
+
+
+# strategy_leaders: win rate, Wilson lower bound, taxed return, ticket-day win rate.
+def leg(s, d, res, odds=2.0):
+    return {"strategy": s, "date": d, "result": res, "odds": str(odds)}
+
+
+rows = [leg("a", f"d{i}", "won" if i < 9 else "lost") for i in range(12)]
+rows += [leg("b", f"d{i}", "won") for i in range(5)]  # too few legs: left out
+rows += [leg("a", "dp", "won"), leg("a", "dp", "pending")]  # a day with a pending leg is not a settled day
+res = audit.strategy_leaders(rows)
+assert [r[0] for r in res] == ["a"], res
+nm, n, w, lo, ret, se, days, dw = res[0]
+assert n == 13 and w == 10 and 0.4 < lo < 10 / 13 and days == 12 and abs(dw - 9 / 12) < 1e-9
+assert abs(ret - ((10 * 0.85 - 3) / 13)) < 1e-9
+assert "Who leads" in audit.markdown(None, None, leaders=res)
+print("audit leaders ok")

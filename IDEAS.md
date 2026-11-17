@@ -6,6 +6,20 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 17 Nov evening] Strategy leaderboard (experiments/measurement, 3/4/1): audit.py strategy_leaders writes "Who leads?"
+  into data/audit.md: per shadow strategy leg win rate with 95% Wilson lower bound, flat taxed return, share of days on which
+  every leg won. Gives each review the win-rate and return leader at a glance without reading code. Realised return of late_value
+  (+38.6%) is luck: its closing-price expected return is -6.1% (scoreboard), so return is judged on the scoreboard, win rate here.
+  Brainstorm that day (impact/confidence/effort): steam/line-move veto (2/1/2, DROPPED, below); 2-of-3 system bet "trixie" of the
+  three likeliest legs (2/2/3: raises how often something pays, not profit, tax hits wins); calibration-based model choice (Walsh &
+  Joshi, already how the bot works: Pinnacle power chance, calibrated); Elo second opinion for tennis (2/2/4); NBA back-to-back flag
+  (2/2/3); late-news veto from Gemini on favourites (3/2/3, waits for ~800 picks); Thompson-sampling selector (3/2/3, waits for data);
+  exchange lay price as fair chance (2/2/3); drop Under totals (2/2/1, now moot because tiers prefer moneyline).
+
+- [DROPPED 17 Nov] Line-movement ("steam") veto (data, 2/1/2): on 341 settled picks with an opening and closing chance, the
+  correlation of the move with (outcome - closing chance) is +0.04; wins by move bin are within 1-2 se of the closing chance
+  (h2h bins are tiny). The close already holds the information, so movement from the morning predicts nothing beyond it.
+
 - [BUILT 17 Nov] Market tiers for the real ticket (selection, 4/3/1): the real ticket is built from moneyline legs
   first, then moneyline + double chance, then anything ("ticket_market_tiers" in config.json). Evidence: on 14 days the
   real ticket won 29% of days (4), ai_own 57% on the same days, h2h_ticket 80% (4 of 5); legs of h2h_ticket won 91%
