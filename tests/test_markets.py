@@ -138,6 +138,7 @@ def fake(answer):
 picks = [{"id": i, "verdict": "AGREE", "adjusted_chance": cand["prob"] * 100, "summary": "s"}
          for i, cand in short.items()]
 now = datetime.datetime.now(bot.TZ)
+bot.CONFIG["ticket_market_tiers"] = None  # tiers are tested in test_tiers.py
 bot.gemini = fake({"picks": picks, "ticket": [a, b, c3], "ticket_reason": "r"})
 ticket, analysis, _ = bot.ai_pick(cands, now)
 assert len(research_calls) == 3, len(research_calls)  # one research call per match
@@ -174,3 +175,12 @@ assert bot.ai_scout(fx, now) == ["s1"] and "Kiel v Minden" in bot.SCOUT_EXTRA
 rules = bot.build_ticket(cands)
 assert rules and CFG_MIN <= rules["total_odds"] <= CFG_MAX
 print("all checks passed;", "AI ticket:", [l["pick"] for l in ticket["legs"]], ticket["total_odds"])
+
+# Market tiers (17 Nov review): with the default tiers the real ticket uses moneylines first.
+bot.CONFIG["ticket_market_tiers"] = [["h2h"], ["h2h", "dc"], None]
+bot.RESEARCH.clear()
+bot.gemini = fake({"picks": picks, "ticket": [b, same_match], "ticket_reason": "r"})
+ticket_t, _, _ = bot.ai_pick(cands, now)
+assert all(l["market"] in ("h2h", "dc") for l in ticket_t["legs"]), ticket_t["legs"]
+assert bot.RESEARCH["ai_ticket"]["prev_tax_ids"], bot.RESEARCH["ai_ticket"]
+print("tier test passed")

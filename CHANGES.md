@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-17: the real ticket now prefers "to win" bets
+
+- Your daily paper ticket is now built from plain "to win" bets first, then "to win or draw" bets, and only uses handicaps or over/under when nothing else fits.
+- Why: handicaps and over/under legs win only about half the time, while "to win" favourites won about 73% of 700 finished picks; in the last two weeks the old tickets won only 4 of 14 days. You asked for the highest success rate.
+- The old rule keeps running beside it as a paper experiment ("prev_rule"), so we can compare the two on the same days and switch back if the old one wins.
+- Stake, tax and paper mode are unchanged; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-16 (late evening): testing the highest win-rate bets
 
 - New side experiments "banker" (the single most likely bet of the day) and "banker_double" (the two most likely, on different matches), both at the best bookmaker price and recorded as paper bets.

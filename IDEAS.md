@@ -6,6 +6,16 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 17 Nov] Market tiers for the real ticket (selection, 4/3/1): the real ticket is built from moneyline legs
+  first, then moneyline + double chance, then anything ("ticket_market_tiers" in config.json). Evidence: on 14 days the
+  real ticket won 29% of days (4), ai_own 57% on the same days, h2h_ticket 80% (4 of 5); legs of h2h_ticket won 91%
+  (11) vs actual 59% (32); 700 picks: h2h won 72.7% (-1.1% after tax), spreads 49.5% (-13.1%), totals 52.0% (-12.7%).
+  Old rule kept as shadow "prev_rule" for same-day comparison. Other ideas that day (impact/confidence/effort):
+  Elo second opinion for tennis (2/2/4); NBA back-to-back flag (2/2/3); Thompson-sampling strategy selector (3/2/3, waits
+  for data); two-leg cap in win-rate mode (3/2/1, test via banker_double); drop Under totals (2/2/1, Under -19.4% on 137
+  picks, 1.8 se, watch); Gemini only for late-news veto on favourites (3/2/3, waits for ~800 picks); exchange lay price as
+  fair chance (2/2/3); lineup-confirmation re-check 60 min before kick-off (3/2/4, extra quota).
+
 - [BUILT 16 Nov late evening] Win-rate shadows banker / banker_double (selection, 3/3/1): the most likely bet of the day
   at the best price (power chance >= 70%, any market) and the two most likely on different matches. Settles the question
   "how high a hit rate, at what tax cost". Other ideas that day (impact/confidence/effort): Elo second opinion (2/2/4), NBA rest

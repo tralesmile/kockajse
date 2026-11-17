@@ -962,7 +962,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 # not captured twice; its pick capture is used.
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
-                   "veto_ticket_best")
+                   "veto_ticket_best", "prev_rule")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "banker", "banker_double")
 
 
@@ -1515,6 +1515,7 @@ SHADOW_NAMES = {
     "taxed_value": "Value singles that still pay after the 15% tax",
     "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
     "fav_flat": "Favourite singles to 1.30, break-even after tax (power chance, best price)",
+    "prev_rule": "The previous real-ticket rule (all bet types, best return after tax)",
     "banker": "Banker: the single most likely bet of the day (power chance, best price)",
     "banker_double": "Banker double: the two most likely bets on different matches (best price)",
     "power_ticket": "Most likely ticket using power-method chances",
@@ -1679,6 +1680,11 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
                                       book=short[i]["best_book"])
                                  if short[i].get("best_odds") else dict(short[i], book="average")
                                  for i in ids]))
+    # The previous real-ticket rule (best return after tax over all bet types), kept as a twin so
+    # the market-tier rule of 17 Nov can be compared on the same days.
+    ids = info.get("prev_tax_ids")
+    if short and ids and all(i in short for i in ids) and ids != info.get("tax_ids"):
+        out.append(("prev_rule", [dict(short[i], book="average") for i in ids]))
     # Best return after tax from the market alone (no AI), the twin of "market".
     taxed = build_taxed_ticket(pool)
     if taxed:
@@ -2380,18 +2386,39 @@ def ai_pick(cands, today):
     # for the "tax_best" shadow, at the best listed price.
     tax_pool = sorted(allowed, key=lambda i: short[i]["blend_power"] * short[i]["odds"],
                       reverse=True)[:45]
-    tax_ids, tax_score = [], None
-    best_ids, best_value = [], None
-    for size in range(1, CONFIG["max_legs"] + 1):
-        for combo in itertools.combinations(tax_pool, size):
-            if usable(combo):
-                value = taxed(combo)
-                if tax_score is None or value > tax_score:
-                    tax_ids, tax_score = list(combo), value
-            if usable_best(combo):
-                value = taxed(combo, "best_odds")
-                if best_value is None or value > best_value:
-                    best_ids, best_value = list(combo), value
+    def in_tier(ids, markets):
+        return markets is None or all(short[i].get("market", "h2h") in markets for i in ids)
+
+    def search_tax(markets):
+        t_ids, t_score, b_ids, b_value = [], None, [], None
+        for size in range(1, CONFIG["max_legs"] + 1):
+            for combo in itertools.combinations(tax_pool, size):
+                if not in_tier(combo, markets):
+                    continue
+                if usable(combo):
+                    value = taxed(combo)
+                    if t_score is None or value > t_score:
+                        t_ids, t_score = list(combo), value
+                if usable_best(combo):
+                    value = taxed(combo, "best_odds")
+                    if b_value is None or value > b_value:
+                        b_ids, b_value = list(combo), value
+        return t_ids, t_score, b_ids, b_value
+
+    # 17 Nov review (owner's win-rate goal): the real ticket is built from the highest-hit-rate
+    # bet types first ("ticket_market_tiers", e.g. moneylines only, then moneylines + double
+    # chance, then anything). Handicap and totals legs are coin flips (49-52% won) that drag a
+    # ticket's win rate; the previous unrestricted rule is logged as the "prev_rule" shadow.
+    prev_ids, prev_score, prev_best_ids, prev_best_value = search_tax(None)
+    tier_used = None
+    tax_ids, tax_score, best_ids, best_value = prev_ids, prev_score, prev_best_ids, prev_best_value
+    for tier in CONFIG.get("ticket_market_tiers") or [None]:
+        found = search_tax(tier)
+        if found[0]:
+            tax_ids, tax_score, best_ids, best_value = found
+            tier_used = tier
+            break
+    RESEARCH["ticket_tier"] = tier_used
     ai_ok = bool(chosen and len(set(chosen)) == len(chosen)
                  and all(i in short for i in chosen) and usable(chosen))
     RESEARCH["ai_ticket"] = {"ids": chosen if ai_ok else [], "valid": ai_ok,
@@ -2400,6 +2427,7 @@ def ai_pick(cands, today):
                              "edge_first_ids": edge_best,
                              "likely_ids": best,
                              "tax_ids": tax_ids,
+                             "prev_tax_ids": prev_ids,
                              "tax_return": None if tax_score is None else round(tax_score, 4),
                              "ai_tax_return": round(taxed(chosen), 4) if ai_ok else None,
                              "tax_best_ids": best_ids,
@@ -2407,7 +2435,7 @@ def ai_pick(cands, today):
                                                  else round(best_value, 4))}
     answer_ids = list(chosen) if ai_ok else []
     if CONFIG.get("ticket_objective", "taxed_ev") == "taxed_ev" and tax_ids:
-        if ai_ok and taxed(chosen) >= tax_score - 0.005:
+        if ai_ok and in_tier(chosen, tier_used) and taxed(chosen) >= tax_score - 0.005:
             source = "AI"
         else:
             chosen = tax_ids

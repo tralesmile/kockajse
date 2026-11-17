@@ -42,6 +42,7 @@
   "min_bookmakers_lines": 4,
   "ai_options": 6,
   "ai_weight": 0.2,
+  "ticket_market_tiers": [["h2h"], ["h2h", "dc"], null],
   "ticket_objective": "taxed_ev",
   "markets": {
     "soccer": "h2h,totals",

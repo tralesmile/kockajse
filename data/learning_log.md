@@ -1003,3 +1003,28 @@ tests/test_banker.py. Real ticket unchanged, no preview run.
 
 To measure next: banker win rate and return at ~30 bets vs fav_flat and ai_own; if win rate is high but return stays below the
 tax, report the price of a high hit rate to the owner.
+
+## 2026-11-17 (review): the real ticket was built from coin-flip legs (market tiers)
+
+Measured (shadow.csv, settled): ticket-day win rate on days with two or more legs: actual 29% (14 days), actual_best 31%,
+market 36%, tax_market 40%, ai_own 53% (15), tax_best 50%, late_ticket_best 75% (8), h2h_ticket 80% (5). On the same 5 days
+h2h_ticket won 80% vs actual 40%. Leg win rates: h2h_ticket 91% (11), late_ticket_best 88% (17), fav_flat 80% (10), ai_own 74%
+(35), actual 59% (32). Returns after tax (flat, average of shadow rows): h2h_ticket +31% (n small), late_ticket_best +37%
+(late, small), actual -13%. Audit on 700 picks: h2h 72.7% won (-1.1%), dc 68.8% (-11.0%), spreads 49.5% (-13.1%), totals 52.0%
+(-12.7%). Real ledger: tickets 38 and 39 won, 13 of 40 won overall. Leader on win rate: moneyline-only tickets (h2h_ticket,
+small n); leader on return after tax: late tax-proof singles and the kick-off sweep (+1.3%, +4.4%, undecided). No strategy
+beats the tax; go/no-go stays NO-GO.
+Loss foreseeability: lost legs of tickets 35-37 were Unders and a handicap/1.82 favourite, coin flips with no warning in the
+research, so the fix is structural (leg type), not a better AI prompt.
+
+Researched: one search round (open-source betting repos, parlay maths); only titles came back (devigger, BeatTheBookie,
+oddspapi, WagerBrain, parlay EV guides), all again use de-margined sharp prices and note parlay win chance is the product of
+leg chances, so leg hit rate is the lever. Nothing new beyond what is logged.
+
+Changed: "ticket_market_tiers" in config.json and bot.py (search_tax, in_tier): real ticket from moneyline legs first, then
+moneyline + double chance, then unrestricted, so a ticket is still placed every day. The previous rule is recorded as
+shadow "prev_rule" (settled, closing-captured, scoreboard row). tests/test_tiers.py and a tier case in test_markets.py;
+all 24 test files pass. Preview run not started (no gh dispatch access from this sandbox).
+
+To measure next: actual vs prev_rule on the same days at ~15 days (win rate first, then return after tax); if prev_rule wins,
+revert via config (set tiers to [null]). Then test a two-leg cap and a late-news veto.
