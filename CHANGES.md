@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-18 (evening): favourite bets tested at kick-off prices too
+
+- New side experiment "late_wide": the same single "to win" favourite bets as "fav_wide" (price up to 2.00, at least 60% likely), but picked minutes before kick-off at the best bookmaker price, recorded as paper bets.
+- Why: you want the highest success rate; late prices were clearly better than morning prices in past data, and late tickets have won far more legs than the morning ticket.
+- It shows up in the scoreboard next to fav_wide, so we can compare morning and late on the same days. Your real ticket is unchanged; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-18: a wider test of high-hit-rate favourite bets
 
 - New side experiment "fav_wide": single bets on "to win" favourites up to price 2.00 that are at least 60% likely and lose little to the 15% tax, at the best bookmaker price, recorded as paper bets.

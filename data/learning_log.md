@@ -1076,3 +1076,24 @@ files pass. The real ticket is unchanged, so no preview run.
 
 To measure next: fav_wide and fav_flat at ~30 scored bets (xROI vs the tax); actual (tiers) vs prev_rule on the same days; consider
 recommending a lower min_total_odds or a single-bet real ticket if fav_wide leads.
+
+## 2026-11-18 (evening review): consensus test and the late twin of fav_wide
+
+Measured (shadow.csv settled legs, 213 unique legs, excluding value/kaunitz singles): leg win rate by how many strategies chose the same
+leg: 1 strategy 65% (101), 2 74% (47), 3-4 60% (25), 5-6 64% (14), 7+ 75% (4), against about 64% implied throughout. Agreement between
+strategies carries no signal, so a "consensus" selector is dropped (the strategies share the same inputs). Leg win rates: h2h_ticket 92% (13),
+late_ticket_best 84% (19), power_value 83% (6), fav_flat 79% (14), ai_own 73% (37), tax_best 70%, actual 56% (34). Leader on win rate:
+h2h_ticket (small n); leader on return after tax at closing prices: late tax-proof singles (+1.3%, undecided); nothing beats the tax, NO-GO stays.
+fav_wide has no settled bets yet (added this morning).
+
+Considered (IDEAS.md): strategy-consensus selector (built as analysis, dropped), late fav_wide (built), Elo second opinion, NBA rest flag,
+2-of-3 system bet, Thompson sampler (waits), lower min_total_odds (owner), late-news veto (waits), exchange lay price, dropping the AI ranking (waits).
+Research: no new search round; earlier rounds (Pinnacle de-margining, CLV, calibration) still cover it and the sandbox returns titles only.
+
+Changed: new shadow "late_wide" in bot.py (late_shadow_bets): the fav_wide rule (moneyline, odds to 2.00, power chance 60%+, taxed EV above -2%,
+best price) evaluated minutes before kick-off in the closing passes and sweeps, one bet per match. The late_ prefix makes the scoreboard score it at
+the close automatically. Reason: the backtest showed late prices beat morning ones by several points, and late tickets win 84% of legs vs 56% for the
+real ticket. test_late_gemini.py extended; all test files pass.
+
+To measure next: fav_wide vs late_wide on win rate and return after tax at ~30 bets each; if late_wide leads, recommend moving the real ticket (or a
+single-bet ticket) to the late window.

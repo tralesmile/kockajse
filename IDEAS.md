@@ -6,6 +6,9 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 18 Nov evening, shadow] late_wide: fav_wide rule at kick-off prices (timing x win rate, 4/3/1). Strategy-consensus selector
+  tested on 213 settled legs: win rate 65/74/60/64/75% for 1/2/3-4/5-6/7+ strategies agreeing, no signal, dropped.
+
 - [BUILT 18 Nov] fav_wide shadow (selection, 4/3/1): moneyline favourites to odds 2.00, power chance 60%+, taxed EV above -2%,
   best price. Backtest 1,951 bets, 80.5% won, +1.8% after tax (se 1.2) vs fav_flat 994 bets +0.6%: twice the sample at a high hit
   rate. Other ideas that day (impact/confidence/effort): one gated bet a day (3/2/1, 790 bets +3.3% se 1.8, covered by fav_wide

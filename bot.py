@@ -1095,7 +1095,7 @@ def late_shadow_bets(events, now):
     Each strategy takes a match at most once."""
     shadow = read_shadow()
     taken = {s: {r["event_id"] for r in shadow if r["strategy"] == s}
-             for s in ("late_value", "late_power")}
+             for s in ("late_value", "late_power", "late_wide")}
     cands = []
     for event in events or []:
         if parse_time(event["commence_time"]) <= now:
@@ -1111,6 +1111,15 @@ def late_shadow_bets(events, now):
                                 book=c["best_book"]))
             for c in taxed_value_bets(cands, "sharp_power")
             if c["event_id"] not in taken["late_power"]]
+    # "late_wide" (18 Nov review, win-rate goal): the fav_wide rule (moneyline favourites to
+    # 2.00, power chance 60%+, taxed EV above FAV_FLAT_MIN_EV) at kick-off prices, where
+    # lineups are known and the backtest shows far better prices than in the morning.
+    out += [("late_wide", dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                               sharp=c["sharp_power"], sharp_prop=c["sharp"],
+                               book=c["best_book"]))
+            for c in taxed_value_bets(cands, "sharp_power", min_ev=FAV_FLAT_MIN_EV,
+                                      max_odds=FAV_WIDE_MAX_ODDS, markets=("h2h",))
+            if c["sharp_power"] >= FAV_WIDE_MIN_CHANCE and c["event_id"] not in taken["late_wide"]]
     return out
 
 
@@ -1439,7 +1448,7 @@ def capture_closing(now=None, window_minutes=None):
         shadow = read_shadow()
         day = now.astimezone(TZ).date().isoformat()
         new = []
-        for strategy in ("late_value", "late_power"):
+        for strategy in ("late_value", "late_power", "late_wide"):
             bets = [c for s, c in late if s == strategy]
             count = sum(1 for r in shadow if r["strategy"] == strategy and r["date"] == day)
             rows_ = shadow_rows(day, [(strategy, [c]) for c in bets])
@@ -1512,6 +1521,7 @@ SHADOW_NAMES = {
     "kaunitz_single": "Kaunitz singles (best price far above the average)",
     "late_value": "Late value singles (best price minutes before kick-off)",
     "late_power": "Late tax-proof singles, power chance (best price minutes before kick-off)",
+    "late_wide": "Late wide favourites: fav_wide rule minutes before kick-off (to 2.00, chance 60%+, best price)",
     "actual_best": "The real ticket at the best bookmaker price (price shopping)",
     "single": "One single a day (best value pick the AI allows)",
     "taxed_value": "Value singles that still pay after the 15% tax",

@@ -37,8 +37,9 @@ def game(eid, pinnacle, soft, best):
 fav = game("f1", pinnacle=(1.09, 9.0), soft=(1.08, 7.5), best=(1.12, 7.0))
 bets = bot.late_shadow_bets([fav], NOW)
 kinds = [s for s, _ in bets]
-assert kinds == ["late_power"], kinds  # 1.12 is below the 1.20 floor of late_value
+assert kinds == ["late_power", "late_wide"], kinds  # late_wide: same bet, 60%+ moneyline favourite to 2.00; 1.12 is below the 1.20 floor of late_value
 c = bets[0][1]
+assert bets[1][1]["odds"] == 1.12 and bets[1][1]["market"] == "h2h"
 assert c["odds"] == 1.12 and c["book"] == "onexbet" and c["prob"] == c["sharp_power"]
 assert bot.taxed_ev(c["prob"], c["odds"]) > 0
 # Proportional chance would not clear the tax: the rule really needs the power chance.
@@ -120,4 +121,7 @@ assert bot.gemini("q", search=True) == "found"
 assert calls == ["k1", "k2"] and (1, "s1") in bot.MODELS_OUT
 calls.clear()
 assert bot.gemini("q", search=True) == "found" and calls == ["k2"]  # k1 skipped later
+assert "late_wide" in bot.SHADOW_NAMES
+under = game("u1", pinnacle=(2.6, 1.55), soft=(2.5, 1.5), best=(2.7, 1.5))
+assert "late_wide" not in [s for s, _ in bot.late_shadow_bets([under], NOW)]  # odds above 2.00 on the Celtics side
 print("all late power and gemini checks passed")
