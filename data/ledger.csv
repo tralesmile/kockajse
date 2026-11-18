@@ -38,3 +38,4 @@ ticket_no,date,picks,total_odds,stake,result,payout,tax,net_profit,bankroll_afte
 37,2026-11-14,Northern Ireland v Ukraine: Under 2.5 goals @1.49 (won) | Romania v Poland: Poland to win @1.82 (lost),2.71,100,lost,0.0,0.0,-100,-1005.9,paper
 38,2026-11-15,Wisconsin Badgers v Coastal Carolina Chanticleers: Coastal Carolina Chanticleers +28.5 (handicap) @1.96 (won) | Milwaukee Bucks v Atlanta Hawks: Atlanta Hawks to win @1.32 (won),2.59,100,won,259.0,23.85,135.15,-870.75,paper
 39,2026-11-16,Greece v Serbia: Greece to win @1.43 (won) | Saint Mary's Gaels v Portland St Vikings: Portland St Vikings +17.5 (handicap) @1.91 (won),2.73,100,won,273.0,25.95,147.05,-723.7,paper
+40,2026-11-17,Pallacanestro Olimpia Milano v KK Crvena zvezda: KK Crvena zvezda to win @1.75 (lost) | San Antonio Spurs v Detroit Pistons: San Antonio Spurs -8.5 (handicap) @1.88 (lost),3.29,100,lost,0.0,0.0,-100,-823.7,paper
