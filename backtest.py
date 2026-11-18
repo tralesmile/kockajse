@@ -276,6 +276,11 @@ STRATEGIES = {
                  lambda s: [[dict(c, odds=c["best"])] for c in as_power(s)
                             if c["best"] and c["market"] == "h2h" and 1.05 <= c["best"] < 1.30
                             and taxed_ev(c, c["best"]) > -0.02]),
+    "fav_wide": ("moneyline favourites to 2.00 at the best price, chance 60%+, taxed EV above "
+                 "-2%, power chance (fav_wide shadow)",
+                 lambda s: [[dict(c, odds=c["best"])] for c in as_power(s)
+                            if c["best"] and c["market"] == "h2h" and 1.05 <= c["best"] <= 2.0
+                            and c["prob"] >= 0.60 and taxed_ev(c, c["best"]) > -0.02]),
     "tax_ticket": ("live rule since 6 Nov: allowed ticket with the best expected return "
                    "after tax, power-method chances",
                    lambda s: [_taxed(s)]),

@@ -6,6 +6,14 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 18 Nov] fav_wide shadow (selection, 4/3/1): moneyline favourites to odds 2.00, power chance 60%+, taxed EV above -2%,
+  best price. Backtest 1,951 bets, 80.5% won, +1.8% after tax (se 1.2) vs fav_flat 994 bets +0.6%: twice the sample at a high hit
+  rate. Other ideas that day (impact/confidence/effort): one gated bet a day (3/2/1, 790 bets +3.3% se 1.8, covered by fav_wide
+  for now); hit-rate ladder by odds floor (2/3/2, win rate is about 1/odds, answered by the 50-90% table in the learning log);
+  lower min_total_odds or single-bet real ticket (4/3/1, owner decision, recommend if fav_wide leads); Elo second opinion
+  (2/2/4); NBA rest flag (2/2/3); 2-of-3 system bet (2/2/3); Thompson-sampling selector (3/2/3, waits); drop AI ranking (waits
+  for ~800 picks); exchange lay price as fair chance (2/2/3).
+
 - [BUILT 17 Nov evening] Strategy leaderboard (experiments/measurement, 3/4/1): audit.py strategy_leaders writes "Who leads?"
   into data/audit.md: per shadow strategy leg win rate with 95% Wilson lower bound, flat taxed return, share of days on which
   every leg won. Gives each review the win-rate and return leader at a glance without reading code. Realised return of late_value

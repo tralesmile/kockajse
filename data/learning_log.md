@@ -1049,3 +1049,30 @@ Changed: audit.py strategy_leaders and the audit.md section, test in tests/test_
 CHANGES.md are untouched, so no preview run and no email.
 
 To measure next: actual vs prev_rule on the same days (tier change, from 18 Nov); fav_flat/banker at ~30 bets; AI gain at ~800 picks.
+
+## 2026-11-18 (review): the favourite frontier, widened (fav_wide shadow)
+
+Measured: ticket 40 (17 Nov, placed before the tier change) lost both legs (Crvena zvezda 1.75, Spurs -8.5): 13 of 41 tickets won.
+Today's first tiered ticket is Alcaraz + Flamengo + Corinthians, all moneyline, but 3 legs (about 31% to win), because min_total_odds
+2.5 forces 2-3 legs from short-priced favourites: the ticket-level hit rate is capped by that floor, whatever the leg quality.
+Leg win rates (shadow.csv settled): h2h_ticket 92% (13), late_ticket_best 84% (19), power_value 83% (6), fav_flat 79% (14),
+ai_own 73% (37), actual 56% (34); banker 1 of 1, banker_double 2 of 2. Leader on win rate: h2h_ticket (small n); leader on return
+after tax at closing prices: late tax-proof singles +1.3% (scoreboard, undecided; still NO-GO).
+
+Backtest (41,971 matches, Pinnacle power chance, best close price, 15% tax), moneyline favourites with taxed EV >= -2%:
+chance 50-60% 301 bets 56% won +1.2%; 60-70% 354 bets 67.5% +3.1%; 70-80% 618 bets 79% +4.1%; 80-90% 839 bets 85% +0.1%;
+90%+ 140 bets 91% -0.5%. Pooled rules: fav_flat (<1.30) 994 bets 86.5% won +0.6% (se 1.3); fav_wide (to 2.00, chance 60%+)
+1,951 bets 80.5% won +1.8% (se 1.2), per season -1% to +7%; one gated bet a day 790 bets 81.6% +3.3% (se 1.8). So the hit rate
+can be 80%+ at about break-even after tax at the best price; it falls apart at the average price (single bookmaker).
+
+Researched: one search round was not needed; the earlier rounds (Pinnacle de-margined prices, closing line value, calibration)
+still hold and the data decided. Considered 9 ideas (IDEAS.md): fav_wide (built), one-gated-bet-a-day, hit-rate ladder by odds
+floor, lower min_total_odds for the real ticket (owner decision), Elo second opinion, NBA rest flag, 2-of-3 system bet,
+Thompson-sampling selector, drop the AI ranking (waits for ~800 picks).
+
+Changed: new shadow "fav_wide" in bot.py (moneyline singles to 2.00, power chance 60%+, taxed EV above -2%, best price), with
+closing capture, scoreboard row, backtest.py strategy and tests/test_fav_wide.py; test_power.py exclusion list updated; all test
+files pass. The real ticket is unchanged, so no preview run.
+
+To measure next: fav_wide and fav_flat at ~30 scored bets (xROI vs the tax); actual (tiers) vs prev_rule on the same days; consider
+recommending a lower min_total_odds or a single-bet real ticket if fav_wide leads.

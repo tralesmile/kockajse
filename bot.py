@@ -937,7 +937,7 @@ def closing_row(pick, cand, now, source="pick"):
     if cand is None:
         return row  # the line moved away (or the bet left the feed): nothing to compare
     sharp = cand["sharp"]
-    if source in ("power_value", "fav_flat", "banker", "banker_double"):  # its opening fair chance is power-de-margined: compare alike
+    if source in ("power_value", "fav_flat", "fav_wide", "banker", "banker_double"):  # its opening fair chance is power-de-margined: compare alike
         sharp = cand.get("sharp_power")
     close = sharp if sharp is not None else cand["consensus"]
     row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
@@ -955,7 +955,7 @@ def closing_row(pick, cand, now, source="pick"):
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
 SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value",
-              "fav_flat", "banker", "banker_double")
+              "fav_flat", "fav_wide", "banker", "banker_double")
 # Ticket shadows whose legs are not always in the pick log (the market and power tickets
 # choose from every candidate): their legs are captured too, so the closing-price
 # scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
@@ -963,7 +963,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
                    "veto_ticket_best", "prev_rule")
-SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "banker", "banker_double")
+SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "fav_wide", "banker", "banker_double")
 
 
 NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
@@ -1484,6 +1484,8 @@ def clv_html():
     table += line("Tax-proof value singles", [r for r in rows if r.get("source") == "taxed_value"])
     table += line("Favourite singles to 1.30 (fav_flat)",
                   [r for r in rows if r.get("source") == "fav_flat"])
+    table += line("Favourite singles to 2.00 (fav_wide)",
+                  [r for r in rows if r.get("source") == "fav_wide"])
     table += line("Tax-proof value, power chance",
                   [r for r in rows if r.get("source") == "power_value"])
     return ("<h3>Closing line</h3><table border='1' cellpadding='5' cellspacing='0' "
@@ -1515,6 +1517,7 @@ SHADOW_NAMES = {
     "taxed_value": "Value singles that still pay after the 15% tax",
     "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
     "fav_flat": "Favourite singles to 1.30, break-even after tax (power chance, best price)",
+    "fav_wide": "Wide favourites: moneyline singles to 2.00, chance 60%+, taxed EV above -2% (power chance, best price)",
     "prev_rule": "The previous real-ticket rule (all bet types, best return after tax)",
     "banker": "Banker: the single most likely bet of the day (power chance, best price)",
     "banker_double": "Banker double: the two most likely bets on different matches (best price)",
@@ -1619,6 +1622,8 @@ def taxed_ev(prob, odds):
 FAV_FLAT_MIN_EV = -0.02
 FAV_FLAT_MAX_ODDS = 1.30
 BANKER_MIN_CHANCE = 0.70
+FAV_WIDE_MAX_ODDS = 2.0
+FAV_WIDE_MIN_CHANCE = 0.60
 
 
 def taxed_value_bets(cands, key="sharp", min_ev=0.0, max_odds=None, markets=None):
@@ -1759,6 +1764,16 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     for c in taxed_value_bets(wide_all, "sharp_power", min_ev=FAV_FLAT_MIN_EV, max_odds=FAV_FLAT_MAX_ODDS,
                               markets=("h2h",))[:CONFIG.get("value_max_singles", 10)]:
         out.append(("fav_flat", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                                      sharp=c["sharp_power"], book=c["best_book"])]))
+    # "fav_wide" (18 Nov review, win-rate goal): the fav_flat rule stretched to odds 2.00 with a
+    # sharp chance of at least 60%. Backtest 2019-2026 (41,971 matches): 1,951 bets, 80.5% won,
+    # +1.8% after tax at the best price (se 1.2), vs 994 bets, 86.5%, +0.6% for fav_flat, so it
+    # doubles the sample at a high hit rate. One bet per match, at most value_max_singles a day.
+    for c in taxed_value_bets(wide_all, "sharp_power", min_ev=FAV_FLAT_MIN_EV, max_odds=FAV_WIDE_MAX_ODDS,
+                              markets=("h2h",)):
+        if c["sharp_power"] < FAV_WIDE_MIN_CHANCE:
+            continue
+        out.append(("fav_wide", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
                                       sharp=c["sharp_power"], book=c["best_book"])]))
     # "banker" / "banker_double" (16 Nov review, owner's win-rate goal): the single most likely bet
     # of the day by the sharp power chance (any market, best price), and the two most likely bets

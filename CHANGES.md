@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-18: a wider test of high-hit-rate favourite bets
+
+- New side experiment "fav_wide": single bets on "to win" favourites up to price 2.00 that are at least 60% likely and lose little to the 15% tax, at the best bookmaker price, recorded as paper bets.
+- Why: you want the highest success rate. Over seven seasons of past matches this kind of bet won about 80% of the time and came out around +1.8% after tax (uncertain, plus or minus 1.2), with twice as many bets as the earlier "fav_flat" test, so it can be judged sooner.
+- Note: your daily ticket needs a total price of at least 2.5, which forces 2 to 3 legs and caps the ticket hit rate near 30-40%. If fav_wide keeps winning, a later review may recommend a lower minimum, which would be your decision.
+- Your real ticket is unchanged; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-17: the real ticket now prefers "to win" bets
 
 - Your daily paper ticket is now built from plain "to win" bets first, then "to win or draw" bets, and only uses handicaps or over/under when nothing else fits.
