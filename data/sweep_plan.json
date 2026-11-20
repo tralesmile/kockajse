@@ -1,11 +1,39 @@
 {
-  "date": "2026-11-19",
+  "date": "2026-11-20",
   "slots": [
     {
-      "id": "soccer_brazil_campeonato@2026-11-19T22:30:00Z",
-      "sport_key": "soccer_brazil_campeonato",
-      "first": "2026-11-19T22:30:00Z",
-      "last": "2026-11-19T22:30:00Z",
+      "id": "soccer_germany_bundesliga2@2026-11-20T17:30:00Z",
+      "sport_key": "soccer_germany_bundesliga2",
+      "first": "2026-11-20T17:30:00Z",
+      "last": "2026-11-20T17:30:00Z",
+      "events": 2
+    },
+    {
+      "id": "soccer_france_ligue_two@2026-11-20T19:00:00Z",
+      "sport_key": "soccer_france_ligue_two",
+      "first": "2026-11-20T19:00:00Z",
+      "last": "2026-11-20T19:00:00Z",
+      "events": 5
+    },
+    {
+      "id": "basketball_euroleague@2026-11-20T19:15:00Z",
+      "sport_key": "basketball_euroleague",
+      "first": "2026-11-20T19:15:00Z",
+      "last": "2026-11-20T19:45:00Z",
+      "events": 3
+    },
+    {
+      "id": "basketball_ncaab@2026-11-20T21:00:00Z",
+      "sport_key": "basketball_ncaab",
+      "first": "2026-11-20T21:00:00Z",
+      "last": "2026-11-20T21:30:00Z",
+      "events": 2
+    },
+    {
+      "id": "soccer_mexico_ligamx@2026-11-21T03:00:00Z",
+      "sport_key": "soccer_mexico_ligamx",
+      "first": "2026-11-21T03:00:00Z",
+      "last": "2026-11-21T03:10:00Z",
       "events": 2
     }
   ]
