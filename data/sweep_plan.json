@@ -1,40 +1,47 @@
 {
-  "date": "2026-11-20",
+  "date": "2026-11-21",
   "slots": [
     {
-      "id": "soccer_germany_bundesliga2@2026-11-20T17:30:00Z",
-      "sport_key": "soccer_germany_bundesliga2",
-      "first": "2026-11-20T17:30:00Z",
-      "last": "2026-11-20T17:30:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_france_ligue_two@2026-11-20T19:00:00Z",
-      "sport_key": "soccer_france_ligue_two",
-      "first": "2026-11-20T19:00:00Z",
-      "last": "2026-11-20T19:00:00Z",
+      "id": "soccer_germany_liga3@2026-11-21T13:00:00Z",
+      "sport_key": "soccer_germany_liga3",
+      "first": "2026-11-21T13:00:00Z",
+      "last": "2026-11-21T13:00:00Z",
       "events": 5
     },
     {
-      "id": "basketball_euroleague@2026-11-20T19:15:00Z",
-      "sport_key": "basketball_euroleague",
-      "first": "2026-11-20T19:15:00Z",
-      "last": "2026-11-20T19:45:00Z",
-      "events": 3
+      "id": "soccer_italy_serie_b@2026-11-21T14:00:00Z",
+      "sport_key": "soccer_italy_serie_b",
+      "first": "2026-11-21T14:00:00Z",
+      "last": "2026-11-21T14:00:00Z",
+      "events": 5
     },
     {
-      "id": "basketball_ncaab@2026-11-20T21:00:00Z",
+      "id": "soccer_england_league2@2026-11-21T15:00:00Z",
+      "sport_key": "soccer_england_league2",
+      "first": "2026-11-21T15:00:00Z",
+      "last": "2026-11-21T15:00:00Z",
+      "events": 10
+    },
+    {
+      "id": "soccer_england_league1@2026-11-21T15:00:00Z",
+      "sport_key": "soccer_england_league1",
+      "first": "2026-11-21T15:00:00Z",
+      "last": "2026-11-21T15:00:00Z",
+      "events": 9
+    },
+    {
+      "id": "soccer_efl_champ@2026-11-21T15:00:00Z",
+      "sport_key": "soccer_efl_champ",
+      "first": "2026-11-21T15:00:00Z",
+      "last": "2026-11-21T15:00:00Z",
+      "events": 8
+    },
+    {
+      "id": "basketball_ncaab@2026-11-21T22:00:00Z",
       "sport_key": "basketball_ncaab",
-      "first": "2026-11-20T21:00:00Z",
-      "last": "2026-11-20T21:30:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_mexico_ligamx@2026-11-21T03:00:00Z",
-      "sport_key": "soccer_mexico_ligamx",
-      "first": "2026-11-21T03:00:00Z",
-      "last": "2026-11-21T03:10:00Z",
-      "events": 2
+      "first": "2026-11-21T22:00:00Z",
+      "last": "2026-11-21T22:30:00Z",
+      "events": 5
     }
   ]
 }
