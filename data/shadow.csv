@@ -687,3 +687,4 @@ date,strategy,shadow_id,event_id,sport_key,match,start,market,sel,point,pick,odd
 2026-11-21,power_ticket,2026-11-21-power_ticket-1,c8bcd407a7b987234c72c62ec37246ef,soccer_germany_bundesliga,Elversberg v SC Freiburg,2026-11-21T14:30:00Z,totals,Under,3.5,Under 3.5 goals,1.6,average,0.601,-0.0384,pending,
 2026-11-21,power_ticket,2026-11-21-power_ticket-1,cb513fd9869c9aa6ce506bb499bcd48b,soccer_italy_serie_a,Parma v AS Roma,2026-11-21T17:00:00Z,h2h,AS Roma,,AS Roma to win,1.24,average,0.8013,-0.0063,pending,
 2026-11-21,power_ticket,2026-11-21-power_ticket-1,ab342b5218a6e8b0cc7efa7c92bf8c01,basketball_ncaab,Cal Poly Mustangs v Northern Arizona Lumberjacks,2026-11-22T00:00:00Z,h2h,Cal Poly Mustangs,,Cal Poly Mustangs to win,1.27,average,0.7732,-0.018,pending,
+2026-11-21,late_value,2026-11-21-late_value-4,6ef39b0fd8839f6e93a3de32523e9807,soccer_epl,Manchester City v Fulham,2026-11-21T12:30:00Z,totals,Under,3.5,Under 3.5 goals,1.81,onexbet,0.5644,0.0215,pending,
