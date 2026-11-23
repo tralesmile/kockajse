@@ -46,7 +46,9 @@ events = [game("g1", S15, (1.40, 4.8, 8.5), (1.38, 4.6, 7.5), (1.45, 4.6, 7.5)),
 
 # --- building ----------------------------------------------------------------------
 tickets = dict(bot.late_ticket_bets(events, NOW, shadow=[]))
-assert set(tickets) == {"late_ticket", "late_ticket_best"}, tickets
+assert set(tickets) == {"late_ticket", "late_ticket_best", "late_floor"}, tickets
+assert 1.60 <= round(__import__("math").prod(l["odds"] for l in tickets["late_floor"]), 2) <= 2.50
+assert len({l["event_id"] for l in tickets["late_floor"]}) == len(tickets["late_floor"]) <= 2
 for strategy, legs in tickets.items():
     total = 1.0
     for leg in legs:
@@ -54,7 +56,8 @@ for strategy, legs in tickets.items():
         # only matches inside the 90-minute window that have not started
         assert leg["event_id"] in {"g1", "g2", "g3", "g4"}, leg["event_id"]
         assert leg["sharp"] is not None
-    assert 2.5 <= round(total, 2) <= 3.5, (strategy, total)
+    lo, hi = (1.6, 2.5) if strategy == "late_floor" else (2.5, 3.5)
+    assert lo <= round(total, 2) <= hi, (strategy, total)
     assert len({l["event_id"] for l in legs}) == len(legs)
 assert all(l["book"] == "average" for l in tickets["late_ticket"])
 # the best-price twin uses the best listed price where one beats the average
@@ -69,10 +72,11 @@ assert bot.late_ticket_bets(events, NOW, shadow=[]) == []
 bot.CONFIG["late_ticket_window_minutes"] = 90
 
 # --- logging: once a day per strategy ------------------------------------------------
-assert bot.log_late_tickets(events, NOW) == 2
+assert bot.log_late_tickets(events, NOW) == 3
 rows = bot.read_shadow()
 ids = {r["shadow_id"] for r in rows}
-assert ids == {"2026-11-14-late_ticket-1", "2026-11-14-late_ticket_best-1"}, ids
+assert ids == {"2026-11-14-late_ticket-1", "2026-11-14-late_ticket_best-1"} | {i for i in ids if "late_floor" in i}, ids
+assert any("late_floor" in i for i in ids)
 assert all(r["result"] == "pending" for r in rows)
 assert bot.log_late_tickets(events, NOW + timedelta(minutes=5)) == 0
 assert len(bot.read_shadow()) == len(rows)
@@ -106,7 +110,7 @@ assert {"late_ticket", "late_ticket_best"} <= strategies, strategies
 import scoreboard  # noqa: E402
 scored = [b for b in scoreboard.score_bets(bot.read_shadow(), [], 0.15)
           if b["strategy"] in bot.LATE_TICKETS]
-assert len(scored) == 2 and all(b["xroi"] is not None for b in scored), scored
+assert len(scored) == 3 and all(b["xroi"] is not None for b in scored), scored
 assert "late_ticket" in bot.SHADOW_NAMES and "late_ticket_best" in bot.SHADOW_NAMES
 
 print("late ticket tests passed")

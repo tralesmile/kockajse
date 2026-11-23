@@ -1119,3 +1119,24 @@ chance), registered for closing capture and scoreboard, tests/test_floor_ticket.
 
 To measure next: floor_ticket vs actual and banker_double on the same days (win rate first, then return after tax at closing); if it hits clearly more often at a similar
 return, recommend lowering min_total_odds (owner decision). fav_wide/late_wide at ~30 scored bets.
+
+## 2026-11-23 (evening review): the late twin of floor_ticket
+
+Measured (shadow.csv settled, 23 Nov): ticket-day win rate by number of legs: actual 2 legs 25% (12 days), 3 legs 38% (8); h2h_ticket 2 legs 62% (8), 3 legs 33% (3);
+tax_best 2 legs 71% (7), 3 legs 44% (9); late_ticket_best 2 legs 45% (11). Samples are tiny but every strategy with a two-leg ticket does at least as well as with three,
+in line with leg-product maths, so the 2.5 floor remains the cap. Real ledger: 14 of 45 tickets won; tickets 42-45 included two more 3-leg misses (one favourite lost each).
+Scoreboard: no strategy beats the tax (best late tax-proof singles +1.5%, undecided; fav_flat -1.0%). Leader on win rate: fav_wide/fav_flat singles (86-89%, small n) and
+prev_rule (11 of 11, 5 days); leader on return after tax at closing prices: late tax-proof singles (+1.5%, undecided). Go/no-go stays NO-GO. floor_ticket (added this morning) has
+no rows yet; it starts logging at the next morning run. Loss foreseeability: lost legs (Fenerbahce 1.50, Vissel Kobe 1.37, RB Salzburg 1.64) were single favourites losing, no warning visible.
+
+Researched: one search round (open-source betting repos: devigger, sports-betting toolbox, CLV trackers, oddspapi backtest/Elo tutorials); only titles came back and all repeat
+what is logged (de-margined sharp price as truth, CLV as the early edge signal, backtest on free historical odds). Nothing new to adapt.
+
+Considered (IDEAS.md): late_floor (built), per-day no-bet gate, draw-no-bet for 50-60% favourites (new market, extra credits), Elo second opinion, NBA rest flag, Gemini late-news veto,
+Thompson sampler, fractional-survival sizing, Brier skill scoring per strategy, exchange lay price.
+
+Changed: new shadow "late_floor" (bot.py, late_ticket_bets): the floor_ticket rule (1-2 moneyline favourites, total odds 1.60-2.50, highest joint sharp chance, best price) at
+kick-off prices, one ticket a day, scored at the close automatically by the late_ prefix. tests/test_late_ticket.py extended; all test files pass. Real ticket unchanged, no preview.
+
+To measure next: floor_ticket and late_floor vs actual on the same days (win rate first, then return after tax); if they hit far more often at similar return, recommend lowering
+min_total_odds (owner decision).

@@ -1132,7 +1132,7 @@ def late_shadow_bets(events, now):
 # "late_ticket_best" at the best capped price (twin of "tax_best"). The first valid ticket
 # of the day is logged, as a bettor would place it, and never replaced.
 
-LATE_TICKETS = ("late_ticket", "late_ticket_best")
+LATE_TICKETS = ("late_ticket", "late_ticket_best", "late_floor")
 PASS_EVENTS = []  # every event fetched in the current closing pass (captures and sweep)
 
 
@@ -1171,6 +1171,13 @@ def late_ticket_bets(events, now, shadow=None):
             lambda l: l.get("best_book") or "average")
         out.append((strategy, [dict(l, book=book(l), sharp=l.get("power_prob"))
                                for l in ticket["legs"]]))
+    # "late_floor" (23 Nov evening review): the floor_ticket rule (1-2 moneyline favourites, total
+    # odds 1.60-2.50, highest joint sharp chance, best price) at kick-off prices, the late twin
+    # of the morning shadow, the same way late_wide twins fav_wide.
+    if "late_floor" not in done:
+        floor = build_floor_ticket(cands)
+        if floor:
+            out.append(("late_floor", floor))
     return out
 
 
@@ -1543,6 +1550,7 @@ SHADOW_NAMES = {
     "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
     "late_ticket": "Late ticket: the ticket rule minutes before kick-off (no AI, average price)",
     "late_ticket_best": "Late ticket at the best bookmaker prices (no AI)",
+    "late_floor": "Late low-floor ticket: floor_ticket rule minutes before kick-off (1-2 moneyline favourites, total odds 1.60-2.50, best price)",
 }
 
 

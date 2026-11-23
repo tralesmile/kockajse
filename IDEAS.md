@@ -6,6 +6,11 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 23 Nov evening, shadow] late_floor (timing x selection, 4/3/1): floor_ticket rule at kick-off prices, late twin of the morning shadow. Other ideas
+  that day (impact/confidence/effort): draw-no-bet for 50-60% favourites (3/2/3, new market, extra credits); per-day no-bet gate (3/2/2, waits); Elo second opinion
+  (2/2/4); NBA rest flag (2/2/3); Gemini late-news veto (3/2/3, waits); Thompson sampler (3/2/3, waits); unconventional: Brier-skill scoring per strategy (2/3/2);
+  unconventional: fractional-survival sizing (2/2/3, owner's stake).
+
 - [BUILT 23 Nov, shadow] floor_ticket (selection, 4/3/1): one or two moneyline favourites on different matches, best price,
   each at least 62% sharp power chance, total odds 1.60-2.50, chosen for the highest joint chance. Reason: the real ticket's
   2.5 minimum total price forces 2-3 legs; it has won 14 of 45 tickets (31%) while moneyline favourite legs win 75-90%.
