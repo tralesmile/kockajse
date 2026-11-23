@@ -1097,3 +1097,25 @@ real ticket. test_late_gemini.py extended; all test files pass.
 
 To measure next: fav_wide vs late_wide on win rate and return after tax at ~30 bets each; if late_wide leads, recommend moving the real ticket (or a
 single-bet ticket) to the late window.
+
+## 2026-11-23 (review): the ticket floor caps the hit rate (floor_ticket shadow)
+
+Measured (shadow.csv settled legs, 23 Nov): leg win rates fav_wide 89% (19), fav_flat 86% (35), banker_double 83% (12), tax_best 78%, h2h_ticket 76% (25),
+ai_own 76% (50), late_ticket_best 75% (28), actual 63% (49), market 58%; returns after tax (flat, recorded odds) ai_own +10%, tax_best +8%, late_ticket_best
++12%, actual -11%. Real ledger: 14 of 45 tickets won (31%); since the moneyline tiers (18 Nov) 2 of 5 (tickets 41-45), all legs short-priced but 2-3 of them
+because of min_total_odds 2.5. Shadow h2h legs by sharp-chance band: 60-70% won 64% (47), 70-80% 81% (59), 80%+ 84% (45), so leg quality is fine and the
+ticket-level hit rate is capped by how many legs the 2.5 floor requires. Leader on win rate: fav_wide / fav_flat singles (high, small n; returns at closing
+prices are still undecided on the scoreboard); leader on return after tax at closing prices: late tax-proof singles (+1.3%, undecided); nothing beats the
+tax, go/no-go stays NO-GO. Loss foreseeability: recent lost tickets 42, 43, 45 were 2-3 leg moneyline tickets; one favourite losing is not foreseeable from the research.
+
+Researched: one search round (Kelly and devigging resources, "fewer legs win more often" accumulator write-ups, favourite-longshot papers); only titles returned, all agree
+with what is logged: each added leg multiplies the hit chance by the leg chance, so fewer legs is the main lever; favourites are priced well by Pinnacle.
+
+Considered (IDEAS.md): floor_ticket (built), no-bet gate, odds-ladder staking, Elo, NBA rest flag, Gemini late-news veto, Thompson sampling, fractional-survival
+sizing, forecast-tournament Brier scoring, exchange lay price.
+
+Changed: new shadow "floor_ticket" in bot.py (build_floor_ticket: 1-2 moneyline legs, best price, each 62%+ sharp power chance, total odds 1.60-2.50, highest joint
+chance), registered for closing capture and scoreboard, tests/test_floor_ticket.py; test_power.py exclusion list updated; all 27 test files pass. The real ticket is unchanged.
+
+To measure next: floor_ticket vs actual and banker_double on the same days (win rate first, then return after tax at closing); if it hits clearly more often at a similar
+return, recommend lowering min_total_odds (owner decision). fav_wide/late_wide at ~30 scored bets.

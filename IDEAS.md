@@ -6,6 +6,17 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 23 Nov, shadow] floor_ticket (selection, 4/3/1): one or two moneyline favourites on different matches, best price,
+  each at least 62% sharp power chance, total odds 1.60-2.50, chosen for the highest joint chance. Reason: the real ticket's
+  2.5 minimum total price forces 2-3 legs; it has won 14 of 45 tickets (31%) while moneyline favourite legs win 75-90%.
+  Compare on the same days with actual, h2h_ticket and banker_double; if it wins far more often at similar return after
+  tax, recommend in CHANGES.md that the owner lowers min_total_odds (owner decision). Other ideas that day (impact/confidence/effort):
+  per-day "no bet" gate when no favourite is above 70% (3/2/2, waits); odds-ladder staking by chance band (2/2/2, stake rules are
+  owner's); Elo second opinion for tennis (2/2/4); NBA rest flag (2/2/3); Gemini late-news veto on favourites only (3/2/3, waits);
+  Thompson-sampling strategy selector (3/2/3, needs ~30 bets per arm, fav_wide has 19); unconventional: Kelly-with-ruin-constraint
+  / "fractional survival" sizing borrowed from finance (2/2/3, stake is owner's); unconventional: pre-registered forecast-tournament
+  scoring (Brier skill vs Pinnacle per strategy) (2/3/2, partly covered by scoreboard); unconventional: exchange lay price as fair chance (2/2/3).
+
 - [BUILT 18 Nov evening, shadow] late_wide: fav_wide rule at kick-off prices (timing x win rate, 4/3/1). Strategy-consensus selector
   tested on 213 settled legs: win rate 65/74/60/64/75% for 1/2/3-4/5-6/7+ strategies agreeing, no signal, dropped.
 

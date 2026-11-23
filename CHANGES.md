@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-23: a low-floor ticket tested beside your real one
+
+- New side experiment "floor_ticket": each day the bot also records a ticket of one or two "to win" favourites (best bookmaker price, each at least 62% likely) with total odds between 1.60 and 2.50, as a paper bet.
+- Why: your real ticket must reach total odds 2.5, which forces 2-3 legs; it has won 14 of 45 tickets (31%) even though single "to win" favourites win 75-90% of the time. Fewer legs means a higher hit rate.
+- It is scored in the scoreboard next to the real ticket on the same days. If it wins much more often at a similar return after tax, a later review will recommend lowering the minimum total odds, which would be your decision.
+- Your real ticket is unchanged; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-18 (evening): favourite bets tested at kick-off prices too
 
 - New side experiment "late_wide": the same single "to win" favourite bets as "fav_wide" (price up to 2.00, at least 60% likely), but picked minutes before kick-off at the best bookmaker price, recorded as paper bets.

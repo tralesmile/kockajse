@@ -962,7 +962,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 # not captured twice; its pick capture is used.
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
-                   "veto_ticket_best", "prev_rule")
+                   "veto_ticket_best", "prev_rule", "floor_ticket")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "fav_wide", "banker", "banker_double")
 
 
@@ -1529,6 +1529,7 @@ SHADOW_NAMES = {
     "fav_flat": "Favourite singles to 1.30, break-even after tax (power chance, best price)",
     "fav_wide": "Wide favourites: moneyline singles to 2.00, chance 60%+, taxed EV above -2% (power chance, best price)",
     "prev_rule": "The previous real-ticket rule (all bet types, best return after tax)",
+    "floor_ticket": "Low-floor ticket: one or two moneyline favourites, total odds 1.60-2.50, highest joint chance (best price)",
     "banker": "Banker: the single most likely bet of the day (power chance, best price)",
     "banker_double": "Banker double: the two most likely bets on different matches (best price)",
     "power_ticket": "Most likely ticket using power-method chances",
@@ -1633,6 +1634,12 @@ FAV_FLAT_MIN_EV = -0.02
 FAV_FLAT_MAX_ODDS = 1.30
 BANKER_MIN_CHANCE = 0.70
 FAV_WIDE_MAX_ODDS = 2.0
+# "floor_ticket" (23 Nov review): the real ticket's 2.5 minimum total price forces 2-3 legs and caps
+# its hit rate near 35% (14 of 45 won). This shadow takes at most two moneyline favourites at the
+# best price with total odds from 1.60, picked for the highest joint sharp chance.
+FLOOR_MIN_TOTAL = 1.60
+FLOOR_MAX_TOTAL = 2.50
+FLOOR_MIN_LEG_CHANCE = 0.62
 FAV_WIDE_MIN_CHANCE = 0.60
 
 
@@ -1658,6 +1665,33 @@ def taxed_value_bets(cands, key="sharp", min_ev=0.0, max_odds=None, markets=None
         if c["event_id"] not in best or ev > best[c["event_id"]][0]:
             best[c["event_id"]] = (ev, c)
     return [c for _, c in sorted(best.values(), key=lambda x: x[0], reverse=True)]
+
+
+def build_floor_ticket(cands, min_total=None, max_total=None, min_chance=None, max_legs=2):
+    """One or two moneyline legs on different matches with total odds inside the lower band,
+    chosen for the highest joint sharp (power) chance; ties go to the better taxed return."""
+    min_total = FLOOR_MIN_TOTAL if min_total is None else min_total
+    max_total = FLOOR_MAX_TOTAL if max_total is None else max_total
+    min_chance = FLOOR_MIN_LEG_CHANCE if min_chance is None else min_chance
+    pool = [c for c in cands if c.get("market") == "h2h" and c.get("best_odds")
+            and (c.get("sharp_power") or 0) >= min_chance and c["best_odds"] >= 1.05]
+    pool = sorted(pool, key=lambda c: c["sharp_power"], reverse=True)[:25]
+    best, best_key = None, None
+    for size in range(1, max_legs + 1):
+        for combo in itertools.combinations(pool, size):
+            if len({c["event_id"] for c in combo}) < size:
+                continue
+            odds = math.prod(c["best_odds"] for c in combo)
+            if not min_total <= round(odds, 2) <= max_total:
+                continue
+            prob = math.prod(c["sharp_power"] for c in combo)
+            key = (round(prob, 4), taxed_return(prob, odds))
+            if best_key is None or key > best_key:
+                best, best_key = combo, key
+    if not best:
+        return None
+    return sorted((dict(c, odds=c["best_odds"], prob=c["sharp_power"], sharp=c["sharp_power"],
+                        book=c["best_book"]) for c in best), key=lambda c: c["start"])
 
 
 def shadow_tickets(cands, short=None, ticket=None, wide=None):
@@ -1802,6 +1836,9 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
         out.append(("banker", [firsts[0]]))
     if len(firsts) >= 2:
         out.append(("banker_double", firsts[:2]))
+    floor = build_floor_ticket(wide_all)
+    if floor:
+        out.append(("floor_ticket", floor))
     # The live ticket rule (most likely ticket) with power chances instead of proportional.
     power_pool = [dict(c, prob=c["power_prob"]) for c in pool if c.get("power_prob")]
     power = build_ticket(power_pool)
