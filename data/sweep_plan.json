@@ -1,47 +1,33 @@
 {
-  "date": "2026-11-22",
+  "date": "2026-11-23",
   "slots": [
     {
-      "id": "soccer_germany_bundesliga2@2026-11-22T12:30:00Z",
-      "sport_key": "soccer_germany_bundesliga2",
-      "first": "2026-11-22T12:30:00Z",
-      "last": "2026-11-22T12:30:00Z",
-      "events": 3
-    },
-    {
-      "id": "soccer_denmark_superliga@2026-11-22T13:00:00Z",
-      "sport_key": "soccer_denmark_superliga",
-      "first": "2026-11-22T13:00:00Z",
-      "last": "2026-11-22T13:00:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_sweden_allsvenskan@2026-11-22T13:00:00Z",
+      "id": "soccer_sweden_allsvenskan@2026-11-23T18:00:00Z",
       "sport_key": "soccer_sweden_allsvenskan",
-      "first": "2026-11-22T13:00:00Z",
-      "last": "2026-11-22T13:00:00Z",
+      "first": "2026-11-23T18:00:00Z",
+      "last": "2026-11-23T18:00:00Z",
       "events": 2
     },
     {
-      "id": "soccer_norway_eliteserien@2026-11-22T16:00:00Z",
-      "sport_key": "soccer_norway_eliteserien",
-      "first": "2026-11-22T16:00:00Z",
-      "last": "2026-11-22T16:00:00Z",
-      "events": 3
+      "id": "soccer_france_ligue_two@2026-11-23T19:45:00Z",
+      "sport_key": "soccer_france_ligue_two",
+      "first": "2026-11-23T19:45:00Z",
+      "last": "2026-11-23T19:45:00Z",
+      "events": 2
     },
     {
-      "id": "basketball_ncaab@2026-11-22T19:00:00Z",
+      "id": "soccer_brazil_campeonato@2026-11-23T22:30:00Z",
+      "sport_key": "soccer_brazil_campeonato",
+      "first": "2026-11-23T22:30:00Z",
+      "last": "2026-11-23T23:00:00Z",
+      "events": 2
+    },
+    {
+      "id": "basketball_ncaab@2026-11-23T23:30:00Z",
       "sport_key": "basketball_ncaab",
-      "first": "2026-11-22T19:00:00Z",
-      "last": "2026-11-22T19:30:00Z",
-      "events": 8
-    },
-    {
-      "id": "basketball_nba@2026-11-23T00:10:00Z",
-      "sport_key": "basketball_nba",
-      "first": "2026-11-23T00:10:00Z",
-      "last": "2026-11-23T00:10:00Z",
-      "events": 3
+      "first": "2026-11-23T23:30:00Z",
+      "last": "2026-11-24T00:00:00Z",
+      "events": 6
     }
   ]
 }
