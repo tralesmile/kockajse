@@ -6,6 +6,10 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [DROPPED 24 Nov, second review] Draw-no-bet for soccer favourites (bet types, 2/4/3): 38,427 matches 1920-2526 at Pinnacle closing odds. DNB loses 10% of 60%+ favourites vs 27% as 1X2 but its derived
+  price falls to 1.02-1.31, so a ticket of the same total odds pays about as often and returns -2 to -5% after tax even with a margin-free price. No new shadow. Also dropped: home/away favourite filter
+  (78% vs 78% on 101 legs); AI-verdict filter (no signal). Waiting: sharp-above-soft gap filter (81% vs 70%, n 78/23, 2/1/1).
+
 - [BUILT 24 Nov] Ticket joint-chance calibration (measurement, 3/4/1): audit.md table of whole-ticket win rate by product of leg sharp chances, pooled over ticket
   strategies. Result: 30-45% band won 46% vs 36% predicted (207 tickets, correlated), no sign a low-joint day is worse than priced, so a no-bet gate is not supported yet. Other ideas
   that day: per-sport favourite filter (2/1/1, DROPPED: basketball -2.9 pts, soccer +6.3, noise); draw-no-bet for 50-60% favourites (3/2/3); Gemini late-news veto (3/2/3, waits);

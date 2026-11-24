@@ -1165,3 +1165,28 @@ that tags lost favourites with injury/rest news after the fact to see if news wo
 Changed: audit.py ticket_joint_calibration plus the audit.md section, test in tests/test_audit.py; all 27 test files pass. The bot, picks and CHANGES.md are untouched (no email, no preview).
 
 To measure next: floor_ticket / late_floor vs actual on the same days at ~15 days; fav_wide and late_wide at ~30 scored bets; recheck the joint-chance table at ~100 independent tickets.
+
+## 2026-11-24 (second review): draw-no-bet tested on 38,427 matches, home/away and verdict filters tested
+
+Measured: shadow settled leg win rates unchanged (fav_wide 89% on 19, fav_flat 86% on 35, banker_double 86% on 14, late_wide 85% on 13, tax_best 77%, actual 63% on 51); ticket-day win rate
+(all legs won): single 65% (20 days), ai_own 50%, actual 27% (22), h2h_ticket 50% (12). late_floor has 2 legs, both lost (Raptors 1.25, Thunder 1.57; the research for 24 Nov shows no warning);
+floor_ticket's two legs are pending. New checks on 101 settled h2h favourite legs (sharp chance 60%+, unique per match): home 78% (64) vs away 78% (37) against 72.5% priced, so no home/away
+effect; verdict AGREE 79%, RISKY 75%, AVOID 88% (8), so the AI verdict still carries no signal; sharp chance above the soft consensus 81% (78) vs below 70% (23), gap about 0.1 se wide, noise
+for now; day of week 71-83%, noise. Scoreboard: nothing beats the tax, best is late tax-proof singles +1.5% (undecided); go/no-go stays NO-GO. Leader on win rate: fav_wide/fav_flat/banker
+singles (86-89%); leader on return after tax at closing prices: late tax-proof singles.
+
+Researched: draw no bet (DNB) as a way to raise the hit rate on soccer favourites. Backtest on 38,427 matches (seasons 1920-2526, Pinnacle closing odds de-margined; DNB price derived as
+odds x (draw odds - 1) / draw odds, i.e. margin-free, so real DNB prices would be worse): favourite chance 50-60% won 55% as 1X2 but lost only 20% as DNB (25% draws void), priced at 1.31;
+60-70%: 67% win, 20% void, DNB loses 13%, price 1.17; 70-80%: 77%, 15% void, price 1.08; 80%+: 86%, 9% void, price 1.02. Return after tax at these prices: 1X2 -8.5/-4.3/-3.1/-3.0%, DNB
+-5.3/-3.2/-2.2/-3.3% (the DNB column is flattering because it has no margin). Overall, favourites at 60%+ lose 27.4% as 1X2 and 10.2% as DNB, but DNB prices fall in step, so a DNB ticket of the
+same total odds has almost the same chance of paying: no free lunch, only a way to hold fewer losses at lower odds. Also searched open-source repos again (devigger, sports-betting toolbox,
+CLV trackers, Pinnacle-benchmark EV articles); only titles came back and all repeat what is logged.
+
+Considered (IDEAS.md, impact/confidence/effort): DNB shadow (2/4/3, DROPPED on the backtest, it re-prices the same risk); home/away favourite filter (1/4/1, DROPPED: 78% vs 78%); AI-verdict
+filter (1/4/1, no signal); sharp-above-soft gap filter (2/1/1, waits for more legs); Elo second opinion (2/2/4); NBA rest flag (2/2/3); Gemini late-news veto (3/2/3, waits); Thompson sampler
+(3/2/3, waits); unconventional: reference-class check against "bad beat" news (2/2/3); unconventional: Brier-skill scoring (2/3/2).
+
+Changed: nothing in the bot (no idea passed its test); CHANGES.md untouched, no email. The recurring finding stays: win rate is set by the odds, 1/odds minus the margin, and the only lever the
+data supports is fewer legs, which is the owner's decision on min_total_odds (floor_ticket and late_floor are collecting the evidence, 4 legs so far).
+
+To measure next: floor_ticket and late_floor vs actual at about 15 days; the sharp-above-soft gap on fav_wide legs once 40+ exist.
