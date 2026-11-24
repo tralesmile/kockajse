@@ -878,3 +878,5 @@ date,strategy,shadow_id,event_id,sport_key,match,start,market,sel,point,pick,odd
 2026-11-24,power_ticket,2026-11-24-power_ticket-1,0f9b0defd0a6c9603d7c70e7962bb628,basketball_euroleague,FC Barcelona Bàsquet v Fenerbahce SK,2026-11-24T20:00:00Z,h2h,Fenerbahce SK,,Fenerbahce SK to win,1.54,average,0.6414,-0.0122,pending,
 2026-11-24,power_ticket,2026-11-24-power_ticket-1,0dbbfc6c0ffe4c7d2c9b65eb8ab96cb3,basketball_ncaab,Iowa State Cyclones v San Diego St Aztecs,2026-11-24T22:00:00Z,h2h,Iowa State Cyclones,,Iowa State Cyclones to win,1.25,average,0.9712,0.214,pending,
 2026-11-24,late_wide,2026-11-24-late_wide-1,50b80f3ebd38bf63663b11ae0afc575b,soccer_uefa_champs_league,Bodø/Glimt v LASK,2026-11-24T17:45:00Z,h2h,Bodø/Glimt,,Bodø/Glimt to win,1.42,gtbets,0.7311,0.0381,pending,
+2026-11-24,late_value,2026-11-24-late_value-2,1126881ccd5628bc2a3e896fd7e05fed,soccer_italy_serie_b,Virtus Entella v Hellas Verona,2026-11-24T19:00:00Z,h2h,Draw,,Draw,3.4,coolbet,0.3099,0.0535,pending,
+2026-11-24,late_value,2026-11-24-late_value-3,1266361213aa65b3a2f950e194f93351,soccer_italy_serie_b,Cesena FC v Ascoli,2026-11-24T19:00:00Z,h2h,Draw,,Draw,3.3,coolbet,0.3123,0.0307,pending,
