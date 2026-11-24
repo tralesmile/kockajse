@@ -114,3 +114,21 @@ assert n == 13 and w == 10 and 0.4 < lo < 10 / 13 and days == 12 and abs(dw - 9 
 assert abs(ret - ((10 * 0.85 - 3) / 13)) < 1e-9
 assert "Who leads" in audit.markdown(None, None, leaders=res)
 print("audit leaders ok")
+
+# ticket_joint_calibration: product of leg chances vs whole-ticket outcome; pending days skipped.
+def tl(s, d, res, fc):
+    return {"strategy": s, "date": d, "result": res, "fair_chance": str(fc), "odds": "1.5"}
+
+
+rows = []
+for i in range(10):  # 10 tickets of two 0.8 legs: joint 0.64; 7 win
+    ok = i < 7
+    rows += [tl("actual", f"d{i}", "won", 0.8), tl("actual", f"d{i}", "won" if ok else "lost", 0.8)]
+rows += [tl("actual", "dp", "won", 0.8), tl("actual", "dp", "pending", 0.8)]  # pending: skipped
+rows += [tl("value_single", f"v{i}", "won", 0.8) for i in range(9)]  # not a ticket strategy
+res = audit.ticket_joint_calibration(rows)
+assert len(res) == 1, res
+lo, hi, n, w, j, k = res[0]
+assert (lo, hi, n, k) == (0.60, 0.75, 10, 2.0) and abs(w - 0.7) < 1e-9 and abs(j - 0.64) < 1e-9
+assert "joint chance" in audit.markdown(None, None, joint=res)
+print("audit joint ok")

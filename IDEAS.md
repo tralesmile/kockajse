@@ -6,6 +6,11 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 24 Nov] Ticket joint-chance calibration (measurement, 3/4/1): audit.md table of whole-ticket win rate by product of leg sharp chances, pooled over ticket
+  strategies. Result: 30-45% band won 46% vs 36% predicted (207 tickets, correlated), no sign a low-joint day is worse than priced, so a no-bet gate is not supported yet. Other ideas
+  that day: per-sport favourite filter (2/1/1, DROPPED: basketball -2.9 pts, soccer +6.3, noise); draw-no-bet for 50-60% favourites (3/2/3); Gemini late-news veto (3/2/3, waits);
+  Thompson sampler (3/2/3, waits); Elo (2/2/4); NBA rest flag (2/2/3); unconventional: post-hoc "bad beat" news tagging of lost favourites (2/2/3); unconventional: Brier-skill leaderboard (2/3/2).
+
 - [BUILT 23 Nov evening, shadow] late_floor (timing x selection, 4/3/1): floor_ticket rule at kick-off prices, late twin of the morning shadow. Other ideas
   that day (impact/confidence/effort): draw-no-bet for 50-60% favourites (3/2/3, new market, extra credits); per-day no-bet gate (3/2/2, waits); Elo second opinion
   (2/2/4); NBA rest flag (2/2/3); Gemini late-news veto (3/2/3, waits); Thompson sampler (3/2/3, waits); unconventional: Brier-skill scoring per strategy (2/3/2);

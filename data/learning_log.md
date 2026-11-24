@@ -1140,3 +1140,28 @@ kick-off prices, one ticket a day, scored at the close automatically by the late
 
 To measure next: floor_ticket and late_floor vs actual on the same days (win rate first, then return after tax); if they hit far more often at similar return, recommend lowering
 min_total_odds (owner decision).
+
+## 2026-11-24 (review): ticket-level calibration table (no-bet gate test), favourite calibration by sport
+
+Measured: real ledger 15 of 46 tickets won; since the moneyline tiers (18 Nov) 3 of 6 (tickets 41-46); ticket 46 (23 Nov) lost on 76ers 1.59. Shadow leg win rates (settled):
+fav_wide 89% (19), fav_flat 86% (35), banker_double 86% (14), late_wide 85% (13), veto_ticket 80% (15), tax_best 77%, ai_own 75% (52), late_ticket_best 76% (33), actual 63% (51).
+late_floor logged its first two legs on 24 Nov and both lost (Raptors 1.25, Thunder 1.57, both NBA favourites): n=2, nothing to conclude; floor_ticket still pending.
+Calibration of h2h favourite legs (268 unique settled legs): won minus sharp chance by sport basketball -2.9 points (150), soccer +6.3 (98), tennis +19 (9), handball -6.8 (11);
+by league only Euroleague (-29 points, 13) and Europa League (-19, 9) stand out, both small samples with no mechanism, so no league filter. New table in data/audit.md: joint chance of a
+whole ticket vs its win rate, pooled over the ticket strategies (settled tickets): 0-30% joint chance won 32% (19), 30-45% won 46% (207, mean joint 36%), 75%+ won 71% (7, mean 83%).
+Tickets win more than the product of leg chances in this window (a hot run for favourites, and strategies share legs so the pooled n is smaller than it looks); there is no sign that a
+low-joint-chance day is worse than the model says, so a "skip low-joint days" gate is not supported yet; the lever remains fewer legs (floor_ticket). Leader on win rate: fav_wide/fav_flat/banker
+singles at 86-89% (high lower bound for fav_wide 69%), prev_rule 13 of 13 (small, 6 days); leader on return after tax at closing prices (scoreboard): late tax-proof singles +1.5% (undecided);
+nothing beats the tax, go/no-go stays NO-GO.
+Loss foreseeability: ticket 46's lost leg and today's NBA legs were single favourites losing; the sharp chance (63-80%) already priced the risk, no research warning.
+
+Researched: one search round (open-source de-vigging tools, BeatTheBookie, sports-betting Python toolbox, backtest tutorials); titles only came back and match what is already logged (Pinnacle de-margined price
+as the truth, favourite-longshot bias, CLV). Nothing new to adapt.
+
+Considered (IDEAS.md, impact/confidence/effort): ticket joint-chance calibration (built, 3/4/1); per-sport favourite filter (2/1/1, dropped: noise); draw-no-bet for 50-60% favourites (3/2/3);
+Gemini late-news veto on favourites (3/2/3, waits); Thompson sampler (3/2/3, waits); Elo second opinion (2/2/4); NBA rest flag (2/2/3); unconventional: reference-class "bad beat" log
+that tags lost favourites with injury/rest news after the fact to see if news would have predicted them (2/2/3); unconventional: Brier-skill leaderboard per strategy (2/3/2).
+
+Changed: audit.py ticket_joint_calibration plus the audit.md section, test in tests/test_audit.py; all 27 test files pass. The bot, picks and CHANGES.md are untouched (no email, no preview).
+
+To measure next: floor_ticket / late_floor vs actual on the same days at ~15 days; fav_wide and late_wide at ~30 scored bets; recheck the joint-chance table at ~100 independent tickets.

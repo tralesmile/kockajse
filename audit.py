@@ -314,7 +314,47 @@ def strategy_leaders(shadow_rows, tax=0.15, min_legs=10):
     return sorted(out, key=lambda t: (-t[3], -t[1]))
 
 
-def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None):
+TICKET_STRATEGIES = ("actual", "actual_best", "ai_own", "market", "tax_best", "tax_market", "likely_ticket",
+                     "power_ticket", "h2h_ticket", "h2h_ticket_best", "floor_ticket", "late_floor",
+                     "banker_double", "late_ticket", "late_ticket_best", "veto_ticket", "veto_ticket_best",
+                     "prev_rule")
+
+
+def ticket_joint_calibration(shadow_rows, edges=(0.0, 0.30, 0.45, 0.60, 0.75, 1.01), min_n=5):
+    """Does the joint sharp chance of a whole ticket predict whether it wins? (no-bet gate test)
+
+    Pools every settled shadow ticket (strategy, day) whose legs all have a fair chance; the joint
+    chance is the product of the legs' chances. Returns rows (low, high, tickets, won_rate,
+    mean_joint, mean_legs) per band with at least min_n tickets. If the win rate tracks the joint
+    chance, a gate that skips days with a low joint chance trades fewer bets for a higher hit rate;
+    if it falls below it, the legs are over-rated.
+    """
+    groups = {}
+    for r in shadow_rows:
+        if r.get("strategy") not in TICKET_STRATEGIES:
+            continue
+        groups.setdefault((r["strategy"], r.get("date")), []).append(r)
+    tickets = []
+    for legs in groups.values():
+        if any(l.get("result") not in ("won", "lost") for l in legs):
+            continue
+        ch = [_f(l.get("fair_chance")) for l in legs]
+        if any(c is None or c <= 0 for c in ch):
+            continue
+        joint = 1.0
+        for c in ch:
+            joint *= c
+        tickets.append((joint, all(l["result"] == "won" for l in legs), len(legs)))
+    out = []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        b = [t for t in tickets if lo <= t[0] < hi]
+        if len(b) >= min_n:
+            out.append((lo, hi, len(b), sum(t[1] for t in b) / len(b),
+                        sum(t[0] for t in b) / len(b), sum(t[2] for t in b) / len(b)))
+    return out
+
+
+def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None, joint=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
     if gng:
@@ -373,6 +413,15 @@ def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None):
                 "Won minus sharp chance by verdict (picks, mean): "
                 + ", ".join(f"{v} {m * 100:+.1f} points ({n})"
                             for v, (n, m) in sorted(ai["verdicts"].items())), ""]
+    if joint:
+        out += ["## Does a ticket's joint chance predict its win rate? (no-bet gate test)", "",
+                "Settled shadow tickets of every ticket strategy pooled (one ticket = one strategy on "
+                "one day); joint chance = product of the legs' sharp chances. A win rate that follows "
+                "the joint chance means a gate on a high joint chance buys a higher hit rate for fewer bets.",
+                "", "| Joint chance | Tickets | Won | Mean joint chance | Mean legs |", "|---|---|---|---|---|"]
+        out += [f"| {lo*100:.0f}-{min(hi,1)*100:.0f}% | {n} | {w*100:.0f}% | {j*100:.0f}% | {k:.1f} |"
+                for lo, hi, n, w, j, k in joint]
+        out.append("")
     out.append("## Which bookmaker's first price best predicts Pinnacle's closing chance?")
     if lead is None:
         out += ["", f"Fewer than {MIN_MATCHES} matches with both an archived price and a "
@@ -431,7 +480,12 @@ def write(data_dir=None, ai_weight=0.2):
                                    json.loads((ROOT / "config.json").read_text())["tax_rate"])
     except Exception:  # noqa: BLE001 - optional
         leaders = None
-    text = markdown(ai, lead, gng, sim, mb, cal, leaders)
+    joint = None
+    try:
+        joint = ticket_joint_calibration(_read(data_dir / "shadow.csv"))
+    except Exception:  # noqa: BLE001 - optional
+        joint = None
+    text = markdown(ai, lead, gng, sim, mb, cal, leaders, joint)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

@@ -88,6 +88,16 @@ Live weight 0.20 vs 0: Brier gain -4.1 +- 2.2 (x0.0001; positive means the AI he
 
 Won minus sharp chance by verdict (picks, mean): AGREE +2.6 points (250), AVOID +2.0 points (248), RISKY +1.6 points (484)
 
+## Does a ticket's joint chance predict its win rate? (no-bet gate test)
+
+Settled shadow tickets of every ticket strategy pooled (one ticket = one strategy on one day); joint chance = product of the legs' sharp chances. A win rate that follows the joint chance means a gate on a high joint chance buys a higher hit rate for fewer bets.
+
+| Joint chance | Tickets | Won | Mean joint chance | Mean legs |
+|---|---|---|---|---|
+| 0-30% | 19 | 32% | 28% | 2.2 |
+| 30-45% | 207 | 46% | 36% | 2.3 |
+| 75-100% | 7 | 71% | 83% | 2.0 |
+
 ## Which bookmaker's first price best predicts Pinnacle's closing chance?
 
 145 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0342, average of all books 0.0349; paired absolute-error gain of the average over Pinnacle -0.0033 +- 0.0009.
