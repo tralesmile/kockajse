@@ -937,7 +937,7 @@ def closing_row(pick, cand, now, source="pick"):
     if cand is None:
         return row  # the line moved away (or the bet left the feed): nothing to compare
     sharp = cand["sharp"]
-    if source in ("power_value", "fav_flat", "fav_wide", "banker", "banker_double"):  # its opening fair chance is power-de-margined: compare alike
+    if source in ("power_value", "fav_flat", "fav_wide", "fav_agree", "banker", "banker_double"):  # its opening fair chance is power-de-margined: compare alike
         sharp = cand.get("sharp_power")
     close = sharp if sharp is not None else cand["consensus"]
     row.update(close_odds=cand["odds"], close_consensus=round(cand["consensus"], 4),
@@ -955,7 +955,7 @@ def closing_row(pick, cand, now, source="pick"):
 # Shadow strategies whose closing price is recorded too, so their value can be checked
 # against the close; value singles need a sharp price, so their fair chance is sharp.
 SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "power_value",
-              "fav_flat", "fav_wide", "banker", "banker_double")
+              "fav_flat", "fav_wide", "fav_agree", "banker", "banker_double")
 # Ticket shadows whose legs are not always in the pick log (the market and power tickets
 # choose from every candidate): their legs are captured too, so the closing-price
 # scoreboard (scoreboard.py) can score every strategy. A leg already logged as a pick is
@@ -963,7 +963,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
                    "veto_ticket_best", "prev_rule", "floor_ticket")
-SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "fav_wide", "banker", "banker_double")
+SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "fav_wide", "fav_agree", "banker", "banker_double")
 
 
 NEAR_MINUTES = 60  # a capture this close to the start counts as the closing price
@@ -1535,6 +1535,7 @@ SHADOW_NAMES = {
     "power_value": "Tax-proof value singles, power-method fair chance (favourites from 1.05)",
     "fav_flat": "Favourite singles to 1.30, break-even after tax (power chance, best price)",
     "fav_wide": "Wide favourites: moneyline singles to 2.00, chance 60%+, taxed EV above -2% (power chance, best price)",
+    "fav_agree": "Agreeing favourites: fav_wide legs where the sharp book is not below the soft bookmakers' average (power chance, best price)",
     "prev_rule": "The previous real-ticket rule (all bet types, best return after tax)",
     "floor_ticket": "Low-floor ticket: one or two moneyline favourites, total odds 1.60-2.50, highest joint chance (best price)",
     "banker": "Banker: the single most likely bet of the day (power chance, best price)",
@@ -1827,6 +1828,12 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
             continue
         out.append(("fav_wide", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
                                       sharp=c["sharp_power"], book=c["best_book"])]))
+        # "fav_agree" (25 Nov review): fav_wide legs where the sharp book is not below the soft
+        # bookmakers' average (sharp >= consensus). On 101 settled favourite legs these won 83%
+        # (86) vs 60% (15) when the sharp book was the lower one; an unproven gap (n small).
+        if c.get("sharp") is not None and c.get("consensus") is not None and c["sharp"] >= c["consensus"]:
+            out.append(("fav_agree", [dict(c, odds=c["best_odds"], prob=c["sharp_power"],
+                                           sharp=c["sharp_power"], book=c["best_book"])]))
     # "banker" / "banker_double" (16 Nov review, owner's win-rate goal): the single most likely bet
     # of the day by the sharp power chance (any market, best price), and the two most likely bets
     # on different matches as a double. They answer "how high can the hit rate go, and what does it

@@ -6,6 +6,9 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 25 Nov, shadow] fav_agree (selection, 3/2/1): fav_wide legs only when sharp >= soft consensus. 101 settled legs: 83% (86) vs 60% (15) when sharp was lower. Waiting: football-only
+  favourite filter (2/2/1, basketball 72% vs football 85%); Gemini late-news veto (3/2/3); Thompson sampler (3/2/3); Elo (2/2/4); NBA rest flag (2/2/3); Brier-skill leaderboard (2/3/2).
+
 - [DROPPED 24 Nov, second review] Draw-no-bet for soccer favourites (bet types, 2/4/3): 38,427 matches 1920-2526 at Pinnacle closing odds. DNB loses 10% of 60%+ favourites vs 27% as 1X2 but its derived
   price falls to 1.02-1.31, so a ticket of the same total odds pays about as often and returns -2 to -5% after tax even with a margin-free price. No new shadow. Also dropped: home/away favourite filter
   (78% vs 78% on 101 legs); AI-verdict filter (no signal). Waiting: sharp-above-soft gap filter (81% vs 70%, n 78/23, 2/1/1).

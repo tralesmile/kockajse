@@ -1190,3 +1190,15 @@ Changed: nothing in the bot (no idea passed its test); CHANGES.md untouched, no 
 data supports is fewer legs, which is the owner's decision on min_total_odds (floor_ticket and late_floor are collecting the evidence, 4 legs so far).
 
 To measure next: floor_ticket and late_floor vs actual at about 15 days; the sharp-above-soft gap on fav_wide legs once 40+ exist.
+
+## 2026-11-25 (review): sharp-below-soft favourites (fav_agree shadow)
+
+Measured: settled shadow legs barely moved since yesterday (fav_wide 91% on 23, fav_flat 87% on 39, banker_double 88%, late_wide 86% on 14, tax_best 78%, actual 64% on 53; floor_ticket 2 of 2 won on
+24 Nov, late_floor 0 of 2). Scoreboard: nothing beats the tax; best is late tax-proof singles +1.5% (undecided); go/no-go stays NO-GO. Leader on win rate: fav_wide/banker singles (86-91%); leader
+on return after tax at closing prices: late tax-proof singles. New cut on 101 settled h2h favourite legs (sharp 60%+, odds to 2.00): sharp >= soft consensus won 82.6% (86) vs 60.0% (15) when the sharp
+book was lower; gap of 1 point or more won 87% (39); sharp 70%+ won 82% (66) vs 74% (35); basketball 72% (43), football 85% (47), tennis 78% (9).
+Researched: no new sources this round (earlier rounds already cover Pinnacle de-margining, CLV, devigging toolkits); the gap test is the practical form of "trust the sharp price, but not when the soft market disagrees".
+Considered (impact/confidence/effort): sharp-vs-soft agreement shadow (3/2/1, BUILT as fav_agree); football-only favourite filter (2/2/1, waits: basketball 72% vs football 85% may be noise); Gemini late-news veto
+(3/2/3); Thompson sampler (3/2/3); Elo second opinion (2/2/4); NBA rest flag (2/2/3); unconventional: pre-registered Brier-skill leaderboard (2/3/2); unconventional: ensemble vote of strategies (2/2/2, tried 18 Nov).
+Changed: bot.py adds shadow fav_agree (fav_wide legs with sharp >= consensus), wired into closing capture and scoreboard; tests/test_fav_agree.py added; all test files pass. CHANGES.md entry added.
+To measure next: fav_agree vs fav_wide win rate at about 30 legs each; football-only cut once 40+ basketball legs settle.

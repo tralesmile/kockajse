@@ -2,6 +2,12 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-25: favourite bets filtered by whether the sharp bookmaker agrees
+
+- New side experiment "fav_agree": the same single "to win" favourite bets as "fav_wide", but only when the sharp bookmaker rates the team at least as likely as the average of the other bookmakers. Recorded as paper bets.
+- Why: you want the highest success rate. On 101 past favourite bets the ones where the sharp price was lower won 60% (15 bets) against 83% for the rest (86 bets). That is a small sample, so it is only a test for now.
+- It appears in the scoreboard next to fav_wide on the same days. Your real ticket is unchanged; paper mode should stay on. No extra Odds API or Gemini use.
+
 ## 2026-11-23 (evening): the low-floor ticket also tested at kick-off prices
 
 - New side experiment "late_floor": the same one or two "to win" favourites as "floor_ticket" (each at least 62% likely, total odds 1.60-2.50), but picked minutes before kick-off at the best bookmaker price, as a paper bet.
