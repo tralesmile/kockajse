@@ -1231,3 +1231,40 @@ rest and ratings are already priced). No preview run (no change to selection cod
 
 Next, more different strategies: the market's own disagreement is exhausted for football; look where prices may be softer: (a) tennis favourites by tournament level, from the live odds
 archive in data/odds; (b) whether women's and lower-division matches the bot already sees calibrate differently; (c) the shots timing signal if floor_ticket/late_floor evidence makes timing matter.
+
+## 2026-11-26 (evening review): who moves first? lead books, a capture bug, and the AI against the closing move
+
+Measured: ledger unchanged since the morning review (16 of 48 won; 47 and 48 won, ticket 49 pending), no newly lost ticket pick to review. Settled shadow legs: ai_own 73% (56), veto_ticket 84% (19),
+actual 65% (55), tax_market 70% (40), market 63% (49); ticket days all won: ai_own 12/24, market 9/24, veto_ticket 6/9, tax_market 9/19. LEADERS: win rate fav_wide (93% of 29 singles, small, short odds);
+return after tax at closing prices: late tax-proof singles +1.5% (10 scored, undecided; the 3-bet sweep row is too small). Nothing beats the tax: NO-GO.
+
+New target: Pinnacle's move to the close instead of results (sd about 3 points a bet against about 45).
+1. Lead books. One side per match (Pinnacle's favourite), power chance at both ends, 174 matches from data/odds and closing.csv. Single books, slope of the move on (book - Pinnacle): BetOnline +0.70
+   (se 0.22, n 146), Betfair Exchange +0.94 (0.37), Matchbook +0.93 (0.52), soft books mostly 0.0-0.5. Mean of the three: +0.84 (0.30, n 160; day-clustered se 0.30; soccer +0.81, basketball +0.66;
+   first half +0.61, second +0.93). Favourites with lead >= Pinnacle moved +0.85 +- 0.46 points (46), below -0.58 +- 0.30 (114). Caveats: three of 22 books chosen after looking; gap sd only 0.8 points;
+   Pinnacle may simply be stale in the feed (still useful at pick time). Outcomes (83 sides with results) cannot tell the two chances apart.
+2. AI: slope of the move on (AI chance - sharp chance) +0.023 (se 0.031, 328 pick captures; the audit.md version, on 330, says +0.02; h2h +0.22 se 0.19 on 105); mean move by verdict AGREE -0.2, RISKY +0.1, AVOID -0.2 points. Second, independent
+   sign that the AI adds no information. Prompts unchanged (a null is not a reason to rewrite them).
+3. Selection drift: with the same power method at both ends, match-winner legs of most morning shadows lose 0.5-1.9 points by the close (fav_wide -0.88 +- 0.31, banker_double -0.80 +- 0.39). A first cut of mine
+   suggested the AI-filtered strategies escape this (+1.2 to +1.5); that was an artefact of comparing a proportional opening chance with a power closing chance, and disappears (actual -0.03, tax_best +0.36, both +- 0.6-0.7)
+   when compared like with like. Lesson for later reviews: closing.csv close_power must only be compared with a power opening chance.
+4. Bug: h2h_ticket and h2h_ticket_best were not in SHADOW_LEGS_CLV: since 11 Nov near-close captures covered 16/32 and 14/36 legs, 3/14 and 0/14 whole tickets (actual 10/15). Fixed.
+
+Replay of the built rule on the 24 archived days: lead_ticket picks differ from the same rule on Pinnacle chances on 17 days (average price) and 12 (best price). Expected joint chance by the lead-adjusted estimate
+0.378 vs 0.375 (best 0.381 vs 0.376), so the expected win-rate gain is about 0.3-0.5 points, and it is measured by the very estimate under test. In-sample, not proof.
+
+Researched: searches on exchange-vs-Pinnacle price discovery, winner's curse in value betting, weighted sharp consensus and prediction markets; GitHub repository search (nothing relevant came back for lead-lag or sharp
+consensus). HughFOD/soccer-markets (13 European books against their own consensus, 16,328 matches): prices more than 2% better than consensus were still better at kick-off 73% of the time (205), under 1% mostly noise;
+it has nothing on BetOnline, exchanges or Pinnacle (https://github.com/HughFOD/soccer-markets). davidhmsilva/nopredictions PR 5: Polymarket and Kalshi football mids within +0.03 and +0.17 points of de-vigged Pinnacle
+(https://github.com/davidhmsilva/nopredictions/pull/5). Unabated and Betfair-vs-Pinnacle articles give opinions without numbers. An arXiv winner's-curse paper (2605.18887) is about A/B tests, not betting. So no published
+measurement of which book leads was found; the evidence for lead_ticket is the bot's own data.
+
+Not done: the football history mirror was not cloned this time, because this session's GitHub access is limited to the owner's two repositories; the lead-book test needs per-book snapshots, which that history is not known to have.
+
+Considered (IDEAS.md): lead_ticket (built), markout measurement (built), capture fix (built), winner's-curse shrinkage (watching), lead-gap veto, order timing by lead gap, prediction-market price, NBA rest history, Gemini
+late-news-only role.
+
+Changed: bot.py (lead_prob/lead_gap on candidates, shadows lead_ticket and lead_ticket_best, closing captures for those and h2h_ticket(_best)), audit.py (price_move_signals and its audit.md section), tests/test_lead_ticket.py;
+all test files pass. The real ticket's selection is unchanged, so no preview run.
+
+To measure next: the audit's out-of-sample lead-gap row at about 150 new matches (keep if slope > 2 se above 0, else drop lead_ticket); lead_ticket vs h2h_ticket on the same days (closing xROI first, then win rate).

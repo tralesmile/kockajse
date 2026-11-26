@@ -55,6 +55,14 @@ PICK_FIELDS = ["date", "ticket_no", "mode", "event_id", "sport_key", "sport", "l
 SHARP_BOOKS = ["pinnacle", "betfair_ex_eu", "matchbook"]
 # Exchanges charge commission on winnings, so their prices are not counted as "best price".
 EXCHANGES = {"betfair_ex_eu", "matchbook"}
+# "Lead" books (26 Nov review): on 160 matches in our own odds archive, Pinnacle's power chance
+# moved by the close about 0.84 (se 0.30) of the way from its morning value to the average of these
+# three. The books were picked after looking at 22 of them, so the shadows "lead_ticket" and the
+# audit's out-of-sample row test it on later matches. lead_prob = Pinnacle + LEAD_WEIGHT x gap;
+# a gap above LEAD_MAX_GAP is treated as a stale price and ignored.
+LEAD_BOOKS = ("betonlineag", "betfair_ex_eu", "matchbook")
+LEAD_WEIGHT = 0.7
+LEAD_MAX_GAP = 0.05
 API = "https://api.the-odds-api.com/v4"
 TZ = ZoneInfo(CONFIG["timezone"])
 SPORT_NAMES = {"soccer": "Football", "basketball": "Basketball",
@@ -269,7 +277,9 @@ def candidates_from_event(event, strict=True, max_odds=None, min_odds=None):
     def add(market, sel, point, prob, price, ppow):
         g = groups.setdefault((market, sel, point),
                               {"probs": [], "pows": [], "prices": [], "sharp": {},
-                               "sharp_pow": {}, "offers": []})
+                               "sharp_pow": {}, "lead": [], "offers": []})
+        if bkey in LEAD_BOOKS:
+            g["lead"].append(ppow)
         if bkey in SHARP_BOOKS:
             g["sharp"][bkey] = prob
             g["sharp_pow"][bkey] = ppow
@@ -334,6 +344,13 @@ def candidates_from_event(event, strict=True, max_odds=None, min_odds=None):
         sharp_power = g["sharp_pow"][sharp_book] if sharp_book else None
         power_prob = (sharp_power if sharp_power is not None
                       else sum(g["pows"]) / len(g["pows"]))
+        # Match winner only: the evidence is on h2h, and line markets differ in points.
+        lead_gap = None
+        if market == "h2h" and sharp_book == "pinnacle" and g["lead"]:
+            gap = sum(g["lead"]) / len(g["lead"]) - sharp_power
+            if abs(gap) <= LEAD_MAX_GAP:
+                lead_gap = gap
+        lead_prob = power_prob if lead_gap is None else power_prob + LEAD_WEIGHT * lead_gap
         best_odds, best_book = best_offer(g["offers"], odds) if market != "dc" else (None, "")
         top_odds, top_book = (best_offer(g["offers"], odds, 1.25) if market != "dc"
                               else (None, ""))
@@ -372,6 +389,8 @@ def candidates_from_event(event, strict=True, max_odds=None, min_odds=None):
             "top_book": top_book,
             "power_prob": power_prob,
             "sharp_power": sharp_power,
+            "lead_gap": lead_gap,
+            "lead_prob": lead_prob,
             "mean_odds": sum(g["prices"]) / len(g["prices"]),
             "books": len(g["probs"]),
             "result": "pending",
@@ -962,7 +981,8 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 # not captured twice; its pick capture is used.
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
-                   "veto_ticket_best", "prev_rule", "floor_ticket")
+                   "veto_ticket_best", "prev_rule", "floor_ticket", "h2h_ticket",
+                   "h2h_ticket_best", "lead_ticket", "lead_ticket_best")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "fav_wide", "fav_agree", "banker", "banker_double")
 
 
@@ -1548,6 +1568,8 @@ SHADOW_NAMES = {
     "veto_ticket_best": "AI as veto only, at the best bookmaker prices",
     "h2h_ticket": "Moneyline-only ticket, best return after tax (no handicaps or totals, no AI)",
     "h2h_ticket_best": "Moneyline-only ticket at the best bookmaker prices (no AI)",
+    "lead_ticket": "Lead-book ticket: the moneyline-only ticket, chances moved towards BetOnline and the exchanges (no AI)",
+    "lead_ticket_best": "Lead-book ticket at the best bookmaker prices (no AI)",
     "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
     "late_ticket": "Late ticket: the ticket rule minutes before kick-off (no AI, average price)",
     "late_ticket_best": "Late ticket at the best bookmaker prices (no AI)",
@@ -1767,6 +1789,15 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
     h2h_pool = [c for c in pool if c.get("market") == "h2h"]
     for name, okey in (("h2h_ticket", "odds"), ("h2h_ticket_best", "best_odds")):
         t = build_taxed_ticket(h2h_pool, odds_key=okey)
+        if t:
+            out.append((name, [dict(l, book="average", sharp=l.get("sharp_power")) if okey == "odds"
+                               else dict(l, book=l.get("best_book") or "average",
+                                         sharp=l.get("sharp_power")) for l in t["legs"]]))
+    # "lead_ticket" (26 Nov evening review): the twin of h2h_ticket with one difference, the chance
+    # used to choose: Pinnacle's power chance moved towards the lead books (lead_prob). fair_chance
+    # stays Pinnacle's, so the audit can see whether the chosen legs shorten by the close.
+    for name, okey in (("lead_ticket", "odds"), ("lead_ticket_best", "best_odds")):
+        t = build_taxed_ticket(h2h_pool, prob_key="lead_prob", odds_key=okey)
         if t:
             out.append((name, [dict(l, book="average", sharp=l.get("sharp_power")) if okey == "odds"
                                else dict(l, book=l.get("best_book") or "average",

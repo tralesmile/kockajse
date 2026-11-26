@@ -141,6 +141,150 @@ def book_lead_lag(odds_dir, closing_rows, power_devig):
             "mean_all": rms(avg), "paired_gain": gain, "paired_se": gain_se}
 
 
+def _slope(rows):
+    """OLS slope of y on x from (cluster, x, y) rows, with a cluster-robust standard error."""
+    if len(rows) < MIN_MATCHES:
+        return None
+    mx = sum(r[1] for r in rows) / len(rows)
+    my = sum(r[2] for r in rows) / len(rows)
+    sxx = sum((r[1] - mx) ** 2 for r in rows)
+    if sxx <= 0:
+        return None
+    b = sum((r[1] - mx) * (r[2] - my) for r in rows) / sxx
+    scores = {}
+    for c, x, y in rows:
+        scores[c] = scores.get(c, 0.0) + (x - mx) * ((y - my) - b * (x - mx))
+    return b, math.sqrt(sum(v * v for v in scores.values())) / sxx, len(rows)
+
+
+def price_move_signals(odds_dir, pick_rows, closing_rows, shadow_rows, power_devig,
+                       lead_books=("betonlineag", "betfair_ex_eu", "matchbook"),
+                       max_gap=0.05, fresh_from="2026-11-27"):
+    """What predicts the sharp price's move before kick-off? A match result is very noisy
+    (sd about 45 points a bet); the move of Pinnacle's chance to the close is not (about 3),
+    so a signal can be judged on a few hundred matches. Everything compares the same method
+    at both ends.
+
+    lead: per match (the side Pinnacle favours in the first archived price), slope of the
+    move of Pinnacle's power chance on (mean power chance of lead_books - Pinnacle's);
+    "fresh" uses only matches first priced on or after fresh_from, after the books were chosen.
+    ai: slope of the pick's move on (AI chance - sharp chance), pick captures only.
+    drift: per shadow strategy, h2h legs, closing power chance minus Pinnacle's power chance
+    in that day's archived price (late_ strategies left out: they are taken near the close)."""
+    close, best_min = {}, {}
+    for r in closing_rows:
+        power, mins = _f(r.get("close_power")), _f(r.get("minutes_before"))
+        if r.get("market") != "h2h" or power is None or r.get("close_book") != "pinnacle":
+            continue
+        key = (r["event_id"], r["sel"])
+        if key not in close or (mins is not None and mins < best_min[key]):
+            close[key], best_min[key] = power, mins if mins is not None else 1e9
+    first, by_day = {}, {}
+    for path in sorted(glob.glob(str(Path(odds_dir) / "*.json.gz"))):
+        day = Path(path).name[:10]
+        try:
+            with gzip.open(path, "rt") as fh:
+                data = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        for event in data.get("events", []):
+            chances = {}
+            for book, markets in event.get("books", {}).items():
+                h2h = markets.get("h2h")
+                if not h2h or len(h2h) < 2:
+                    continue
+                try:
+                    probs = power_devig([x[2] for x in h2h])
+                except (ValueError, ZeroDivisionError, TypeError):
+                    continue
+                for x, p in zip(h2h, probs):
+                    chances.setdefault(x[0], {})[book] = p
+            by_day[(day, event["id"])] = chances
+            first.setdefault(event["id"], (day, chances))
+    sides = {}
+    for (eid, sel), truth in close.items():
+        if eid not in first:
+            continue
+        day, chances = first[eid]
+        c = chances.get(sel, {})
+        others = [c[b] for b in lead_books if b in c]
+        if "pinnacle" not in c or not others:
+            continue
+        gap = sum(others) / len(others) - c["pinnacle"]
+        if abs(gap) > max_gap:
+            continue
+        # one side per match: the one Pinnacle rates highest among those with a close
+        if eid not in sides or c["pinnacle"] > sides[eid][0]:
+            sides[eid] = (c["pinnacle"], gap, truth - c["pinnacle"], day)
+    lead_rows = [(e, v[1], v[2]) for e, v in sides.items()]
+    groups = {}
+    for label, keep in (("lead books at or above Pinnacle", lambda g: g >= 0),
+                        ("lead books below Pinnacle", lambda g: g < 0)):
+        moves = [v[2] for v in sides.values() if keep(v[1])]
+        if len(moves) > 1:
+            groups[label] = (len(moves),) + _mean_se(moves)
+    picks = {}
+    for r in pick_rows:
+        picks[(r["event_id"], r["market"], r["sel"], r.get("point") or "")] = r
+    ai_rows, done = [], {}
+    for r in closing_rows:
+        if (r.get("source") or "pick") != "pick":
+            continue
+        done[(r["event_id"], r["market"], r["sel"], r.get("point") or "")] = r
+    for key, r in done.items():
+        pick = picks.get(key)
+        a, b = _f(r.get("close_sharp")), _f(r.get("open_sharp"))
+        if not pick or a is None or b is None:
+            continue
+        ai, sharp = _f(pick.get("ai_chance")), _f(pick.get("sharp_chance"))
+        if ai is not None and sharp is not None:
+            ai_rows.append((key[0], ai - sharp, a - b))
+    drift = {}
+    for r in shadow_rows:
+        if r.get("market") != "h2h" or r["strategy"].startswith("late_"):
+            continue
+        truth = close.get((r["event_id"], r["sel"]))
+        pin = by_day.get((r["date"], r["event_id"]), {}).get(r["sel"], {}).get("pinnacle")
+        if truth is not None and pin is not None:
+            drift.setdefault(r["strategy"], []).append(truth - pin)
+    table = sorted(((k, len(v)) + _mean_se(v) for k, v in drift.items() if len(v) >= 8),
+                   key=lambda t: t[2])
+    return {"lead": _slope(lead_rows),
+            "fresh": _slope([(e, v[1], v[2]) for e, v in sides.items() if v[3] >= fresh_from]),
+            "fresh_n": sum(1 for v in sides.values() if v[3] >= fresh_from),
+            "fresh_from": fresh_from, "groups": groups, "ai": _slope(ai_rows), "drift": table}
+
+
+def price_move_markdown(pm):
+    def line(label, s):
+        if not s:
+            return f"| {label} | - | - | - |"
+        return f"| {label} | {s[2]} | {s[0]:+.2f} | {s[1]:.2f} |"
+    out = ["## What predicts the sharp price's move before kick-off?", "",
+           "A slope of 1 means Pinnacle moves all the way to the signal by the close, 0 that the "
+           "signal says nothing. Match-winner prices; the move is far less noisy than results, so "
+           "this settles questions much sooner. The lead books (BetOnline, Betfair Exchange, "
+           "Matchbook) were chosen after comparing 22 books on matches up to 26 Nov, so only the "
+           "later row is a fair test.", "",
+           "| Signal | Matches or picks | Slope | se |", "|---|---|---|---|",
+           line("Lead books minus Pinnacle, all matches", pm["lead"]),
+           line(f"Lead books minus Pinnacle, first priced from {pm['fresh_from']} (out of sample, "
+                f"{pm['fresh_n']} so far)", pm["fresh"]),
+           line("AI chance minus sharp chance (logged picks, all bet types)", pm["ai"]), ""]
+    if pm["groups"]:
+        out += ["Mean move of the favourite's chance (points): "
+                + "; ".join(f"{k} {m * 100:+.2f} +- {se * 100:.2f} ({n})"
+                            for k, (n, m, se) in pm["groups"].items()) + ".", ""]
+    if pm["drift"]:
+        out += ["Which strategies' match-winner legs lose sharp support after they are picked "
+                "(closing minus that morning's Pinnacle power chance; negative = the chance used "
+                "to choose them was too high):", "",
+                "| Strategy | Legs | Move (points) | se |", "|---|---|---|---|"]
+        out += [f"| {k} | {n} | {m * 100:+.2f} | {se * 100:.2f} |" for k, n, m, se in pm["drift"]]
+        out.append("")
+    return out
+
+
 def _judge(ai):
     if ai["gain"] > 2 * ai["gain_se"]:
         return "The AI shift helps"
@@ -315,7 +459,8 @@ def strategy_leaders(shadow_rows, tax=0.15, min_legs=10):
 
 
 TICKET_STRATEGIES = ("actual", "actual_best", "ai_own", "market", "tax_best", "tax_market", "likely_ticket",
-                     "power_ticket", "h2h_ticket", "h2h_ticket_best", "floor_ticket", "late_floor",
+                     "power_ticket", "h2h_ticket", "h2h_ticket_best", "lead_ticket", "lead_ticket_best",
+                     "floor_ticket", "late_floor",
                      "banker_double", "late_ticket", "late_ticket_best", "veto_ticket", "veto_ticket_best",
                      "prev_rule")
 
@@ -354,7 +499,8 @@ def ticket_joint_calibration(shadow_rows, edges=(0.0, 0.30, 0.45, 0.60, 0.75, 1.
     return out
 
 
-def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None, joint=None):
+def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None, joint=None,
+             moves=None):
     out = ["# Standing audits", "", "Built by audit.py from recorded data; nothing here changes "
            "a recorded result.", ""]
     if gng:
@@ -422,6 +568,8 @@ def markdown(ai, lead, gng=None, sim=None, mb=None, cal=None, leaders=None, join
         out += [f"| {lo*100:.0f}-{min(hi,1)*100:.0f}% | {n} | {w*100:.0f}% | {j*100:.0f}% | {k:.1f} |"
                 for lo, hi, n, w, j, k in joint]
         out.append("")
+    if moves:
+        out += price_move_markdown(moves)
     out.append("## Which bookmaker's first price best predicts Pinnacle's closing chance?")
     if lead is None:
         out += ["", f"Fewer than {MIN_MATCHES} matches with both an archived price and a "
@@ -485,7 +633,15 @@ def write(data_dir=None, ai_weight=0.2):
         joint = ticket_joint_calibration(_read(data_dir / "shadow.csv"))
     except Exception:  # noqa: BLE001 - optional
         joint = None
-    text = markdown(ai, lead, gng, sim, mb, cal, leaders, joint)
+    moves = None
+    try:
+        if power_devig:
+            moves = price_move_signals(data_dir / "odds", _read(data_dir / "picks.csv"),
+                                       _read(data_dir / "closing.csv"),
+                                       _read(data_dir / "shadow.csv"), power_devig)
+    except Exception:  # noqa: BLE001 - optional
+        moves = None
+    text = markdown(ai, lead, gng, sim, mb, cal, leaders, joint, moves)
     (data_dir / "audit.md").write_text(text)
     return ai, lead, text
 

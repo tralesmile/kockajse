@@ -4,7 +4,7 @@ Built by audit.py from recorded data; nothing here changes a recorded result.
 
 ## Real-money go / no-go
 
-NO-GO: none of 6 strategies with 20+ scored bets beats the tax; best is fav_flat at -1.0% after tax on 24 bets (negative).
+NO-GO: none of 7 strategies with 20+ scored bets beats the tax; best is fav_flat at -1.3% after tax on 27 bets (negative).
 
 ## If the owner bet this ticket rule for real
 
@@ -67,7 +67,7 @@ Settled shadow legs, flat stake at the recorded odds, after the tax. Sorted by t
 | market | 49 | 31 | 63% | 49% | -7.3% | 10.4 | 23 | 39% |
 | late_power | 10 | 8 | 80% | 49% | -2.4% | 16.8 | 4 | 50% |
 | single | 22 | 15 | 68% | 47% | +6.5% | 16.5 | 22 | 68% |
-| late_value | 54 | 23 | 43% | 30% | -3.7% | 16.0 | 16 | 25% |
+| late_value | 54 | 23 | 43% | 30% | -3.7% | 16.0 | 15 | 27% |
 | value_single | 71 | 24 | 34% | 24% | -20.7% | 13.9 | 19 | 11% |
 | value_ticket | 16 | 7 | 44% | 23% | +3.2% | 31.2 | 15 | 40% |
 
@@ -99,34 +99,71 @@ Settled shadow tickets of every ticket strategy pooled (one ticket = one strateg
 | 45-60% | 8 | 50% | 49% | 2.1 |
 | 75-100% | 10 | 80% | 84% | 2.0 |
 
+## What predicts the sharp price's move before kick-off?
+
+A slope of 1 means Pinnacle moves all the way to the signal by the close, 0 that the signal says nothing. Match-winner prices; the move is far less noisy than results, so this settles questions much sooner. The lead books (BetOnline, Betfair Exchange, Matchbook) were chosen after comparing 22 books on matches up to 26 Nov, so only the later row is a fair test.
+
+| Signal | Matches or picks | Slope | se |
+|---|---|---|---|
+| Lead books minus Pinnacle, all matches | 160 | +0.84 | 0.30 |
+| Lead books minus Pinnacle, first priced from 2026-11-27 (out of sample, 0 so far) | - | - | - |
+| AI chance minus sharp chance (logged picks, all bet types) | 330 | +0.02 | 0.03 |
+
+Mean move of the favourite's chance (points): lead books at or above Pinnacle +0.85 +- 0.46 (46); lead books below Pinnacle -0.58 +- 0.30 (114).
+
+Which strategies' match-winner legs lose sharp support after they are picked (closing minus that morning's Pinnacle power chance; negative = the chance used to choose them was too high):
+
+| Strategy | Legs | Move (points) | se |
+|---|---|---|---|
+| power_value | 8 | -1.88 | 1.92 |
+| tax_market | 18 | -1.84 | 1.10 |
+| ai_own | 18 | -1.11 | 1.11 |
+| power_ticket | 24 | -1.02 | 0.93 |
+| veto_ticket_best | 13 | -1.00 | 0.86 |
+| market | 18 | -0.89 | 1.26 |
+| fav_wide | 20 | -0.88 | 0.31 |
+| banker_double | 13 | -0.80 | 0.39 |
+| veto_ticket | 10 | -0.66 | 1.08 |
+| h2h_ticket_best | 12 | -0.60 | 0.78 |
+| h2h_ticket | 15 | -0.58 | 0.48 |
+| fav_flat | 26 | -0.56 | 0.27 |
+| value_single | 28 | -0.50 | 0.39 |
+| prev_rule | 9 | -0.46 | 1.21 |
+| edge_first | 10 | -0.45 | 1.03 |
+| actual | 30 | -0.03 | 0.68 |
+| actual_best | 30 | -0.03 | 0.68 |
+| likely_ticket | 16 | +0.35 | 0.90 |
+| tax_best | 31 | +0.36 | 0.57 |
+| value_ticket | 9 | +0.78 | 0.52 |
+
 ## Which bookmaker's first price best predicts Pinnacle's closing chance?
 
-165 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0335, average of all books 0.0338; paired absolute-error gain of the average over Pinnacle -0.0024 +- 0.0008.
+178 match sides. RMSE of the first-seen chance against the closing power chance: Pinnacle 0.0330, average of all books 0.0334; paired absolute-error gain of the average over Pinnacle -0.0023 +- 0.0008.
 
 | Bookmaker | Matches | Bias | RMSE |
 |---|---|---|---|
 | betanysports | 51 | -0.0080 | 0.0268 |
-| betonlineag | 147 | -0.0018 | 0.0316 |
-| pinnacle | 165 | +0.0024 | 0.0335 |
-| winamax_de | 135 | -0.0017 | 0.0349 |
-| betsson | 158 | +0.0003 | 0.0356 |
-| matchbook | 103 | -0.0027 | 0.0357 |
-| nordicbet | 157 | +0.0002 | 0.0357 |
-| sport888 | 179 | -0.0019 | 0.0360 |
-| williamhill | 153 | -0.0008 | 0.0368 |
-| codere_it | 115 | -0.0044 | 0.0368 |
-| onexbet | 174 | -0.0025 | 0.0371 |
-| betclic_fr | 101 | +0.0031 | 0.0373 |
+| betonlineag | 159 | -0.0008 | 0.0311 |
+| pinnacle | 178 | +0.0028 | 0.0330 |
+| winamax_de | 143 | -0.0008 | 0.0347 |
+| matchbook | 115 | -0.0018 | 0.0349 |
+| betsson | 170 | +0.0012 | 0.0355 |
+| nordicbet | 169 | +0.0011 | 0.0355 |
+| sport888 | 192 | -0.0014 | 0.0356 |
+| codere_it | 122 | -0.0038 | 0.0362 |
+| williamhill | 166 | -0.0003 | 0.0362 |
+| onexbet | 187 | -0.0019 | 0.0365 |
+| betclic_fr | 114 | +0.0046 | 0.0368 |
+| coolbet | 124 | -0.0039 | 0.0369 |
 | mybookieag | 81 | +0.0019 | 0.0374 |
 | gtbets | 115 | +0.0011 | 0.0376 |
-| coolbet | 112 | -0.0046 | 0.0378 |
-| winamax_fr | 121 | +0.0066 | 0.0379 |
-| unibet_se | 177 | -0.0026 | 0.0392 |
-| unibet_nl | 160 | -0.0041 | 0.0392 |
-| leovegas_se | 178 | +0.0001 | 0.0394 |
-| marathonbet | 119 | -0.0007 | 0.0395 |
-| unibet_fr | 99 | +0.0144 | 0.0400 |
+| winamax_fr | 129 | +0.0076 | 0.0378 |
+| unibet_nl | 173 | -0.0039 | 0.0386 |
+| marathonbet | 131 | +0.0005 | 0.0386 |
+| unibet_se | 185 | -0.0026 | 0.0387 |
+| leovegas_se | 191 | +0.0006 | 0.0389 |
 | everygame | 50 | +0.0094 | 0.0403 |
-| betfair_ex_eu | 145 | -0.0017 | 0.0418 |
-| pmu_fr | 107 | +0.0106 | 0.0429 |
-| tipico_de | 90 | +0.0106 | 0.0459 |
+| unibet_fr | 112 | +0.0163 | 0.0405 |
+| betfair_ex_eu | 158 | -0.0012 | 0.0408 |
+| pmu_fr | 115 | +0.0113 | 0.0423 |
+| tipico_de | 91 | +0.0106 | 0.0457 |

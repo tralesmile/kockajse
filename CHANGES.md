@@ -2,6 +2,14 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-26 (evening): a new test using BetOnline and the betting exchanges, and a scoring bug fixed
+
+- In 160 recent matches, when BetOnline and the betting exchanges rated a team differently from the sharp bookmaker (Pinnacle) at pick time, Pinnacle usually moved most of the way towards them before kick-off. The effect is small (about 1 point of win chance) and I chose these three after comparing 22 bookmakers, so it still has to prove itself on new matches.
+- New side experiment "lead_ticket" (average and best price): the same moneyline-only ticket as an existing side test, but picking with chances adjusted towards those three. It differs on about 7 days in 10 at average prices (half the days at best prices). Expect only a tiny change in win rate, about half a point at most.
+- Fixed: since 11 Nov the moneyline-only side test often got no closing prices (at average prices only 3 of 14 tickets could be scored, at best prices none). It now asks for them. The missed ones cannot be recovered, and it may use a few more price requests within the existing daily limit.
+- Another check on the daily AI: its opinion also does not predict which way the sharp price will move (330 picks).
+- Your real ticket is chosen exactly as before; paper mode should stay on. No extra Gemini use.
+
 ## 2026-11-26: tested ten ways to pick better favourites; "fav_agree" is stopped
 
 - I tested ten extra signals on 11,646 past football matches (form, shots, rest days, home or away, team ratings, handicap prices and others). None reliably picked more winning favourites than the sharp bookmaker's price already does.

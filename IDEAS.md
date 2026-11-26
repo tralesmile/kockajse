@@ -6,6 +6,23 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 26 Nov evening, shadows] lead_ticket / lead_ticket_best (data x maths, 3/2/2): choose moneyline legs with Pinnacle's power chance moved 0.7 of the way to the
+  mean of BetOnline, Betfair Exchange and Matchbook. Evidence (data/odds + closing.csv, 160 matches): slope of Pinnacle's move to the close on that gap +0.84 (se 0.30; same
+  day-clustered; trimmed +0.90; rank corr 0.22, p 0.005; halves +0.61 and +0.93); RMSE to the close 0.03254 -> 0.03190. Books picked after looking at 22, so POST HOC until the
+  audit's out-of-sample row (from 27 Nov) confirms. Results too few to judge (83 sides, Brier slightly worse with the shift, no information). Expected hit gain only about +0.3
+  points per ticket. Rule: after about 150 new matches, keep if out-of-sample slope > 2 se above 0, else DROP. Differs from the dropped fav_agree (soft average) and steam veto
+  (the past move, not a gap between books).
+- [BUILT 26 Nov evening, measurement, unconventional: "markout analysis" from trading] audit.md "What predicts the sharp price's move?" (4/4/2): the move to the close is about
+  15x less noisy than results, so a signal can be judged on hundreds of matches. First readings: lead-book gap +0.84 +- 0.30; AI disagreement +0.02 +- 0.03 (330 picks); match-winner
+  legs of price-selecting shadows drift -0.5 to -1.9 points (fav_wide -0.88 +- 0.31, fav_flat -0.56 +- 0.27).
+- [BUILT 26 Nov evening, bug] h2h_ticket(_best) legs were missing from the closing captures (since 11 Nov: 3 of 14 and 0 of 14 tickets fully captured near kick-off), 4/5/1.
+- [WATCHING] winner's-curse shrinkage (maths, 3/2/2): of 105 match-winner picks, the quarter whose price most exceeded Pinnacle's chance moved -0.7 +- 0.8 points, the least +1.5 +- 0.7;
+  nothing for totals or double chance. In the archive the edge effect shrinks from -0.31 to -0.14 (se 0.17) once the lead gap is in the regression. No separate rule yet.
+- Brainstorm 26 Nov evening, not built (impact/confidence/effort): lead gap as a veto on fav_wide or the real ticket (3/2/1, waits for out-of-sample); unconventional "work the order":
+  place lead-below-Pinnacle legs late and lead-above legs early (3/2/3, waits); Polymarket/Kalshi as another fair price (1/3/3: one public project found exchange mids within
+  0.03-0.17 points of de-vigged Pinnacle on average, so little extra level information; their lead over Pinnacle is untested); NBA rest/back-to-back history (2/2/4, no free history
+  within this session's repository access); move Gemini from rating picks to nothing but late-news veto (3/2/3, waits for ~800+ picks; the move test is a second null).
+
 - [BUILT 26 Nov, measurement] signal_lab.py (modelling/measurement, 3/5/3): walk-forward test of 10 pre-match signals on top of Pinnacle's power chance, 11,646 favourites 1920-2526,
   replication 1314-1819. No signal and no combination improves log loss (all |z| < 1.6; all together -3.0 +- 4.8 x0.0001). Settles these backlog ideas, now DROPPED for football:
   Elo second opinion, rest / short-turnaround flag, home/away filter, form filter, cross-market Asian-handicap model as a win-rate pick (unconventional), all-signal meta-model
