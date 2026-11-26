@@ -1,25 +1,11 @@
 {
-  "date": "2026-11-25",
+  "date": "2026-11-26",
   "slots": [
     {
-      "id": "soccer_japan_j_league@2026-11-25T10:00:00Z",
-      "sport_key": "soccer_japan_j_league",
-      "first": "2026-11-25T10:00:00Z",
-      "last": "2026-11-25T10:30:00Z",
-      "events": 7
-    },
-    {
-      "id": "basketball_ncaab@2026-11-25T17:00:00Z",
+      "id": "basketball_ncaab@2026-11-26T21:30:00Z",
       "sport_key": "basketball_ncaab",
-      "first": "2026-11-25T17:00:00Z",
-      "last": "2026-11-25T17:30:00Z",
-      "events": 3
-    },
-    {
-      "id": "soccer_italy_serie_b@2026-11-25T19:00:00Z",
-      "sport_key": "soccer_italy_serie_b",
-      "first": "2026-11-25T19:00:00Z",
-      "last": "2026-11-25T19:00:00Z",
+      "first": "2026-11-26T21:30:00Z",
+      "last": "2026-11-26T22:00:00Z",
       "events": 3
     }
   ]
