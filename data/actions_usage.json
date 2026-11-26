@@ -1,12 +1,12 @@
 {
-  "measured": "2026-11-26T10:22:46+00:00",
+  "measured": "2026-11-26T10:59:13+00:00",
   "private": false,
   "cycle_start": "2026-11-01",
-  "minutes": 27072,
-  "closing_today": 206,
+  "minutes": 27109,
+  "closing_today": 243,
   "day": "2026-11-26",
   "per_workflow": {
-    "Closing prices": 20274,
+    "Closing prices": 20311,
     "Email bot updates": 6153,
     "Daily ticket": 645
   }
