@@ -6,6 +6,19 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 26 Nov, measurement] signal_lab.py (modelling/measurement, 3/5/3): walk-forward test of 10 pre-match signals on top of Pinnacle's power chance, 11,646 favourites 1920-2526,
+  replication 1314-1819. No signal and no combination improves log loss (all |z| < 1.6; all together -3.0 +- 4.8 x0.0001). Settles these backlog ideas, now DROPPED for football:
+  Elo second opinion, rest / short-turnaround flag, home/away filter, form filter, cross-market Asian-handicap model as a win-rate pick (unconventional), all-signal meta-model
+  (unconventional, machine learning), best-price premium. Tennis Elo and NBA rest are untested (no free history in reach).
+- [DROPPED 26 Nov] fav_agree (retired, rows kept and scored): on history the rule won +0.6 +- 0.6 points over price (6,518) vs +1.0 +- 0.6 for sharp-below-soft (5,128); at 70%+
+  +0.6 vs +0.8. The live 83% vs 60% was small-sample noise. The same applies to the "sharp above soft gap filter".
+- [WAITING] shots-form timing signal (timing/data, 2/4/4): shots-on-target difference over the last 6 matches, minus the part the price implies (1.12 + 2.13 x logit p; thirds cut at
+  -0.92 / +0.88). Top third: Pinnacle's chance rises by the close, bottom third falls, in 13 of 13 seasons (+0.4 / -0.5 points). Won minus priced +1.7 vs -1.1 in 1920-2526 (7/7 seasons)
+  but +0.4 vs +1.3 in 1314-1819, so NO win-rate edge is claimed. Use if built: take high-shot favourites in the morning, leave low-shot ones to the late window. Needs current-season
+  football-data CSVs fetched inside Actions plus team-name matching; worth about 0.5-1% of price, so not built yet. Related: Asian-handicap model gap also predicts the move (7/7).
+- [NEW 26 Nov, not built] draw-chance/low-total favourite filter (1/2/1: 'low' predicts the move a little, not the result); shots-form as a late_floor tie-break (2/2/4); tennis
+  surface-Elo (2/2/4); basketball back-to-back from the live schedule (2/2/3); Gemini late-news veto (3/2/3, waits); Thompson sampler (3/2/3, waits).
+
 - [BUILT 25 Nov, shadow] fav_agree (selection, 3/2/1): fav_wide legs only when sharp >= soft consensus. 101 settled legs: 83% (86) vs 60% (15) when sharp was lower. Waiting: football-only
   favourite filter (2/2/1, basketball 72% vs football 85%); Gemini late-news veto (3/2/3); Thompson sampler (3/2/3); Elo (2/2/4); NBA rest flag (2/2/3); Brier-skill leaderboard (2/3/2).
 

@@ -1202,3 +1202,32 @@ Considered (impact/confidence/effort): sharp-vs-soft agreement shadow (3/2/1, BU
 (3/2/3); Thompson sampler (3/2/3); Elo second opinion (2/2/4); NBA rest flag (2/2/3); unconventional: pre-registered Brier-skill leaderboard (2/3/2); unconventional: ensemble vote of strategies (2/2/2, tried 18 Nov).
 Changed: bot.py adds shadow fav_agree (fav_wide legs with sharp >= consensus), wired into closing capture and scoreboard; tests/test_fav_agree.py added; all test files pass. CHANGES.md entry added.
 To measure next: fav_agree vs fav_wide win rate at about 30 legs each; football-only cut once 40+ basketball legs settle.
+
+## 2026-11-26 (review): ten signals against the sharp price on 11,646 favourites (signal_lab.py)
+
+Measured: real ledger 16 of 48 tickets won (tickets 47 and 48 won; the last lost one, 46, was reviewed on 24 Nov). Settled fav_wide legs 27 of 29 (93%, 6 days), banker_double 16 of 18, fav_flat 89%.
+AI against no-AI on the same days: ai_own won 12 of 24 days vs market 9 (its tickets were priced LESS likely, 32% vs 37%); veto_ticket 6 vs tax_market 5 on 9 days. Far too few days to
+tell apart, and audit.md still shows no value in the AI's chance shift (1,073 picks), so the AI workflow is unchanged. Scoreboard: nothing beats the tax; go/no-go NO-GO.
+LEADERS: win rate fav_wide (singles, 93% on 29, small sample); return after tax at closing prices: late tax-proof singles +1.5% (10 scored, undecided; the 3-bet kick-off sweep row at +4.4% is too small).
+
+Backtest (new tool, data/backtest/signals.md): favourites 55%+ by Pinnacle pre-match power chance, signals agree, best-price premium, Elo, form, shots on target, rest, short turnaround,
+Asian handicap + O/U goals model, under-2.5 chance, home. Walk-forward logistic correction on top of the sharp chance, 8,275 test bets: no gain for any one or all together (largest +1.7 +- 3.1
+x0.0001, shots). The all-signal model's favourite third won +1.9 +- 0.9 over price, its worst third +1.2: nothing. Win rate by price band: 55-60% 58.7%, 60-70% 64.8%, 70-80% 75.0%, 80%+ 85.5%.
+fav_agree REJECTED (+0.6 vs +1.0 points; the live 83% vs 60% on 101 legs was noise) and retired. Lesson: a live gap on about 100 legs must be backtested before it becomes a shadow when the history has the columns.
+One finding: shots-on-target form (price-adjusted) predicts Pinnacle's move to the close (correlation +0.13; top third +0.39 points, bottom -0.58; 7/7 seasons, replicated 6/6 on 1314-1819 which
+was not used to find it). Its win-rate gap (+2.8 points, 7/7) did NOT replicate (-0.9 points, 3/6), so it is a price-timing signal only, about 0.5-1% of price; parked in IDEAS.md.
+
+Researched: Whelan and Hegarty (IJF 2025): Asian handicap prices carry no favourite-longshot bias, 1X2 does (https://karlwhelan.com/sports-betting-asian-handicap-vs-1x2/); Buchdahl on
+wisdom-of-crowd value bets vs the closing line (football-data.co.uk blog); public repos Jatzo/football-value-model (Poisson/Dixon-Coles + shot xG: log loss 0.9665 vs Pinnacle close 0.9441,
+CLV -6.8%), miaoqi1222/closing-line (Elo loses to the close by 0.024 log loss), baselsadaldin/prem-match-predictor (rest days, form, value tried; Pinnacle better every season),
+noushiFlex/orion (stacked model only reaches market level; injured starters add a little). Wheatcroft's GAP shot ratings (IJF 2020) report an over/under edge from shot statistics (title and
+listing seen only). All agree with the lab: public match statistics do not beat the sharp price at picking winners.
+
+Considered (IDEAS.md): signal lab (built), cross-market AH goals model (unconventional, tested), all-signal ML meta-model (unconventional, tested), Elo (tested), rest/turnaround (tested),
+home/away and form (tested), shots timing signal (waiting), tennis surface Elo, basketball back-to-back, Gemini late-news veto, Thompson sampler.
+
+Changed: signal_lab.py + tests/test_signal_lab.py (needs numpy, review-time tool only); fav_agree no longer logged (old rows settled and scored); one line in prompts/lessons.md (form, home,
+rest and ratings are already priced). No preview run (no change to selection code of the real ticket). All test files pass.
+
+Next, more different strategies: the market's own disagreement is exhausted for football; look where prices may be softer: (a) tennis favourites by tournament level, from the live odds
+archive in data/odds; (b) whether women's and lower-division matches the bot already sees calibrate differently; (c) the shots timing signal if floor_ticket/late_floor evidence makes timing matter.

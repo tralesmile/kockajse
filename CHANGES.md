@@ -2,6 +2,13 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-26: tested ten ways to pick better favourites; "fav_agree" is stopped
+
+- I tested ten extra signals on 11,646 past football matches (form, shots, rest days, home or away, team ratings, handicap prices and others). None reliably picked more winning favourites than the sharp bookmaker's price already does.
+- Yesterday's "fav_agree" experiment rested on 101 bets. On the big history it made no difference (it won 0.6 points above its price, the rest 1.0), so no new fav_agree bets are recorded. The ones already recorded are still settled.
+- One real finding: teams that recently had more shots on target tend to see the sharp price move in their favour before kick-off, in all 13 seasons tested. It is small, and the extra wins did not repeat in the older seasons, so it is not used to pick bets yet.
+- The daily AI now has a note not to downgrade a favourite just because of form, home or away, tiredness or ratings. Your ticket rules are unchanged. Expect no jump in win rate: shorter odds and fewer picks per ticket remain the main way to win more often (the minimum total odds is your setting). Keep paper mode on.
+
 ## 2026-11-25: favourite bets filtered by whether the sharp bookmaker agrees
 
 - New side experiment "fav_agree": the same single "to win" favourite bets as "fav_wide", but only when the sharp bookmaker rates the team at least as likely as the average of the other bookmakers. Recorded as paper bets.

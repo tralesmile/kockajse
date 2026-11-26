@@ -16,3 +16,7 @@ Evidence-based lessons from the review task. Apply them every day.
   match days the ticket with the best chance x (1 + 0.85 x (odds - 1)) lost about 4 points
   less than the most likely ticket. Prefer picks priced close to the sharp fair price over
   slightly safer picks priced well below it.
+- Recent form, home or away, days of rest, a short turnaround and team ratings (Elo) are
+  already in the sharp price. In a walk-forward test on 8,275 football favourites (2021-2026,
+  `data/backtest/signals.md`) none of them said anything more about who wins. Do not rate a
+  favourite AVOID or RISKY, or move its chance, for any of these on their own.

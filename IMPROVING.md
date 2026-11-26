@@ -59,6 +59,8 @@ tweak. Every review:
    sandbox; clone the public mirror `https://github.com/huhao930422-debug/football-odds-mirror`
    (shallow) and run `python backtest.py --dir <clone>/data --seasons 1920,...,2526`, or
    start the "Historical backtest" workflow, which downloads the originals.
+   Before adding a shadow that filters picks, test the filter on history if the columns exist:
+   `python signal_lab.py --dir <clone>/data` (needs numpy; report in `data/backtest/signals.md`).
 2. **Research.** Search the web for better methods and data and bring back what applies.
    Rotate topics so each review looks at something new; record what you looked at in
    `data/learning_log.md`. Starting ideas, not limits:
@@ -78,7 +80,7 @@ tweak. Every review:
    evidence or research supports them. Keep each change focused enough that its effect can
    be measured, and note in `prompts/lessons.md` any lesson the AI should apply daily.
 4. **Check.** Add or update tests for new code. Run `python tests/test_markets.py`,
-   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py`, `python tests/test_taxed.py`, `python tests/test_actions_budget.py`, `python tests/test_sweep.py`, `python tests/test_odds_budget.py`, `python tests/test_merge.py`, `python tests/test_late_ticket.py`, `python tests/test_breakeven.py`, `python tests/test_audit.py`, `python tests/test_recal.py`, `python tests/test_veto_ticket.py` and `python tests/simulate.py`;
+   `python tests/test_tracking.py`, `python tests/test_shadow.py`, `python tests/test_closing.py`, `python tests/test_backtest.py`, `python tests/test_power.py`, `python tests/test_late_gemini.py`, `python tests/test_chain.py`, `python tests/test_fallback.py`, `python tests/test_scoreboard.py`, `python tests/test_taxed.py`, `python tests/test_actions_budget.py`, `python tests/test_sweep.py`, `python tests/test_odds_budget.py`, `python tests/test_merge.py`, `python tests/test_late_ticket.py`, `python tests/test_breakeven.py`, `python tests/test_audit.py`, `python tests/test_recal.py`, `python tests/test_veto_ticket.py`, `python tests/test_floor_ticket.py`, `python tests/test_fav_agree.py`, `python tests/test_signal_lab.py` and `python tests/simulate.py`;
    all must pass. After a
    change to how picks are chosen, you may start one preview run to see it work live:
    `gh api -X POST repos/tralesmile/kockajse/actions/workflows/daily.yml/dispatches -f ref=main -F 'inputs[preview]=true'`
