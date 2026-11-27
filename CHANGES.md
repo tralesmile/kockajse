@@ -2,6 +2,15 @@
 
 Newest first. Each new entry is emailed automatically.
 
+## 2026-11-27: the maths now picks some of the matches the AI checks
+
+- The AI chooses which matches get checked, and it looks for the "safest" ones. These are mostly very short favourites, so the ticket often needed three legs to reach your minimum odds of 2.5, and each leg adds the bookmaker's margin.
+- From the next daily run, the matches from the two best "to win" tickets by price maths go on the checked list first. The AI still researches each one and can reject it. The list stays at 12 matches, so the AI's own matches get a few places fewer.
+- On 20 past days this gave tickets about 1 to 3 points more chance to win and about 2 points better expected return after tax (after allowing for later price moves), mostly with fewer legs. About 1 to 1.5 points of extra win chance is the realistic figure, and it is an estimate from prices with no AI rating of the new matches, so not yet proof.
+- Actual results do not settle it: in a replay, the few past days that could be checked favoured the old list, while a similar no-AI test ticket won 9 of 15 days against 7 for your real one. Both samples are far too small.
+- A new side experiment, "old_shortlist", records a no-AI ticket from the old list of matches. If the real ticket does not beat it at closing prices after about 20 comparable days, the change will be undone.
+- Your stake, odds limits and paper mode are unchanged, and paper mode should stay on: the ticket is still expected to lose after tax. No extra Gemini use; the experiment may use a few more price requests within the daily limit.
+
 ## 2026-11-26 (evening): a new test using BetOnline and the betting exchanges, and a scoring bug fixed
 
 - In 160 recent matches, when BetOnline and the betting exchanges rated a team differently from the sharp bookmaker (Pinnacle) at pick time, Pinnacle usually moved most of the way towards them before kick-off. The effect is small (about 1 point of win chance) and I chose these three after comparing 22 bookmakers, so it still has to prove itself on new matches.

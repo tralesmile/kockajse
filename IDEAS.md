@@ -6,6 +6,20 @@ Scores: impact / confidence / effort, each 1 (low) to 5 (high).
 
 ## Live or measuring
 
+- [BUILT 27 Nov, LIVE with shadow old_shortlist] maths matches on the AI shortlist (workflow x selection, 4/3/2): the matches of the 2 best taxed moneyline tickets (disjoint) are rated
+  first; 12 matches as before, the AI still vetoes. Replay 20 days: ticket chance +2.2..+2.9 at morning Pinnacle power chance, +1.2..+1.4 after winner's-curse + lead correction,
+  +1.1..+1.2 by consensus chance; legs 2.65 -> 2.3. Realised results on the few fully settled replay days favour the old list (0 better / 2 worse). KILL RULE: after about 20
+  comparable days, if actual is not ahead of old_shortlist at closing prices on differing days, set ai_shortlist_math_tickets to 0.
+- Brainstorm 27 Nov (impact/confidence/effort). Tested on 175 favourites against Pinnacle's move to the close, all NULL, so DROPPED unless new data: book dispersion ("analyst disagreement",
+  unconventional, 2/1/1), Pinnacle margin as informativeness (2/1/1), hours-to-kickoff / home / favourite level (1/1/1), basketball spread-implied vs moneyline chance (cross-market
+  consistency, 3/1/2, slope -0.17 +- 0.30), totals line level (1/1/1). Price momentum from the previous day's snapshot (unconventional, quant time-series momentum, 3/2/2): UNTESTABLE,
+  no match is in two daily snapshots. Win-first tie-break within 1 point of the best taxed return (3/3/1): DROPPED, only about +0.5 points of ticket chance. Dropping AVOID only
+  (variant replay): no measurable effect.
+- [WATCHING] soft consensus minus Pinnacle / winner's curse (maths, 3/2/2): consensus gap slope +0.36 +- 0.23; price above Pinnacle fair -0.32 +- 0.16 (-0.21 +- 0.17 with the lead gap).
+  Candidate next step: choose legs by a shrunk chance (power + lead gap - k x price premium) once the lead gap passes out of sample.
+- [NEXT] drop the max-1-RISKY cap (AI workflow, 3/2/1): test when research math_added shows the cap blocking maths legs. LLM only as late-news checker with a structured yes/no
+  "concrete adverse news" question instead of AGREE/RISKY/AVOID (prompts, 3/2/3). Unconventional, still waiting: "pre-mortem" second pass that must name a dated source before any veto (2/2/2).
+
 - [BUILT 26 Nov evening, shadows] lead_ticket / lead_ticket_best (data x maths, 3/2/2): choose moneyline legs with Pinnacle's power chance moved 0.7 of the way to the
   mean of BetOnline, Betfair Exchange and Matchbook. Evidence (data/odds + closing.csv, 160 matches): slope of Pinnacle's move to the close on that gap +0.84 (se 0.30; same
   day-clustered; trimmed +0.90; rank corr 0.22, p 0.005; halves +0.61 and +0.93); RMSE to the close 0.03254 -> 0.03190. Books picked after looking at 22, so POST HOC until the

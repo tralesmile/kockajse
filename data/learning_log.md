@@ -1268,3 +1268,38 @@ Changed: bot.py (lead_prob/lead_gap on candidates, shadows lead_ticket and lead_
 all test files pass. The real ticket's selection is unchanged, so no preview run.
 
 To measure next: the audit's out-of-sample lead-gap row at about 150 new matches (keep if slope > 2 se above 0, else drop lead_ticket); lead_ticket vs h2h_ticket on the same days (closing xROI first, then win rate).
+
+## 2026-11-27 (review): the AI scout's shortlist forced three-leg tickets (math matches added to it)
+
+Measured: real ledger 17 of 49 won (4 of the last 7; 47, 48, 49 won). No ticket pick was newly lost since the last review. Same-day ticket results: actual 9 vs market-only 10 of 25 days, vs tax_market 9 vs 10 of 20,
+vs ai_own 9 vs 12 of 25, vs veto_ticket 5 vs 7 of 10, vs h2h_ticket 7 vs 9 of 15. Too few days to tell apart. LEADERS: leg win rate prev_rule 19/19 (small) and fav_wide 31/33 (the larger sample);
+return after tax at closing prices: late tax-proof singles +1.5% (10 scored, undecided; the 3-bet sweep row is too small). Nothing beats the tax: NO-GO.
+
+New question: how much does each step of the AI workflow cost the ticket? Replay of 20 archived days (data/odds, picks.csv verdicts), moneyline ticket 2.50-3.50, best taxed return, chances by Pinnacle power:
+same matches with no verdicts / drop AVOID / max 1 RISKY / AI shift all sit within 0.4 points of each other; but ALL moneylines of the shortlisted leagues give +3.3 points joint chance (se 1.2; better 16 days, worse 3),
+2.25 legs against 2.65. So the cost is the shortlist, not the verdicts: the scout picks very short favourites, which need a third leg. Winner's-curse check (120 sides in the ticket odds range): the move to the close
+falls 0.32 (se 0.16) per point of price above Pinnacle's fair price. Correcting for that and the lead gap, the gain is +1.7 (se 0.8); by the all-book consensus chance, a different yardstick, +1.6 (se 0.6).
+Built rule (2 maths tickets' matches first, 12 matches in all; verdicts for the NEW matches are unknown, so shown as all AGREE / all RISKY): morning chance +2.9 / +2.2 (se 1.2 / 1.1), corrected +1.4 / +1.2,
+consensus +1.2 / +1.1; taxed return +6.2 / +4.6 points at morning prices, +2.5 / +2.2 after the price-move correction. AVOIDs on new matches would shrink this further. Realised results do not support it yet:
+on the replay days where both tickets were fully settled (13-17 days) the old ticket won on 2-3 days when the new one lost and never the reverse (only legs recorded elsewhere can be settled; my first count also
+included half-settled tickets that already had a lost leg, which was biased, and was fixed). Closing prices cover too few replayed legs (2-11 days) to judge. Logged shadows: h2h_ticket (all shortlisted
+leagues, no AI) 9 of 15 days vs actual 7.
+
+Other signals tested for Pinnacle's move to the close (175 favourites, day-clustered se): dispersion between books t=-0.3, Pinnacle margin t=-0.6, hours to kick-off t=-1.3, home -, favourite level t=-1.0,
+number of books -, draw chance t=+0.6, basketball spread-implied chance minus moneyline (sigma 11-13.5) slope -0.17 +- 0.30, soft consensus minus Pinnacle +0.36 +- 0.23 (same sign both halves),
+best price premium -0.24 +- 0.15, totals line t=-2.0 pooled (mixes sports; weak within sport, about 15 tests, so noise). Only the lead-book gap stays (+0.84 +- 0.30, in-sample). Price momentum from the day
+before cannot be tested: none of the 175 matches appears in two daily snapshots. A "highest chance within 1 point of the best taxed return" tie-break gained only about +0.5 points: not built.
+Lead-book out-of-sample row: starts today.
+
+Researched: four searches, four pages read. arXiv 2607.17765 (4 LLM agents with web search, 104 World Cup matches): none beat the de-vigged market (Brier 0.469 market, 0.471 best agent)
+(https://arxiv.org/pdf/2607.17765). LLM-SoccerArena (7 LLMs; model-extracted summary of a partly read paper): none significantly beat closing odds, web search was the one factor that helped, prompt style did not
+(https://arxiv.org/pdf/2607.24573). KellyBench: all frontier models lost on a Premier League season (https://arxiv.org/html/2604.27865). Whelan's parlay puzzle: with longer-priced legs at most two
+(https://www.karlwhelan.com/?p=2466). GitHub-oriented searches returned only titles; nothing measured to adapt. This fits the bot's own nulls: the LLM should check candidates, not decide which ones exist.
+
+Changed: bot.py math_matches() and shortlist() (config ai_shortlist_math_tickets 2; 0 restores the old behaviour), research JSON field math_added, shadow old_shortlist (closing captured), audit.py ticket
+list, tests/test_math_shortlist.py; all test files pass. This changes how the real ticket is chosen. CHANGES.md entry added.
+
+To measure next: (1) actual vs old_shortlist: closing expected return on days where they differ; revert if actual is not ahead after about 20 such days. (2) Win rate and legs per ticket. (3) What verdicts the
+added matches get (research math_added): if the max-1-RISKY rule often blocks the maths legs (they are 1.45-2.00 favourites, rated RISKY about half the time), test dropping that cap, since RISKY and AGREE
+picks beat their price by similar amounts (+2.1 and +3.6 points). (4) Lead-book out-of-sample slope.
+

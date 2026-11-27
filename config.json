@@ -33,6 +33,7 @@
     "handball_germany_bundesliga"
   ],
   "ai_shortlist": 12,
+  "ai_shortlist_math_tickets": 2,
   "skip_keys_containing": [
     "preseason",
     "summer_league",

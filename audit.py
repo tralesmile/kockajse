@@ -461,7 +461,7 @@ def strategy_leaders(shadow_rows, tax=0.15, min_legs=10):
 TICKET_STRATEGIES = ("actual", "actual_best", "ai_own", "market", "tax_best", "tax_market", "likely_ticket",
                      "power_ticket", "h2h_ticket", "h2h_ticket_best", "lead_ticket", "lead_ticket_best",
                      "floor_ticket", "late_floor",
-                     "banker_double", "late_ticket", "late_ticket_best", "veto_ticket", "veto_ticket_best",
+                     "old_shortlist", "banker_double", "late_ticket", "late_ticket_best", "veto_ticket", "veto_ticket_best",
                      "prev_rule")
 
 

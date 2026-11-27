@@ -982,7 +982,7 @@ SHADOW_CLV = ("value_single", "kaunitz_single", "value_ticket", "taxed_value", "
 SHADOW_LEGS_CLV = ("market", "power_ticket", "edge_first", "single", "actual_best", "ai_own",
                    "actual", "likely_ticket", "tax_best", "tax_market", "veto_ticket",
                    "veto_ticket_best", "prev_rule", "floor_ticket", "h2h_ticket",
-                   "h2h_ticket_best", "lead_ticket", "lead_ticket_best")
+                   "h2h_ticket_best", "lead_ticket", "lead_ticket_best", "old_shortlist")
 SHARP_SHADOWS = ("value_single", "value_ticket", "taxed_value", "power_value", "fav_flat", "fav_wide", "fav_agree", "banker", "banker_double")
 
 
@@ -1568,6 +1568,7 @@ SHADOW_NAMES = {
     "veto_ticket_best": "AI as veto only, at the best bookmaker prices",
     "h2h_ticket": "Moneyline-only ticket, best return after tax (no handicaps or totals, no AI)",
     "h2h_ticket_best": "Moneyline-only ticket at the best bookmaker prices (no AI)",
+    "old_shortlist": "Moneyline-only ticket from the matches the AI would have rated before 27 Nov (no AI)",
     "lead_ticket": "Lead-book ticket: the moneyline-only ticket, chances moved towards BetOnline and the exchanges (no AI)",
     "lead_ticket_best": "Lead-book ticket at the best bookmaker prices (no AI)",
     "late_sweep": "Kick-off sweep: late tax-proof singles in other leagues' busiest slots",
@@ -1793,6 +1794,16 @@ def shadow_tickets(cands, short=None, ticket=None, wide=None):
             out.append((name, [dict(l, book="average", sharp=l.get("sharp_power")) if okey == "odds"
                                else dict(l, book=l.get("best_book") or "average",
                                          sharp=l.get("sharp_power")) for l in t["legs"]]))
+    # "old_shortlist" (27 Nov review): what the shortlist without the maths matches would have
+    # allowed, so the 27 Nov change can be judged on the same days against "actual". Moneyline
+    # only, best taxed return, no AI (on the replayed days the verdicts barely moved the chance).
+    if short and CONFIG.get("ai_shortlist_math_tickets", 0):
+        before = {c["event_id"] for c in shortlist(cands, math_tickets=0).values()}
+        t = build_taxed_ticket([c for c in cands
+                                if c.get("market") == "h2h" and c["event_id"] in before])
+        if t:
+            out.append(("old_shortlist", [dict(l, book="average", sharp=l.get("sharp_power"))
+                                          for l in t["legs"]]))
     # "lead_ticket" (26 Nov evening review): the twin of h2h_ticket with one difference, the chance
     # used to choose: Pinnacle's power chance moved towards the lead books (lead_prob). fair_chance
     # stays Pinnacle's, so the audit can see whether the chosen legs shorten by the close.
@@ -2337,19 +2348,57 @@ DECISION_SCHEMA = {
 }
 
 
-def shortlist(cands):
-    """Candidate bets for the AI: the best matches, each with its possible bets, numbered."""
+def math_matches(cands, tickets=None):
+    """Matches the market maths wants on the AI's shortlist: those of the best moneyline ticket
+    by taxed return, then of the next best one built without them, and so on.
+
+    The AI scout looks for the "safest" matches, mostly very short favourites that need three
+    legs to reach the minimum total odds. Replaying 20 archived days (27 Nov review), a ticket
+    limited to its shortlist had 3.3 points less chance by the sharp price than one chosen from
+    every priced favourite (about 1.5 after allowing for the price moves before kick-off).
+    Returns [(event_id, selection)], best ticket first.
+    """
+    tickets = CONFIG.get("ai_shortlist_math_tickets", 0) if tickets is None else tickets
+    pool = [c for c in cands if c.get("market") == "h2h" and c.get("power_prob")]
+    out = []
+    for _ in range(tickets):
+        found = build_taxed_ticket(pool)
+        if not found:
+            break
+        out += [(l["event_id"], l["sel"]) for l in found["legs"]]
+        used = {l["event_id"] for l in found["legs"]}
+        pool = [c for c in pool if c["event_id"] not in used]
+    return out
+
+
+def shortlist(cands, math_tickets=None):
+    """Candidate bets for the AI: the best matches, each with its possible bets, numbered.
+
+    Order: the matches of the market maths (math_matches; math_tickets=0 leaves them out, which
+    gives the shortlist as it was before 27 Nov), then the AI scout's, then the strongest
+    favourites. The AI still rates every bet, so it can veto a maths choice.
+    """
+    wanted = dict(math_matches(cands, math_tickets))  # event id -> the bet the maths chose
     by_event = {}
     for c in cands:
         by_event.setdefault(c["event_id"], []).append(c)
     events = sorted(by_event.values(), key=lambda opts: max(o["prob"] for o in opts),
                     reverse=True)
     # Matches the AI scout chose come first; the rest fill any remaining places.
-    events = ([e for e in events if e[0]["event_id"] in SCOUTED]
+    first = [by_event[e] for e in wanted if e in by_event]
+    events = [e for e in events if e[0]["event_id"] not in wanted]
+    events = (first + [e for e in events if e[0]["event_id"] in SCOUTED]
               + [e for e in events if e[0]["event_id"] not in SCOUTED])[:CONFIG["ai_shortlist"]]
     short, number = {}, 1
     for options in events:
-        for c in sorted(options, key=lambda o: o["prob"], reverse=True)[:CONFIG["ai_options"]]:
+        ranked = sorted(options, key=lambda o: o["prob"], reverse=True)
+        shown = ranked[:CONFIG["ai_options"]]
+        chosen = wanted.get(options[0]["event_id"])
+        if chosen and not any(o["market"] == "h2h" and o["sel"] == chosen for o in shown):
+            # The bet the maths wants must be one the AI can rate.
+            shown = shown[:-1] + [o for o in ranked
+                                  if o["market"] == "h2h" and o["sel"] == chosen]
+        for c in shown:
             short[number] = c
             number += 1
     return short
@@ -2408,6 +2457,9 @@ def ai_pick(cands, today):
         return None
     research = "\n\n".join(notes)
     RESEARCH["notes"] = research
+    scouted_only = {c["event_id"] for c in shortlist(cands, math_tickets=0).values()}
+    RESEARCH["math_added"] = [e for e in dict.fromkeys(c["event_id"] for c in short.values())
+                              if e not in scouted_only]
     raw = gemini((ROOT / "prompts" / "decide.txt").read_text().format(
         today=day, candidates=listing, research=research, max_legs=CONFIG["max_legs"],
         lessons=lessons(),
