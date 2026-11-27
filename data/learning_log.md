@@ -1303,3 +1303,6 @@ To measure next: (1) actual vs old_shortlist: closing expected return on days wh
 added matches get (research math_added): if the max-1-RISKY rule often blocks the maths legs (they are 1.45-2.00 favourites, rated RISKY about half the time), test dropping that cap, since RISKY and AGREE
 picks beat their price by similar amounts (+2.1 and +3.6 points). (4) Lead-book out-of-sample slope.
 
+
+Preview run (27 Nov 09:27 UTC, not counted): ran cleanly (13 research calls, same as before; one 503 retry on the decision). The AI rated both maths legs AGREE and its own ticket matched: Gummersbach 1.27 + Göppingen 1.97
+(total 2.50, 2 legs, power chance 42%) against 34.9% for the old_shortlist ticket (Werder 1.66 + West Virginia 1.65). One day, measured by the morning price the rule selects on; not evidence of a better result.
