@@ -1,12 +1,26 @@
 {
-  "date": "2026-11-26",
+  "date": "2026-11-27",
   "slots": [
     {
-      "id": "basketball_ncaab@2026-11-26T21:30:00Z",
+      "id": "soccer_turkey_super_league@2026-11-27T17:00:00Z",
+      "sport_key": "soccer_turkey_super_league",
+      "first": "2026-11-27T17:00:00Z",
+      "last": "2026-11-27T17:00:00Z",
+      "events": 2
+    },
+    {
+      "id": "soccer_germany_bundesliga2@2026-11-27T17:30:00Z",
+      "sport_key": "soccer_germany_bundesliga2",
+      "first": "2026-11-27T17:30:00Z",
+      "last": "2026-11-27T17:30:00Z",
+      "events": 2
+    },
+    {
+      "id": "basketball_ncaab@2026-11-27T19:00:00Z",
       "sport_key": "basketball_ncaab",
-      "first": "2026-11-26T21:30:00Z",
-      "last": "2026-11-26T22:00:00Z",
-      "events": 3
+      "first": "2026-11-27T19:00:00Z",
+      "last": "2026-11-27T19:30:00Z",
+      "events": 5
     }
   ]
 }
