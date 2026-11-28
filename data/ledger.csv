@@ -48,3 +48,4 @@ ticket_no,date,picks,total_odds,stake,result,payout,tax,net_profit,bankroll_afte
 47,2026-11-24,Bradford City v Barnsley: Bradford City to win @1.57 (won) | Orlando Magic v Detroit Pistons: Detroit Pistons to win @1.74 (won),2.73,100,won,273.0,25.95,147.05,-792.75,paper
 48,2026-11-25,Olympiacos v Hapoel Tel Aviv: Olympiacos to win @1.32 (won) | Bolton Wanderers v West Bromwich Albion: West Bromwich Albion to win @1.98 (won),2.61,100,won,261.0,24.15,136.85,-655.9,paper
 49,2026-11-26,Torreense v Celtic: Celtic to win @1.63 (won) | TSG Hoffenheim v SK Sturm Graz: TSG Hoffenheim to win @1.32 (won) | Sao Paulo v Remo: Sao Paulo to win @1.34 (won),2.88,100,won,288.0,28.2,159.8,-496.1,paper
+50,2026-11-27,VfL Gummersbach v HC Erlangen: VfL Gummersbach to win @1.27 (won) | Bergischer HC v THW Kiel: THW Kiel to win @1.2 (won) | Werder Bremen v Borussia Monchengladbach: Werder Bremen to win @1.7 (lost),2.59,100,lost,0.0,0.0,-100,-596.1,paper

@@ -1,26 +1,47 @@
 {
-  "date": "2026-11-27",
+  "date": "2026-11-28",
   "slots": [
     {
-      "id": "soccer_turkey_super_league@2026-11-27T17:00:00Z",
-      "sport_key": "soccer_turkey_super_league",
-      "first": "2026-11-27T17:00:00Z",
-      "last": "2026-11-27T17:00:00Z",
-      "events": 2
-    },
-    {
-      "id": "soccer_germany_bundesliga2@2026-11-27T17:30:00Z",
-      "sport_key": "soccer_germany_bundesliga2",
-      "first": "2026-11-27T17:30:00Z",
-      "last": "2026-11-27T17:30:00Z",
-      "events": 2
-    },
-    {
-      "id": "basketball_ncaab@2026-11-27T19:00:00Z",
-      "sport_key": "basketball_ncaab",
-      "first": "2026-11-27T19:00:00Z",
-      "last": "2026-11-27T19:30:00Z",
+      "id": "soccer_germany_liga3@2026-11-28T13:00:00Z",
+      "sport_key": "soccer_germany_liga3",
+      "first": "2026-11-28T13:00:00Z",
+      "last": "2026-11-28T13:00:00Z",
       "events": 5
+    },
+    {
+      "id": "soccer_england_league2@2026-11-28T15:00:00Z",
+      "sport_key": "soccer_england_league2",
+      "first": "2026-11-28T15:00:00Z",
+      "last": "2026-11-28T15:00:00Z",
+      "events": 10
+    },
+    {
+      "id": "soccer_england_league1@2026-11-28T15:00:00Z",
+      "sport_key": "soccer_england_league1",
+      "first": "2026-11-28T15:00:00Z",
+      "last": "2026-11-28T15:00:00Z",
+      "events": 9
+    },
+    {
+      "id": "soccer_efl_champ@2026-11-28T15:00:00Z",
+      "sport_key": "soccer_efl_champ",
+      "first": "2026-11-28T15:00:00Z",
+      "last": "2026-11-28T15:00:00Z",
+      "events": 7
+    },
+    {
+      "id": "soccer_spl@2026-11-28T15:00:00Z",
+      "sport_key": "soccer_spl",
+      "first": "2026-11-28T15:00:00Z",
+      "last": "2026-11-28T15:00:00Z",
+      "events": 4
+    },
+    {
+      "id": "soccer_france_coupe_de_france@2026-11-28T17:00:00Z",
+      "sport_key": "soccer_france_coupe_de_france",
+      "first": "2026-11-28T17:00:00Z",
+      "last": "2026-11-28T17:30:00Z",
+      "events": 6
     }
   ]
 }
